@@ -1,0 +1,410 @@
+---
+title: "Investigating the bias of refinedIBD on simulated array data"
+output: html_document
+---
+
+# ONE DEME
+
+Ralph & Coop reported that at 2cM, fastIBD has 50% power and at 4cM has 98% power. Let's investigate the power and false positive rate of IBD calling on genotype data for ourselves.
+
+Analytically, how many IBD blocks do you expect in the W-F model? Palarama, 2012 show that for a panmitic population
+$$\lambda \approx \int_u^{\infty} \frac{p(l)}{l}$$
+
+```{r, echo=FALSE}
+N = seq(1e2, 1e4, by=100)
+# in centimograns
+r=1e-8
+L = 2e6
+plot(N, 2.6e9*(2*N*r)/(1+2*N*L*r)^2, xlab = "N", ylab = "expected number of segments", main = "2cM or greater")
+```
+
+## RefinedIBD software
+
+Let's investigate whether the analytical values match the empirical values for the RefinedIBD software. Here, I use default BEAGLE's default parameters, except that I set LOD = 1 (default LOD = 3) because LOD = 3 is quite conservative. Beagle uses a two-step process to call IBD segments.
+
+>> The first is identification of candidate IBD segments. The candidate segments are regions in which two individuals share an identical statistically phased haplotype segment that is longer than a specified threshold. In the second step, we use the phased haplotypes to build a haplotype frequency model, and for each candidate IBD segment we calculate the likelihood of an IBD model (one haplotype shared IBD) and of a non-IBD model (no haplotypes shared IBD). We compute the LOD score, which is the base 10 log of the likelihood ratio. Candidate segments having LOD score greater than a specified threshold (the default threshold is 3.0) are reported as IBD segments.
+
+```{r, echo=FALSE}
+
+readIBD <- function(infile, nhaploids, cutOff)
+{
+  # example
+  # infile = data/run_7/l_1.3e8_N_1000_mu_1.25e-8_r_1e-8_1D
+  # nhaploids = 80
+  # cutOff = 2e6
+  
+  
+  file = paste(infile, ".out.ibd", sep = "")
+  ibd = read.table(file, sep = "\t", header=FALSE)
+  file = paste(infile, ".out.hbd", sep = "")
+  hbd = read.table(file, sep = "\t", header=FALSE)
+  ndiploids = nhaploids/2
+
+  toIndex = matrix(nrow=ndiploids, ncol = 2, 0)
+  cnt = 1
+  for (i in 1:ndiploids){
+    for (j in 1:2){
+      toIndex[i,j] = cnt
+      cnt = cnt + 1
+    }
+  }
+
+  n = nrow(ibd)
+  ibdM = matrix(nrow=nhaploids, ncol = nhaploids, 0)
+  for (i in 1:n){
+    ii = toIndex[ibd$V1[i], ibd$V2[i]]
+    jj = toIndex[ibd$V3[i], ibd$V4[i]]
+    diff = ibd$V7[i]-ibd$V6[i]
+    if (diff > cutOff){
+      ibdM[ii,jj] = ibdM[ii,jj] + 1
+      ibdM[jj,ii] = ibdM[ii,jj]
+    }
+  }
+
+  n = nrow(hbd)
+  for (i in 1:n){
+   ii = toIndex[hbd$V1[i], hbd$V2[i]]
+   jj = toIndex[hbd$V3[i], hbd$V4[i]]
+    diff = hbd$V7[i]-hbd$V6[i]
+   if (diff > cutOff){
+      ibdM[ii,jj] = ibdM[ii,jj] + 1
+      ibdM[jj,ii] = ibdM[ii,jj]
+   }
+  }
+
+  return(ibdM)
+}
+
+```
+
+### N = 1000, 2cMm LOD =1
+
+First, let's visually inspect the matrix.
+
+```{r, cache=TRUE}
+source("myImagePlot.R")
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, 2e6)
+myImagePlot(ibdM)
+```
+
+
+```{r, cache=TRUE}
+source("myImagePlot.R")
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 1000, 3cM, LOD =1
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 1000, 4cM, LOD =1
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 2cM, LOD = 1
+```{r, cache=TRUE}
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, 2e6)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 3cM, LOD =1
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 10000, 4cM, LOD =1
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=1/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+I notice some interesting phenomenon. For N = 100 (not shown), the analytical equation tell us there should be > 120 IBD segments which refinedIBD gets horribly wrong. Probably has to do something with the fact that there aren't many SNPs (less than 10,000 for the whole genome). As the population size increases, the analytical solutions get closer to the empirical mean. At N = 1000, refinedIBD slightly underestimates the analytical mean but for N = 10000, it slighly overestimates the empirical mean. Perhaps, LOD = 2 is a good comprimise between LOD = 1 and LOD = 3.
+
+### N = 1000, 2cM, LOD =2
+
+```{r, cache=TRUE}
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, 2e6)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 1000, 3cM, LOD =2
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 1000, 4cM, LOD =2
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 2cM, LOD = 2
+```{r, cache=TRUE}
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, 2e6)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 3cM, LOD =2
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 10000, 4cM, LOD =2
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=2/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+Seems to still overestimate, let's try with the default (LOD = 3).
+
+### N = 1000, 2cM, LOD =3
+
+```{r, cache=TRUE}
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, 2e6)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 1000, 3cM, LOD =3
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 1000, 4cM, LOD =3
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e3_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*1000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 2cM, LOD = 3
+```{r, cache=TRUE}
+L = 2e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+### N = 10000, 3cM, LOD =3
+
+```{r, cache=TRUE}
+L = 3e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+
+### N = 10000, 4cM, LOD =3
+
+```{r, cache=TRUE}
+L = 4e6
+ibdM = readIBD("data/const_1D/LOD=3/l_1.3e8_N_1e4_nhap_200_1D_rs_10", 200, L)
+pairwise = ibdM[upper.tri(ibdM)]
+mean(pairwise)
+r=1e-8
+N = 2*10000
+2.6e9*(2*N*r)/(1+2*N*L*r)^2
+```
+
+So, it seems LOD = 3 is overconservative for the N = 1000 where's there's fewer markers.
+
+It seems to me LOD = 1 is the best option.
+
+```{r, echo=FALSE,include=FALSE}
+r = 1e-8
+t = seq(1, 50, by = 1)
+# pdf is gamma with alpha = 2, beta = 2*t*r
+plot(t,2/(t*2*r), log="xy", xlab = "generation", ylab = "expected Length in bp (L)", main = "excpted no of gen w/ no recombination")
+#plot(t, 2/(2*r*t)^2, col = "red", main = "variance in length in bp (L)", log="xy", xlab = #"generation", ylab = "Length in bp (L)")
+```
+
+# TWO DEME MODEL
+```{r, echo=FALSE}
+makeQ <- function(m, q){
+  Q = matrix(nrow=4, ncol=4, 0)
+  Q[1,2] = 2*m
+  Q[1,4] = q[1]
+  Q[2,1] = m
+  Q[2,3] = m
+  Q[3,2] = 2*m
+  Q[3,4] = q[2]
+  diag(Q) = -rowSums(Q)
+  return(Q)
+}
+
+computeWeights <- function(u){
+  x = c(0.118440697736960550688, 0.3973475034735802657556, 0.8365549141880933313119, 1.437175158191620443607,
+        2.200789508440616292336, 3.129448303166859096349, 4.225699164493802071261, 5.492626704368934083587,
+        6.933903364122364597039, 8.553853192793023779194, 10.35753137020864105106, 12.35082332811269876439,
+        14.54056869943518703492, 16.93471724415800802837, 19.54252664684054185266, 22.37481610233449499411,
+        25.44429563058376261798, 28.76600031447167014762, 32.35787326932856805551, 36.24156497875364752439,
+        40.44355691460364227197, 44.99678841355200250088, 49.94309754094208987181, 55.33704611950810443499,
+        61.25224904369593075136, 67.79260716731075303985, 75.11420274687672563149, 83.47405073153149030595,
+        93.36359463048878316735, 106.0462505962874034422)
+  w = c(0.02093564741472521761, 0.09585049298017654367, 0.18833296435057945936, 0.23281944819987904471,
+        0.2060782293528492151, 0.138528960450616358, 0.07293919110208096649, 0.030605607903988887905,
+        0.010333948458420042431, 0.002821608083735993584, 6.2402663742264620427E-4, 1.1168849922460852198E-4,
+        1.6129719270580565631E-5, 1.87044426274856472768E-6, 1.72995513372709914535E-7, 1.26506996496773906645E-8,
+        7.2352574135703022224E-10, 3.19320138447436406004E-11, 1.069761647687436460972E-12, 2.66597906070505518515E-14,
+        4.82019019925788439097E-16, 6.12740480626441608041E-18, 5.26125812567892365789E-20, 2.89562589607893296815E-22,
+        9.51695437836864011982E-25, 1.69046847745875738033E-27, 1.39738002075239812243E-30, 4.20697826929603166432E-34,
+        2.89826026866498969507E-38, 1.411587124593531584E-43)
+  
+  w = w*(1/(L*2*r*L))
+  x = x/(2*r*L)
+  return(list(w=w, x=x))
+}
+
+library(expm)
+calculateIntegral <- function(Q, L,r, ind){
+  # ind =1 for within and ind =2 for between
+  ret = computeWeights(L*r)
+  t = ret$x
+  w = ret$w
+  n = length(t)
+  P = rep(0, n)
+  for (i in 1:n){
+    P[i] = expm(Q*t[i])[ind,4]
+  }
+  p = c(0, diff(P)/(t[2:n]-t[1:(n-1)]))
+  int = w%*%p
+  return(int)
+}
+
+m = 0.01
+N = c(10000, 10000)
+q = 1/(2*N)
+r = 1e-8
+Q = makeQ(m,q)
+L = 2.5e6
+genomeSize = 2.6e9
+ibdM = readIBD("data/const_2D/LOD=2/l_1.3e8_N_1e4_nhap_100_d_2_rs_10", 100, L)
+myImagePlot(ibdM)
+
+pop1 = ibdM[1:50, 1:50]
+pop2 = ibdM[51:100, 51:100]
+within_sharing = c(pop1[upper.tri(pop1)], pop2[upper.tri(pop2)])
+
+mean(within_sharing)
+genomeSize*calculateIntegral(Q, L, r, 1)
+
+betw_sharing = ibdM[1:50, 51:100]
+mean(betw_sharing)
+genomeSize*calculateIntegral(Q, L, r, 2)
+
+```
+
+Seems like something is horrible wrong here. The empirical mean is much bigger than the analytical mean for within sharing and much smaller (0) than the analytical mean for within sharing.
+
+# Ralph & Coop
+![alt text](data/power_fp.png "Title")
+
+>> Estimated false positive rate as a function of length. Observed rates
+of IBD blocks, per pair and per cM, are also displayed for the purpose of comparison. ‘‘Nearby’’ and ‘‘Distant’’ means IBD between pairs of populations
+closer and farther away than 1,000 km, respectively. Below, the estimated power as a function of length (black line), together with the parametric fit
+c(x) of equation (1) (red dotted curve).
+
+We find that empirical means moves closer to the true mean as the threshold for calling IBD gets larger which is consistent with the figure. They call IBD with LOD = 3, so with LOD =1 and LOD =2 there is presumingly false positives and increased power. For, N = 10,000, our empirical mean matches the true mean quite well for 2cM so in our case, we seems much more power than the figure suggests. There is probably some balancing with false positives and false negatives. 

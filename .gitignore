@@ -2,3 +2,6 @@ miscell/
 Readme.html
 *DS_Store
 .Rhistory
+src/*.o
+test/Eigen/
+*~
