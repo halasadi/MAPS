@@ -11,6 +11,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
   try {
       // need to put genome size
       // also dimension of Krylov subspace
+      // take out nBlocks
     po::options_description eems_options("EEMS options from parameter file");
     eems_options.add_options()
       ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")

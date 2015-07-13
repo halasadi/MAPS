@@ -928,7 +928,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     // consider IBD segments greater than 3cM
     double L = 3e6;
     double r = 1e-8;
-    computeWeights(w, x, L, r);
+    computeWeights(w, x, r, L);
     // where to store the matrix exponential
     MatrixXd E(dimKrylov,dimKrylov);
     

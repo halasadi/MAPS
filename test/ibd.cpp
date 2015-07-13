@@ -1,11 +1,14 @@
 #include "ibd.hpp"
 #include <math.h>
+#include <fstream>
+#include <ctime>
+
 
 // number of nodes row-wise
-const int nrow = 5;
+const int nrow = 20;
 
 // number of nodes column-wise
-const int ncol = 5;
+const int ncol = 20;
 
 // total number of nodes
 const int ndemes = ncol * nrow;
@@ -22,6 +25,9 @@ void swap(int &i, int &j){
     i = j;
     j = temp;
 }
+
+// define the format you want, you only need one instance of this...
+const static IOFormat CSVFormat(FullPrecision, DontAlignCols, ", ", "\n");
 
 // a way to go from index in the Q matrix to (i,j)
 // excluding the coalescent state
@@ -299,16 +305,22 @@ void padm(MatrixXd &H, MatrixXd &E){
     }
 }
 
+
+void writeToCSVfile(string name, MatrixXd matrix)
+{
+    ofstream file(name.c_str());
+    file << matrix.format(CSVFormat);
+}
+
 // For testing purposes only
-void test_FullMatrixExp(node nodes[], MatrixXd &Q, MatrixXd &E){
-  // Requires: Q and E be NxN
+void makeFullMatrix(node nodes[], MatrixXd &Q){
+  // Requires: Q be NxN
   int index;
   double mi;
   double mj;
   node demei;
   node demej;
-
-  Q.setZero();
+    Q.setZero();
     // i < (nstates-1) because the last row of Q is all zeros
   for (int i = 0; i < (nstates-1); i++){
     demei = nodes[lookup[i][0]];
@@ -320,38 +332,38 @@ void test_FullMatrixExp(node nodes[], MatrixXd &Q, MatrixXd &E){
     // look at first lineage. e.g. (i,j) then look at movements of lineage i
     if (demei.llabel != -1){
       index = revLookup(demei.llabel, demej.label);
-      Q(i, index) += 0.5*(nodes[demei.llabel].m + mj);
+      Q(i, index) += 0.5*(nodes[demei.llabel].m + mi);
     }
     if (demei.rlabel != -1){
       index = revLookup(demei.rlabel, demej.label);
-      Q(i, index) += 0.5*(nodes[demei.rlabel].m + mj);
+      Q(i, index) += 0.5*(nodes[demei.rlabel].m + mi);
     }
     if (demei.tlabel != -1){
       index = revLookup(demei.tlabel, demej.label);
-      Q(i, index) += 0.5*(nodes[demei.tlabel].m + mj);
+      Q(i, index) += 0.5*(nodes[demei.tlabel].m + mi);
     }
     if (demei.blabel != -1){
       index = revLookup(demei.blabel, demej.label);
-      Q(i, index) += 0.5*(nodes[demei.blabel].m + mj);
+      Q(i, index) += 0.5*(nodes[demei.blabel].m + mi);
     }
         
         // look at second lineage
     if (demej.llabel != -1){
       index = revLookup(demei.label, demej.llabel);
-      Q(i, index) += 0.5*(nodes[demej.llabel].m + mi);
+      Q(i, index) += 0.5*(nodes[demej.llabel].m + mj);
     }
     if (demej.rlabel != -1){
       index = revLookup(demei.label, demej.rlabel);
-      Q(i, index) += 0.5*(nodes[demej.rlabel].m + mi);
+      Q(i, index) += 0.5*(nodes[demej.rlabel].m + mj);
     }
     if (demej.tlabel != -1){
       index = revLookup(demei.label, demej.tlabel);
-      Q(i, index) += 0.5*(nodes[demej.tlabel].m + mi);
+      Q(i, index) += 0.5*(nodes[demej.tlabel].m + mj);
       
     }
     if (demej.blabel != -1){
       index = revLookup(demei.label, demej.blabel);
-      Q(i, index) += 0.5*(nodes[demej.blabel].m + mi);
+      Q(i, index) += 0.5*(nodes[demej.blabel].m + mj);
     }
     
     // if both in the same deme, they can coalesce
@@ -363,32 +375,116 @@ void test_FullMatrixExp(node nodes[], MatrixXd &Q, MatrixXd &E){
     Q(i,i) = -1*(Q.row(i).sum());
     
   }
-    
-  padm(Q, E);
 }
 
-void computeWeights(VectorXd &w, VectorXd &x, double u){
-  // REQUIRES: w and x vectors of length 20 and u > 0.
-  // MODIFIES: w and x
-  // EFFECTS: x will contain the x-values telling you where to evaluate P(T_mrca = x); w will contains the weights
-  // This function allows user to compute an integral by computing \sum_i P(T_mrca = x_i) * w_i 
-
-    x << 0.07053988969199015, 0.3721268180016133, 0.9165821024832778, 1.707306531028346,
-        2.749199255309431, 4.048925313850894, 5.615174970861625, 7.459017453671069,
-        9.594392869581098, 12.03880254696431, 14.81429344263073, 17.94889552051938,
-        21.47878824028502, 25.45170279318691, 29.9325546317006, 35.01343424047902,
-        40.83305705672853, 47.61999404734653, 55.8107957500639, 66.52441652561578;
-  
-    w << 0.1687468018511152, 0.2912543620060685, 0.266686102867001, 0.1660024532695055,
-        0.07482606466879245, 0.02496441730928314, 0.006202550844572207, 0.001144962386476896,
-        0.0001557417730278113, 1.54014408652249e-05, 1.086486366517979e-06, 5.3301209095567e-08,
-        1.757981179050555e-09, 3.725502402512292e-11, 4.767529251578155e-13, 3.372844243362382e-15,
-        1.155014339500436e-17, 1.539522140582338e-20, 5.28644272556909e-24, 1.656456612498994e-28;
+void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
+    // REQUIRES: w and x vectors of length 30, r is recombination rate, and L (in base pairs) of cutoff.
+    // MODIFIES: w and x
+    // EFFECTS: x will contain the x-values telling you where to evaluate P(T_mrca = x); w will contains the weights
+    // This function allows user to compute an integral by computing \sum_i P(T_mrca = x_i) * w_i
     
-    // integral f(t) e^(-2*m*t) (1 + 2*m*t) dt = integral f(u/2m) e^-u (1+u) du/2m
-    w = w.cwiseProduct(VectorXd::Ones(20)+x)/(2*u);
-    x = x/(2*u);
+    x << 0.118440697736960550688, 0.3973475034735802657556, 0.8365549141880933313119, 1.437175158191620443607,
+    2.200789508440616292336, 3.129448303166859096349, 4.225699164493802071261, 5.492626704368934083587,
+    6.933903364122364597039, 8.553853192793023779194, 10.35753137020864105106, 12.35082332811269876439,
+    14.54056869943518703492, 16.93471724415800802837, 19.54252664684054185266, 22.37481610233449499411,
+    25.44429563058376261798, 28.76600031447167014762, 32.35787326932856805551, 36.24156497875364752439,
+    40.44355691460364227197, 44.99678841355200250088, 49.94309754094208987181, 55.33704611950810443499,
+    61.25224904369593075136, 67.79260716731075303985, 75.11420274687672563149, 83.47405073153149030595,
+    93.36359463048878316735, 106.0462505962874034422;
+    
+    w << 0.02093564741472521761, 0.09585049298017654367, 0.18833296435057945936, 0.23281944819987904471,
+    0.2060782293528492151, 0.138528960450616358, 0.07293919110208096649, 0.030605607903988887905,
+    0.010333948458420042431, 0.002821608083735993584, 6.2402663742264620427E-4, 1.1168849922460852198E-4,
+    1.6129719270580565631E-5, 1.87044426274856472768E-6, 1.72995513372709914535E-7, 1.26506996496773906645E-8,
+    7.2352574135703022224E-10, 3.19320138447436406004E-11, 1.069761647687436460972E-12, 2.66597906070505518515E-14,
+    4.82019019925788439097E-16, 6.12740480626441608041E-18, 5.26125812567892365789E-20, 2.89562589607893296815E-22,
+    9.51695437836864011982E-25, 1.69046847745875738033E-27, 1.39738002075239812243E-30, 4.20697826929603166432E-34,
+    2.89826026866498969507E-38, 1.411587124593531584E-43;
+    
+    // integral_0^{\inf} 2rte^(-2trL)f(t) = (1/L^2) \integral_0^{\inf} f(u/2rL) ue^(-u)
+    w = w*(1/(L*2.0*r*L));
+    x = x/(2*r*L);
+}
 
+void calculateIntegralKrylov(node nodes[], double r, double L, VectorXd &approximate){
+    MatrixXd Q(nstates, m);
+    MatrixXd H(m, m);
+    krylovProj(nodes, H, Q, m);
+    
+    // abisca for the gaussian quadrature
+    VectorXd w(30);
+    VectorXd x(30);
+    computeWeights(w, x, r, L);
+    // where to store the matrix exponential
+    MatrixXd E(m,m);
+    
+    // to get the last column
+    VectorXd l = VectorXd::Zero(nstates);
+    l[nstates-1] = 1.0;
+    
+    // storing the probabilities
+    MatrixXd Papprox(nstates, 30);
+    
+    MatrixXd Ht(m,m);
+    for (int i = 0; i < x.size() ; i++){
+        Ht = H*x[i];
+        padm(Ht, E);
+        Papprox.col(i) = (Q*E)*(Q.transpose()*l);
+    }
+    
+    int cnt = 0;
+    VectorXd papprox(30);
+    int state;
+    for (int i = 0; i < ndemes; i++){
+        for (int j = i; j < ndemes; j++)
+        {
+            state = revLookup(i,j);
+            // estimate the probability mass function
+            papprox(0) = 0;
+            papprox.tail(29) = (Papprox.row(state).tail(29)- Papprox.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
+            approximate[cnt] = w.dot(papprox);
+            cnt += 1;
+        }
+    }
+    
+}
+
+void calculateIntegral(node nodes[], double r, double L, VectorXd &exact){
+    VectorXd w(30);
+    VectorXd x(30);
+    computeWeights(w, x, r, L);
+
+    MatrixXd E(nstates, nstates);
+    MatrixXd A(nstates, nstates);
+    makeFullMatrix(nodes, A);
+    
+    // to get the last column
+    VectorXd l = VectorXd::Zero(nstates);
+    l[nstates-1] = 1.0;
+    
+    MatrixXd At(nstates, nstates);
+    MatrixXd Pexact(nstates, 30);
+    for (int i = 0; i < x.size() ; i++){
+        At = A*x[i];
+        padm(At, E);
+        Pexact.col(i) = E*l;
+    }
+    
+    int cnt = 0;
+    VectorXd pexact(30);
+    int state;
+    for (int i = 0; i < ndemes; i++){
+        for (int j = i; j < ndemes; j++)
+        {
+            state = revLookup(i,j);
+            pexact(0) = 0;
+            pexact.tail(29) = (Pexact.row(state).tail(29)- Pexact.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
+            exact[cnt] = w.dot(pexact);
+            cnt += 1;
+        }
+    }
+    
+    
 }
 
 
@@ -403,52 +499,42 @@ int main()
             ind += 1;
         }
     }
+    double r = 1e-8;
+    double L = 2e6;
 
 
     // array of nodes
     node nodes[ndemes];
+    
     const int nreps = 1;
     for (int i = 0; i < nreps; i++){
         VectorXd mrates(ndemes);
         VectorXd qrates(ndemes);
-        qrates << 1e-3, 1e-3, 1e-3, 1e-3;
-        mrates << 0.464932, 0.464932, 0.464932, 0.464932;
         
-        //VectorXd ones = VectorXd::Ones(ndemes);
-        //qrates.setRandom(ndemes);
-        //mrates.setRandom(ndemes);
-        //qrates = 0.001 * (qrates + ones);
-        //mrates = 0.001 * (mrates + ones);
-        //qrates = (qrates + ones);
-        //mrates = (mrates + ones);
+        //mrates << 0.00532767, 0.00218959, 0.000470446, 0.00678865;
+        //qrates << 7.82637e-09, 0.000131538, 0.000755605,  0.00045865;
+        
+        VectorXd ones = VectorXd::Ones(ndemes);
+        qrates.setRandom(ndemes);
+        mrates.setRandom(ndemes);
+        qrates = (0.001/2) * (qrates + ones);
+        mrates = (0.01/2) * (mrates + ones);
+
+        
         // initalize graph
         makeGraph(nodes, mrates, qrates, nrow, ncol);
-    
-        MatrixXd Q(nstates, m);
-        MatrixXd H(m, m);
-        krylovProj(nodes, H, Q, m);
-        MatrixXd E(m,m);
-        cout << H << endl;
         
-        double t = 1;
-        H = H*t;
-        padm(H, E);
-        VectorXd Y_1(nstates);
-        VectorXd Y_2(nstates);
-        MatrixXd E2(nstates, nstates);
-        MatrixXd Q2(nstates, nstates);
-        test_FullMatrixExp(nodes, Q2, E2);
-        VectorXd l = VectorXd::Zero(nstates);
-        l[nstates-1] = 1.0;
-        VectorXd Y(nstates);
-        Y_1 = (Q*E)*(Q.transpose()*l);
-        Y_2 = E2*l;
-        //cout << (Y_1-Y_2).norm() << endl;
-        
+ 
+        VectorXd approximate(nstates-1);
+        //VectorXd exact(nstates-1);
+        //clock_t begin_time = clock();
+        //calculateIntegral(nodes, r, L, exact);
+        //cout << "For Full: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;;
+        clock_t begin_time = clock();
+        calculateIntegralKrylov(nodes, r, L, approximate);
+        cout << "For Krylov: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;;
+        //cout << "error: " << (approximate-exact).norm() << "\n\n\n" << endl;
 
-        //VectorXd w(20);
-        //VectorXd x(20);
-        //computeWeights(w, x, 2);
         
         
          }
