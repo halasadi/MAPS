@@ -1,5 +1,5 @@
 library(expm)
-source("myImagePlot.R")
+#source("myImagePlot.R")
 
 trapezoidal.integration = function(x, f)
 {
@@ -116,7 +116,7 @@ N = c(1000, 1000)
 q = 1/(2*N)
 r = 1e-8
 Q = makeQ(m,q)
-L = 2e6
+L = 3e6
 genomeSize = 2.99e9
 constantsize_m = (2*2*N*r)/(1+2*2*N*L*r)^2
 int = calculateIntegral(L, r)

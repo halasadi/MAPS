@@ -5,10 +5,10 @@
 
 
 // number of nodes row-wise
-const int nrow = 20;
+const int nrow = 2;
 
 // number of nodes column-wise
-const int ncol = 20;
+const int ncol = 2;
 
 // total number of nodes
 const int ndemes = ncol * nrow;
@@ -487,6 +487,18 @@ void calculateIntegral(node nodes[], double r, double L, VectorXd &exact){
     
 }
 
+double poisln(const MatrixXd &Lambda, const MatrixXd &lambda, const MatrixXd &cMatrix){
+    double ll = 0;
+    int n = Lambda.rows();
+    for (int i = 0; i < n; i++){
+        for (int j = i; j < n; j++){
+            cout << "i: " << i << ", j: " << j << endl;
+            ll += lambda(i,j)*log(Lambda(i,j))-cMatrix(i,j)*Lambda(i,j);
+        }
+    }
+    cout << "logl: " << ll << endl;
+    return(ll);
+}
 
 int main()
 {
@@ -499,6 +511,26 @@ int main()
             ind += 1;
         }
     }
+    
+    MatrixXd Lambda(2,2);
+    MatrixXd lambda(2,2);
+    MatrixXd cMatrix(2,2);
+    cMatrix(0,0) = 45;
+    cMatrix(1,1) = 45;
+    cMatrix(0,1) = 100;
+    cMatrix(1,0) = 100;
+    Lambda(0,0) = 3;
+    Lambda(1,1) = 3;
+    Lambda(0,1) = 1;
+    Lambda(1,0) = 1;
+    
+    lambda(0,0) = 126;
+    lambda(1,1) = 137;
+    lambda(0,1) = 112;
+    lambda(1,0) = 112;
+    
+    poisln(Lambda, lambda, cMatrix);
+    
     double r = 1e-8;
     double L = 2e6;
 
@@ -506,6 +538,7 @@ int main()
     // array of nodes
     node nodes[ndemes];
     
+    /*
     const int nreps = 1;
     for (int i = 0; i < nreps; i++){
         VectorXd mrates(ndemes);
@@ -534,8 +567,7 @@ int main()
         calculateIntegralKrylov(nodes, r, L, approximate);
         cout << "For Krylov: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;;
         //cout << "error: " << (approximate-exact).norm() << "\n\n\n" << endl;
-
-        
         
          }
+     */
 }

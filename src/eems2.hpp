@@ -59,6 +59,7 @@ public:
                             VectorXd newqEffcts, double newmrateMu, double newdf) const;
     void calculateProduct(VectorXd &z, VectorXd &q, const MatrixXd &M, const VectorXd &W) const;
     void krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const VectorXd &W) const;
+    void calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &Lambda, double L, double r) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -118,7 +119,7 @@ private:
     //int p; // number of markers
     int nstates; // number of states in the structured coalescent CTMC
     int dimKrylov; // number of dimensions in krylov subspace
-    MatrixXd lambda; // observed means (for number of IBD blocks)
+    MatrixXd totalSharingM; // observed means (for number of IBD blocks)
     VectorXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
 

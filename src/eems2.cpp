@@ -13,7 +13,7 @@ EEMS2::EEMS2(const Params &params) {
     d = graph.get_num_total_demes();
     nstates = (int) (d*(d+1))/2 + 1;
     // dimension of krylov subspace
-    dimKrylov = 20;
+    dimKrylov = 10;
     n = params.nIndiv;
     initialize_sims();
 }
@@ -57,7 +57,7 @@ void EEMS2::initialize_sims( ) {
     
     // the number of comparisons for each deme.
     cMatrix = MatrixXd::Zero(o,o);
-    lambda = MatrixXd::Zero(o, o);
+    totalSharingM = MatrixXd::Zero(o, o);
     int demei;
     int demej;
     // all (n choose 2) comparisons at the individual level
@@ -66,8 +66,8 @@ void EEMS2::initialize_sims( ) {
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += 1;
-            lambda(demei, demej) += Sims(i,j);
-            lambda(demej, demei) = lambda(demei, demej);
+            totalSharingM(demei, demej) += Sims(i,j);
+            totalSharingM(demej, demei) = totalSharingM(demei, demej);
         }
     }
     for ( int i = 0 ; i < n ; i ++ ) {
@@ -868,6 +868,56 @@ void EEMS2::krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const Vector
     }
 }
 
+void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r) const{
+    
+    MatrixXd Q(nstates, dimKrylov);
+    MatrixXd H(dimKrylov, dimKrylov);
+    krylovProj(H, Q, M, W);
+    
+    // weights for the gaussian quadrature
+    VectorXd w(30);
+    // abisca for the gaussian quadrature
+    VectorXd x(30);
+    
+    computeWeights(w, x, r, L);
+    
+    // where to store the matrix exponential
+    MatrixXd E(dimKrylov,dimKrylov);
+    
+    // to get the last column
+    VectorXd l = VectorXd::Zero(nstates);
+    l[nstates-1] = 1.0;
+    
+    // storing the probabilities
+    MatrixXd P(nstates, 30);
+    
+    MatrixXd Ht(dimKrylov,dimKrylov);
+    
+    for (int i = 0; i < x.size() ; i++){
+        Ht = H*x[i];
+        padm(Ht, E);
+        P.col(i) = (Q*E)*(Q.transpose()*l);
+    }
+    
+    VectorXd p(30);
+    int state;
+    for (int i = 0; i < o; i++){
+        for (int j = i; j < o; j++)
+        {
+            state = revLookup(i,j);
+            // estimate the probability mass function
+            p(0) = 0;
+            p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
+            
+            // compute the integral
+            lambda(i,j) = w.dot(p);
+            lambda(j,i) = lambda(i,j);
+        }
+    }
+
+    
+}
+
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                                const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu,
                                const double df) const {
@@ -915,57 +965,13 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
      W(3) = 0.00353327;
      */
     
-    /* All the EEMS2-specific computations should be plug in here */
-    MatrixXd Q(nstates, dimKrylov);
-    MatrixXd H(dimKrylov, dimKrylov);
-    krylovProj(H, Q, M, W);
-    //cout << "H:\n" << H << endl;
     
-    // weights for the gaussian quadrature
-    VectorXd w(30);
-    // abisca for the gaussian quadrature
-    VectorXd x(30);
-    // consider IBD segments greater than 3cM
-    double L = 3e6;
     double r = 1e-8;
-    computeWeights(w, x, r, L);
-    // where to store the matrix exponential
-    MatrixXd E(dimKrylov,dimKrylov);
+    MatrixXd lambda(o,o);
+    calculateIntegral(M, W, lambda, params.cutOff, r);
     
-    // to get the last column
-    VectorXd l = VectorXd::Zero(nstates);
-    l[nstates-1] = 1.0;
-    
-    // storing the probabilities
-    MatrixXd P(nstates, 30);
-    
-    MatrixXd Ht(dimKrylov,dimKrylov);
-    for (int i = 0; i < x.size() ; i++){
-        Ht = H*x[i];
-        padm(Ht, E);
-        P.col(i) = (Q*E)*(Q.transpose()*l);
-    }
-    
-    // F is the self-similarity matrix
-    MatrixXd Lambda(o,o);
-    VectorXd p(30);
-    int state;
-    for (int i = 0; i < o; i++){
-        for (int j = i; j < o; j++)
-        {
-            state = revLookup(i,j);
-            // estimate the probability mass function
-            p(0) = 0;
-            p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
-            
-            // compute the integral
-            Lambda(i,j) = w.dot(p);
-            Lambda(j,i) = Lambda(i,j);
-        }
-    }
-    
-    double logll = 1;
-    return (logll);
+    double logll = poisln(lambda, totalSharingM, cMatrix);
+    return (1);
 }
 double EEMS2::getMigrationRate(const int edge) const {
     int nEdges = graph.get_num_edges();
@@ -979,9 +985,6 @@ double EEMS2::getMigrationRate(const int edge) const {
      VectorXi mColors; 
      graph.index_closest_to_deme(nowmSeeds,mColors);
      */
-    //double log10m_alpha = nowmEffcts(nowmColors(alpha)) + nowmrateMu;
-    //double log10m_beta = nowmEffcts(nowmColors(beta)) + nowmrateMu;
-    //return (0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta));
     double m_alpha = nowmEffcts(nowmColors(alpha));
     double m_beta = nowmEffcts(nowmColors(beta));
     return (0.5 * m_alpha + 0.5 * m_beta);
@@ -997,8 +1000,6 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      VectorXi qColors;
      graph.index_closest_to_deme(nowqSeeds,qColors);  
      */
-    //double log10q_alpha = nowqEffcts(nowqColors(alpha)); // qrateMu = 0.0
-    //return (pow(10.0,log10q_alpha));
     double q_alpha = nowqEffcts(nowqColors(alpha));
     return (q_alpha);
 }

@@ -61,9 +61,9 @@ public:
   double qrateShape_2, qrateScale_2;
   double sigmaShape_2, sigmaScale_2;
   double dfProposalS2, negBiProb;
-  double dfmin, dfmax, qVoronoiPr;
+  double dfmin, dfmax, qVoronoiPr, cutOff, genomeSize;
   int numMCMCIter, numBurnIter, numThinIter;
-  int nDemes, nIndiv, nBlocks, negBiSize;
+  int nDemes, nIndiv, negBiSize;
   string distance;
 };
 

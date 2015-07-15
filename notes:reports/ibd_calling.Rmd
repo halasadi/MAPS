@@ -374,30 +374,30 @@ calculateIntegral <- function(Q, L,r, ind){
   return(int)
 }
 
-m = 0.01
-N = c(10000, 10000)
+m = 0.008
+N = c(15000, 15000)
 q = 1/(2*N)
 r = 1e-8
 Q = makeQ(m,q)
-L = 2.5e6
+L = 3e6
 genomeSize = 2.6e9
-ibdM = readIBD("data/const_2D/LOD=2/l_1.3e8_N_1e4_nhap_100_d_2_rs_10", 100, L)
+ibdM = readIBD("data/const_2D/LOD=1/l_1.3e8_N_1.5e4_nhap_200_d_2_rs_20", 200, L)
 myImagePlot(ibdM)
 
-pop1 = ibdM[1:50, 1:50]
-pop2 = ibdM[51:100, 51:100]
+pop1 = ibdM[1:100, 1:100]
+pop2 = ibdM[101:200, 101:200]
 within_sharing = c(pop1[upper.tri(pop1)], pop2[upper.tri(pop2)])
 
 mean(within_sharing)
 genomeSize*calculateIntegral(Q, L, r, 1)
 
-betw_sharing = ibdM[1:50, 51:100]
+betw_sharing = ibdM[1:100, 101:200]
 mean(betw_sharing)
 genomeSize*calculateIntegral(Q, L, r, 2)
 
 ```
 
-Seems like something is horrible wrong here. The empirical mean is much bigger than the analytical mean for within sharing and much smaller (0) than the analytical mean for within sharing.
+Seems like something wrong here. The empirical mean is bigger than the analytical mean for within sharing and much smaller (0) than the analytical mean for within sharing. Could it be the choice of SNPs i.e. most SNPs arise because there is a mutation in one deme and it's absent in the other. Could this property bias you to call more IBD segments within a population and less between populations? More importantely, is this a concern for real data?
 
 # Ralph & Coop
 ![alt text](data/power_fp.png "Title")
