@@ -5,10 +5,10 @@
 
 
 // number of nodes row-wise
-const int nrow = 2;
+const int nrow = 3;
 
 // number of nodes column-wise
-const int ncol = 2;
+const int ncol = 3;
 
 // total number of nodes
 const int ndemes = ncol * nrow;
@@ -512,7 +512,7 @@ int main()
         }
     }
     
-    MatrixXd Lambda(2,2);
+    /*MatrixXd Lambda(2,2);
     MatrixXd lambda(2,2);
     MatrixXd cMatrix(2,2);
     cMatrix(0,0) = 45;
@@ -530,23 +530,20 @@ int main()
     lambda(1,0) = 112;
     
     poisln(Lambda, lambda, cMatrix);
+     */
     
     double r = 1e-8;
     double L = 2e6;
 
-
     // array of nodes
     node nodes[ndemes];
-    
-    /*
-    const int nreps = 1;
+
+    const int nreps = 1000;
     for (int i = 0; i < nreps; i++){
         VectorXd mrates(ndemes);
         VectorXd qrates(ndemes);
         
-        //mrates << 0.00532767, 0.00218959, 0.000470446, 0.00678865;
-        //qrates << 7.82637e-09, 0.000131538, 0.000755605,  0.00045865;
-        
+
         VectorXd ones = VectorXd::Ones(ndemes);
         qrates.setRandom(ndemes);
         mrates.setRandom(ndemes);
@@ -568,6 +565,7 @@ int main()
         cout << "For Krylov: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;;
         //cout << "error: " << (approximate-exact).norm() << "\n\n\n" << endl;
         
+        cout << approximate << endl;
+        
          }
-     */
 }

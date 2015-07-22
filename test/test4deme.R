@@ -98,22 +98,22 @@ calculateIntegral <- function(r, L){
   ret = computeWeights(r, L)
   x = ret$x
   w = ret$w
-  P = matrix(0, nrow=length(x), ncol = 11)
+  #P = matrix(0, nrow=length(x), ncol = 11)
   Pkrylov = matrix(0, nrow=length(x), ncol = 11)
   v = rep(0, 11)
   v[11] = 1
   for (i in 1:length(x)){
-    P[i,] = expm(Q*x[i])%*%v
+    #P[i,] = expm(Q*x[i])%*%v
     Pkrylov[i,] = krylov(Q, 11, 10, x[i])
   }
   
   #print(Pkrylov)
   
-  int = rep(0, 11)
-  for (i in 1:11){
-    p = c(0, diff(P[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
-    int[i] = w%*%p
-  }
+  #int = rep(0, 11)
+  #for (i in 1:11){
+  #  p = c(0, diff(P[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
+  #  int[i] = w%*%p
+  #}
   
   intkrylov = rep(0, 11)
   for (i in 1:11){
@@ -121,30 +121,23 @@ calculateIntegral <- function(r, L){
     intkrylov[i] = w%*%pkrylov
   }
 
-  print(intkrylov)
-  print(int)
-  return(int)
+  return(intkrylov*3e9)
 }
 
-m = c(0.00532767, 0.00218959, 0.000470446, 0.00678865)
 q = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
-M = matrix(nrow=4, ncol=4, 0)
-#for (i in 1:4){
-#  for (j in 1:4){
-#    M[i,j] = (m[1] + m[2])/2
-#    M[j,i] = M[i,j]
-#  }
-#}
-
-P_C = as.matrix(read.csv("Papprox.txt", header=FALSE))
-
-
+#m = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
+#M = matrix(nrow=4, ncol=4, 0)
 #m = runif(4, min = 0, max = 0.01)
-M[1,2] = M[2,1] = (m[1]+m[2])/2
-M[1,3] = M[3,1] = (m[1]+m[3])/2
-M[2,4] = M[4,2] = (m[2]+m[4])/2
-M[3,4] = M[4,3] = (m[3]+m[4])/2
-# = runif(4, min = 0, max = 0.001)
+#M[1,2] = M[2,1] = (m[1]+m[2])/2
+#M[1,3] = M[3,1] = (m[1]+m[3])/2
+#M[2,4] = M[4,2] = (m[2]+m[4])/2
+#M[3,4] = M[4,3] = (m[3]+m[4])/2
+M = matrix(nrow = 4, ncol = 4, 0)
+M[1,2] = M[2,1] = 0.00375863
+M[1,3] = M[3,1] = 0.00289906 
+M[2,4] = M[4,2] = 0.00448912
+M[3,4] = M[4,3] = 0.00362955
+
 Q = makeQ(M,q)
 r = 1e-8
 L = 2e6

@@ -116,11 +116,10 @@ private:
     int o; // number of observed demes
     int d; // total number of demes
     int n; // number of samples
-    //int p; // number of markers
     int nstates; // number of states in the structured coalescent CTMC
     int dimKrylov; // number of dimensions in krylov subspace
     MatrixXd totalSharingM; // observed means (for number of IBD blocks)
-    VectorXd cMatrix; // number of pairwise observations between observed populations
+    MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
 
     

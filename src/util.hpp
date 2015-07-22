@@ -41,30 +41,31 @@ typedef Eigen::Triplet<double> Tri;
 
 class Params {
 public:
-
-  Params( );
-  ~Params( );
-  Params(const string &params_file, const long seed_from_command_line);
-  bool check_input_params( ) const;
-  
-  friend ostream& operator<<(ostream& out, const Params& params);
-  
-  long seed;
-  bool diploid, testing;
-  string datapath, mcmcpath, prevpath, gridpath;
-  //double qEffctHalfInterval, mEffctHalfInterval, mrateMuHalfInterval, qrateMuHalfInterval;
-  double mEffctUpperBound, qEffctUpperBound, mrateMuUpperBound, qrateMuUpperBound;
-  double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
-  double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
-  double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
-  double mrateShape_2, mrateScale_2;
-  double qrateShape_2, qrateScale_2;
-  double sigmaShape_2, sigmaScale_2;
-  double dfProposalS2, negBiProb;
-  double dfmin, dfmax, qVoronoiPr, cutOff, genomeSize;
-  int numMCMCIter, numBurnIter, numThinIter;
-  int nDemes, nIndiv, negBiSize;
-  string distance;
+    
+    Params( );
+    ~Params( );
+    Params(const string &params_file, const long seed_from_command_line);
+    bool check_input_params( ) const;
+    
+    friend ostream& operator<<(ostream& out, const Params& params);
+    
+    long seed;
+    bool diploid, testing;
+    string datapath, mcmcpath, prevpath, gridpath;
+    //double qEffctHalfInterval, mEffctHalfInterval, mrateMuHalfInterval, qrateMuHalfInterval;
+    double mEffctUpperBound, qEffctUpperBound, mrateMuUpperBound, qrateMuUpperBound;
+    double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
+    double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
+    double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
+    double mrateShape_2, mrateScale_2;
+    double qrateShape_2, qrateScale_2;
+    double sigmaShape_2, sigmaScale_2;
+    double dfProposalS2, negBiProb;
+    double dfmin, dfmax, qVoronoiPr;
+    //double cutOff, genomeSize;
+    int numMCMCIter, numBurnIter, numThinIter;
+    int nDemes, nIndiv, negBiSize;
+    string distance;
 };
 
 VectorXd split(const string &line);

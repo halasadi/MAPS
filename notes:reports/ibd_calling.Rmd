@@ -379,7 +379,7 @@ N = c(15000, 15000)
 q = 1/(2*N)
 r = 1e-8
 Q = makeQ(m,q)
-L = 3e6
+L = 2.5e6
 genomeSize = 2.6e9
 ibdM = readIBD("data/const_2D/LOD=1/l_1.3e8_N_1.5e4_nhap_200_d_2_rs_20", 200, L)
 myImagePlot(ibdM)

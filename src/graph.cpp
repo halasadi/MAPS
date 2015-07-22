@@ -163,6 +163,8 @@ void Graph::reindex_demes( ) {
   // Now indiv2deme and DemeSizes use the new deme indices
   // But DemeCoords and DemePairs still use the old deme indices
   // Have to store the deme coordinates in a temporary matrix
+    
+    /*
   MatrixXd InputDemes = DemeCoord;
   for ( int i = 0 ; i < DemeCoord.rows( ) ; i++ ) {
     DemeCoord(newIndex(i),0) = InputDemes(i,0);
@@ -174,6 +176,7 @@ void Graph::reindex_demes( ) {
     DemePairs(i,0) = alpha;
     DemePairs(i,1) = beta;
   }
+    */
   this->populate_nodes();
 }
 

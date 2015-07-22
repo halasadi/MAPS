@@ -14,7 +14,6 @@ struct node {
     int label;
 };
 
-
 /* 
    Triangular graph, possibly irregularly shaped. (The shape is determined by the habitat outline.)
    Or alternatively, the function Graph::generate_grid() can be modified to load a pre-constructed

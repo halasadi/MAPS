@@ -46,17 +46,21 @@ void EEMS2::rnorm_effects(const double mu, const double rateS2, const double upp
 
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
-    MatrixXd Sims = readMatrixXd(params.datapath + ".sim");
+    MatrixXd Sims = readMatrixXd(params.datapath + ".diffs");
+    cout << Sims.rows() << endl;
+    cout << Sims.cols() << endl;
     if ((Sims.rows()!=n)||(Sims.cols()!=n)) {
-        cerr << "  Error reading similarities matrix " << params.datapath + ".sim" << endl
+        cerr << "  Error reading similarities matrix " << params.datapath + ".diffs" << endl
         << "  Expect a " << n << "x" << n << " matrix of pairwise similarities" << endl; exit(1);
     }
-    cerr << "  Loaded similarities matrix from " << params.datapath + ".sim" << endl;
+    cerr << "  Loaded similarities matrix from " << params.datapath + ".diffs" << endl;
     
     cerr << "[Sims::initialize] Done." << endl << endl;
     
     // the number of comparisons for each deme.
+    
     cMatrix = MatrixXd::Zero(o,o);
+    cvec = VectorXd::Zero(o);
     totalSharingM = MatrixXd::Zero(o, o);
     int demei;
     int demej;
@@ -66,6 +70,7 @@ void EEMS2::initialize_sims( ) {
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += 1;
+            cMatrix(demej, demei) += 1;
             totalSharingM(demei, demej) += Sims(i,j);
             totalSharingM(demej, demei) = totalSharingM(demei, demej);
         }
@@ -73,7 +78,6 @@ void EEMS2::initialize_sims( ) {
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
-    
 }
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
@@ -215,6 +219,7 @@ MoveType EEMS2::choose_move_type( ) {
             move = M_MEAN_RATE_UPDATE;
         } else if (u2 < 0.6666) {
             move = Q_MEAN_RATE_UPDATE;
+        // remove df when done
         } else {
             move = DF_UPDATE;
         }
@@ -750,6 +755,8 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (qrateMu>params.qrateMuUpperBound || qrateMu < 0) { inrange = false; }
     if ((df<params.dfmin) || (df>params.dfmax)) { inrange = false; }
     if (!inrange) { return (-Inf); }
+    
+    // remove df when done
     double logpi = - log(df)
     + dnegbinln(mtiles,params.negBiSize,params.negBiProb)
     + dnegbinln(qtiles,params.negBiSize,params.negBiProb)
@@ -908,13 +915,12 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &la
             // estimate the probability mass function
             p(0) = 0;
             p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
-            
             // compute the integral
-            lambda(i,j) = w.dot(p);
+            // 3e9 is genome size
+            lambda(i,j) = (3e9)*(w.dot(p));
             lambda(j,i) = lambda(i,j);
         }
     }
-
     
 }
 
@@ -940,6 +946,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         double q_alpha = qEffcts(qColors(alpha));
         W(alpha) = q_alpha;
     }
+    
+    // To Do: make this a sparse matrix to save space
     MatrixXd M = MatrixXd::Zero(d,d);
     int alpha, beta;
     // Transform the log10 migration parameters into migration rates on the original scale
@@ -954,7 +962,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(beta,alpha) = M(alpha,beta);
     }
     // FOR TESTING ONLY
-    /*M(1,2) = M(2,1) = 0;
+    
+    /* M(1,2) = M(2,1) = 0;
      M(0,1) = M(1,0) = 0.143995;
      M(1,3) = M(3,1) = 0.213838;
      M(2,3) = M(3,2) = 0.28368;
@@ -962,16 +971,47 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
      W(0) = 0.00548318;
      W(1) = 0.00945489;
      W(2) = 0.00344319;
-     W(3) = 0.00353327;
-     */
+     W(3) = 0.00353327; */
     
-    
+    M.setZero();
+    W.setZero();
+    M(0,1) = M(1,0) = 0.099962;
+    M(0,2) = M(2,0) = 0.099962;
+    M(1,2) = M(2,1) = 0.099962;
+    M(1,3) = M(3,1) = 0.099962;
+    M(2,3) = M(3,2) = 0.099962;
+    M(2,4) = M(4,2) = 0.099962;
+    M(2,5) = M(5,2) = 0.099962;
+    M(3,5) = M(5,3) = 0.099962;
+    M(4,5) = M(5,4) = 0.099962;
+
+    W(0) = 0.00005;
+    W(1) = 0.00005;
+    W(2) = 0.00005;
+    W(3) = 0.00005;
+    W(4) = 0.01000;
+    W(5) = 0.00005;
+
+    printMigrationAndCoalescenceRates();
+
     double r = 1e-8;
     MatrixXd lambda(o,o);
-    calculateIntegral(M, W, lambda, params.cutOff, r);
+    double cutOff = 2e6;
+    calculateIntegral(M, W, lambda, cutOff, r);
     
+    cout << "Migration:\n" << M << endl;
+    cout << "Coalescent rates:\n" << W << endl;
+    cout << "Average IBD:\n " << lambda << endl;
+
+    //cout << cMatrix << endl;
+    //cout << totalSharingM << endl;
+    //printMigrationAndCoalescenceRates( );
     double logll = poisln(lambda, totalSharingM, cMatrix);
-    return (1);
+    if (logll != logll){
+        throw std::exception();
+    }
+    //cout << logll << endl;
+    return (logll);
 }
 double EEMS2::getMigrationRate(const int edge) const {
     int nEdges = graph.get_num_edges();
@@ -1006,20 +1046,21 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
 
 void EEMS2::printMigrationAndCoalescenceRates( ) const {
     
-    int nDemes = graph.get_num_total_demes();
-    cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
-    for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
-        cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
-    }
+    //int nDemes = graph.get_num_total_demes();
+    //cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
+    //for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
+    //    cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
+    //}
     int nEdges = graph.get_num_edges();
-    cout << "Here is the migration rate of each edge" << endl;
-    for ( int edge = 0 ; edge<nEdges ; edge++ ) {
-        cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
-    }
+    //cout << "Here is the migration rate of each edge" << endl;
+    //for ( int edge = 0 ; edge<nEdges ; edge++ ) {
+    //    cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
+    //}
     int alpha, beta;
     cout << "Here is the migration rate of each edge, this time edges as pairs of demes" << endl;
     for ( int edge = 0 ; edge<nEdges ; edge++ ) {
         graph.get_edge(edge,alpha,beta);
         cout << "  edge = (" << alpha << "," << beta << "), m rate = " << getMigrationRate(edge) << endl;
     }
+
 }
