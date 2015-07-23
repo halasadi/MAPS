@@ -5,17 +5,14 @@
 #include <vector>
 
 
-const int nrow = 2;
-const int ncol = 2;
+const int nrow = 20;
+const int ncol = 20;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
 // number of states in the markov chain
 // eqn = no of deme pairs + coalescent state
 const int nstates = (int) (ndemes*(ndemes+1))/2 + 1;
-
-// dimension of Krylov subspace
-const int m = 10;
 
 void swap(int &i, int &j){
     int temp = i;
@@ -181,7 +178,7 @@ void calculateProduct(VectorXd &z, VectorXd &q, const MatrixXd &M, const VectorX
 }
 
 
-void krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const VectorXd &W, vector<node> nodes) {
+void krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const VectorXd &W, vector<node> nodes, const int m) {
     // REQUIRES: dimKrylov < nstates
     // MODIFIES: H, Q
     // EFFECTS: krylov projection of the rate matrix,e.g. if  A is rate matrix then
@@ -284,10 +281,10 @@ void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
 }
 
 
-void calculateIntegralKrylov(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, vector<node> &nodes){
+void calculateIntegralKrylov(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, vector<node> &nodes, const int m){
     MatrixXd Q(nstates, m);
     MatrixXd H(m, m);
-    krylovProj(H, Q, M, W, nodes);
+    krylovProj(H, Q, M, W, nodes, m);
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -326,6 +323,9 @@ void calculateIntegralKrylov(const MatrixXd &M, const MatrixXd &W, MatrixXd &lam
             // compute the integral
             // 3e9 is genome size
             lambda(i,j) = (3e9)*(w.dot(p));
+            //if (lambda(i,j) < 0){
+            //    throw std::exception();
+            //}
             lambda(j,i) = lambda(i,j);
         }
     }
@@ -454,8 +454,11 @@ int main()
     VectorXd ones = VectorXd::Ones(ndemes);
     W.setRandom(ndemes);
     mrates.setRandom(ndemes);
-    W = (0.001/2) * (W + ones);
-    mrates = (0.01/2) * (mrates + ones);
+    W = (0.00001/2) * (W + ones);
+    mrates = (0.1/2) * (mrates + ones);
+    
+    //cout << W << endl;
+    //cout << mrates << endl;
     
     // Must agree with ndemes above
     // set up the graph here
@@ -463,7 +466,6 @@ int main()
     MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
     make_edges(nrow, ncol, DemePairs);
     
-    cout << DemePairs << endl;
     /*
     // edge 0
     DemePairs(0,0) = 0;
@@ -529,15 +531,17 @@ int main()
     //cout << "W:\n" << W << endl;
     //cout << "M:\n" << M << endl;
     
+    // dimension of krylov subpsace
+    int m;
+    m = 200;
     MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
-    
-    calculateIntegral(M, W, lambda, L, r, nodes);
-
-    cout << "exact lambda: \n" << lambda << endl;
+    calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
+    cout << "almost exact lambda: \n" << lambda.row(0) << endl;
     
     lambda.setZero();
-    calculateIntegralKrylov(M, W, lambda, L, r, nodes);
+    m = 20;
+    calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
  
-    cout << "approx lambda:\n" << lambda << endl;
+    cout << "approx lambda:\n" << lambda.row(0) << endl;
     
 }
