@@ -61,6 +61,8 @@ qrates.levels <- function(Zvals,plot.params) {
     numlevels <- length(eems.colors)
     minZ <- min(Zvals)
     maxZ <- max(Zvals)
+    print(minZ)
+    print(maxZ)
     eems.levels <- seq(from=minZ,to=maxZ,length=numlevels+1)
 
 #maxZ2 <- max(maxZ,-minZ)
@@ -754,7 +756,7 @@ eems.plots <- function(mcmcpath,plotpath,longlat,
                        add.outline=FALSE,col.outline="white",lwd.outline=2,
                        projection.in=NULL,projection.out=NULL,
                        add.map=FALSE,col.map="gray60",lwd.map=2,
-                       eems.colors=NULL) {
+                       eems.colors=NULL, standardize=TRUE) {
 
     if (is.null(eems.colors)) {
         eems.colors = default.eems.colors( )
@@ -783,7 +785,6 @@ eems.plots <- function(mcmcpath,plotpath,longlat,
         max.cex.demes = min.cex.demes
     }
 
-    standardize <- TRUE
     plot.params <- list(add.map=add.map,add.grid=add.grid,add.outline=add.outline,add.demes=add.demes,
                         col.map=col.map,col.grid=col.grid,col.outline=col.outline,col.demes=col.demes,
                         lwd.map=lwd.map,lwd.grid=lwd.grid,lwd.outline=lwd.outline,pch.demes=pch.demes,
@@ -868,7 +869,7 @@ eems.plots <- function(mcmcpath,plotpath,longlat,
 
 eems.voronoi <- function(mcmcpath,plotpath,longlat,
                          plot.width=7,plot.height=7,out.png=TRUE,res=600,
-                         eems.colors=NULL) {
+                         eems.colors=NULL, standardize=TRUE) {
     
     if (is.null(eems.colors)) {
         eems.colors = default.eems.colors( )
@@ -876,7 +877,6 @@ eems.voronoi <- function(mcmcpath,plotpath,longlat,
 
     load.required.package(package='deldir',required.by='eems.voronoi')
 
-    standardize <- TRUE
     plot.params <- list(standardize=standardize,
                         add.map=FALSE,add.demes=FALSE,add.grid=FALSE,
                         add.outline=TRUE,lwd.outline=2,col="black",

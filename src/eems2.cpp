@@ -13,7 +13,7 @@ EEMS2::EEMS2(const Params &params) {
     d = graph.get_num_total_demes();
     nstates = (int) (d*(d+1))/2 + 1;
     // dimension of krylov subspace
-    dimKrylov = 10;
+    dimKrylov = 20;
     n = params.nIndiv;
     initialize_sims();
 }
@@ -78,6 +78,7 @@ void EEMS2::initialize_sims( ) {
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
+    
 }
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
@@ -217,11 +218,15 @@ MoveType EEMS2::choose_move_type( ) {
     } else {
         if (u2 < 0.3333) {
             move = M_MEAN_RATE_UPDATE;
-        } else if (u2 < 0.6666) {
+        /*} else if (u2 < 0.6666) {
             move = Q_MEAN_RATE_UPDATE;
         // remove df when done
         } else {
             move = DF_UPDATE;
+        }
+        */
+        } else{
+            move = Q_MEAN_RATE_UPDATE;
         }
     }
     return(move);
@@ -963,16 +968,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     // FOR TESTING ONLY
     
-    /* M(1,2) = M(2,1) = 0;
-     M(0,1) = M(1,0) = 0.143995;
-     M(1,3) = M(3,1) = 0.213838;
-     M(2,3) = M(3,2) = 0.28368;
-     M(0,2) = M(2,0) = 0.213838;
-     W(0) = 0.00548318;
-     W(1) = 0.00945489;
-     W(2) = 0.00344319;
-     W(3) = 0.00353327; */
-    
+    /*
     M.setZero();
     W.setZero();
     M(0,1) = M(1,0) = 0.099962;
@@ -991,26 +987,26 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     W(3) = 0.00005;
     W(4) = 0.01000;
     W(5) = 0.00005;
-
-    printMigrationAndCoalescenceRates();
+     */
 
     double r = 1e-8;
     MatrixXd lambda(o,o);
-    double cutOff = 2e6;
+    double cutOff = 4e6;
     calculateIntegral(M, W, lambda, cutOff, r);
     
-    cout << "Migration:\n" << M << endl;
+    //cout << "OBSERVED:\n\n\n" << totalSharingM.array() / cMatrix.array() << endl;
+    
+    /*cout << "Migration:\n" << M << endl;
     cout << "Coalescent rates:\n" << W << endl;
-    cout << "Average IBD:\n " << lambda << endl;
+    cout << "Average IBD:\n\n " << lambda << endl;
+     */
+    
+    //cout << "EXPECTED:\n\n\n" << lambda << endl;
 
-    //cout << cMatrix << endl;
-    //cout << totalSharingM << endl;
-    //printMigrationAndCoalescenceRates( );
     double logll = poisln(lambda, totalSharingM, cMatrix);
     if (logll != logll){
         throw std::exception();
     }
-    //cout << logll << endl;
     return (logll);
 }
 double EEMS2::getMigrationRate(const int edge) const {
@@ -1046,16 +1042,16 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
 
 void EEMS2::printMigrationAndCoalescenceRates( ) const {
     
-    //int nDemes = graph.get_num_total_demes();
-    //cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
-    //for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
-    //    cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
-    //}
+    int nDemes = graph.get_num_total_demes();
+    cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
+    for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
+        cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
+    }
     int nEdges = graph.get_num_edges();
-    //cout << "Here is the migration rate of each edge" << endl;
-    //for ( int edge = 0 ; edge<nEdges ; edge++ ) {
-    //    cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
-    //}
+    cout << "Here is the migration rate of each edge" << endl;
+    for ( int edge = 0 ; edge<nEdges ; edge++ ) {
+        cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
+    }
     int alpha, beta;
     cout << "Here is the migration rate of each edge, this time edges as pairs of demes" << endl;
     for ( int edge = 0 ; edge<nEdges ; edge++ ) {

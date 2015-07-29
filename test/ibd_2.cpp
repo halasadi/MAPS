@@ -5,8 +5,8 @@
 #include <vector>
 
 
-const int nrow = 20;
-const int ncol = 20;
+const int nrow = 15;
+const int ncol = 15;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -421,6 +421,7 @@ void get_edge(int edge, int &alpha, int &beta, MatrixXi &DemePairs)
 void make_edges(int nrow, int ncol, MatrixXi &DemePairs){
     int edge = 0;
     for (int i = 0; i < ndemes; i++){
+        
         // if node not on bottom
         if ((i+1) <= ncol*(nrow-1)){
             DemePairs(edge,0) = i;
@@ -429,9 +430,16 @@ void make_edges(int nrow, int ncol, MatrixXi &DemePairs){
         }
         
         // if node not on the right edge
-        if ((i+1) % ncol){
+        if (((i+1) % ncol) != 0){
             DemePairs(edge,0) = i;
             DemePairs(edge,1) = i+1;
+            edge += 1;
+        }
+        
+        // if node not on the right edge AND not on bottom
+        if  ((((i+1) % ncol) != 0)  & ((i+1) <= ncol*(nrow-1)) ){
+            DemePairs(edge, 0) = i;
+            DemePairs(edge, 1) = i+ncol + 1;
             edge += 1;
         }
     }
@@ -462,18 +470,17 @@ int main()
     
     // Must agree with ndemes above
     // set up the graph here
-    const int nedges = (ncol-1)*nrow + (nrow-1)*ncol;
+    const int nedges = (ncol-1)*nrow + (nrow-1)*ncol + (ncol-1)*(nrow-1);
     MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
+    
     make_edges(nrow, ncol, DemePairs);
     
     /*
     // edge 0
     DemePairs(0,0) = 0;
     DemePairs(0,1) = 1;
-    // edge 1
     DemePairs(1,0) = 0;
     DemePairs(1,1) = 2;
-    // edge 2 and so on...
     DemePairs(2,0) = 1;
     DemePairs(2,1) = 2;
     DemePairs(3,0) = 1;
@@ -525,7 +532,7 @@ int main()
 
     
     double r = 1e-8;
-    double L = 2e6;
+    double L = 4e6;
     
     
     //cout << "W:\n" << W << endl;
@@ -533,13 +540,13 @@ int main()
     
     // dimension of krylov subpsace
     int m;
-    m = 200;
+    m = 100;
     MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
     calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
     cout << "almost exact lambda: \n" << lambda.row(0) << endl;
     
     lambda.setZero();
-    m = 20;
+    m = 15;
     calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
  
     cout << "approx lambda:\n" << lambda.row(0) << endl;

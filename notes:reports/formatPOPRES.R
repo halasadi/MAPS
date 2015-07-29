@@ -35,8 +35,8 @@ for (i in 1:n){
 write.table(sim, file = "popres.sim", row.names=FALSE, col.names=FALSE)
 
 # in same order as total_ids
-lat = c(10, -4.9, 2, -7.6, 8.4, -3.8)
-long = c(46, 50.3, 46, 53, -39.4, 40.7)
+lat = c(10, -1.22, 2, -7.6, -8.4, -3.8)
+long = c(46, 52.2, 46, 53, 39.4, 40.7)
 
 l_vector = c(length(italy_ids), length(uk_ids), length(france_ids), length(ireland_ids),
              length(portugal_ids), length(spain_ids))
