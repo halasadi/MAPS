@@ -5,3 +5,13 @@ Readme.html
 src/*.o
 test/Eigen/
 *~
+docs/
+*.html
+*.RData
+*_cache
+*_files
+notes:reports/data/
+src/runeems2
+test/check_priors.R
+test/data/
+test/popres-EEMS2-test-sim/

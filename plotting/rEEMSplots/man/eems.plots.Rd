@@ -4,13 +4,61 @@
 \alias{eems.plots}
 \title{A function to plot effective migration and diversity surfaces from EEMS output}
 \usage{
-eems.plots(mcmcpath, plotpath, longlat, plot.width = 7, plot.height = 7,
-  out.png = TRUE, res = 600, xpd = TRUE, add.grid = FALSE,
-  col.grid = "gray80", lwd.grid = 1, add.demes = FALSE,
-  col.demes = "black", pch.demes = 19, min.cex.demes = 1,
-  max.cex.demes = 3, add.outline = FALSE, col.outline = "white",
-  lwd.outline = 2, projection.in = NULL, projection.out = NULL,
-  add.map = FALSE, col.map = "gray60", lwd.map = 2, eems.colors = NULL)
+eems.plots(            mcmcpath,
+                       plotpath,
+                       longlat,
+                       
+                       ## Properties of the figures to generate
+                       plot.width = 7,
+                       plot.height = 7,
+                       out.png = TRUE,
+                       res = 600,
+                       xpd = TRUE,
+
+                       ## Properties of the population grid
+                       add.grid = FALSE,
+                       col.grid = "gray80",
+                       lwd.grid = 1,
+
+                       ## Properties of the observed demes
+                       add.demes = FALSE,
+                       col.demes = "black",
+                       pch.demes = 19,
+                       min.cex.demes = 1,
+                       max.cex.demes = 3,
+
+                       ## Properties of the habitat outline
+                       add.outline = FALSE,
+                       col.outline = "white",
+                       lwd.outline = 2,
+
+                       ## Properties of the cartographic projection
+                       projection.in = NULL,
+                       projection.out = NULL,
+
+                       ## Properties of the geographic map
+                       add.map = FALSE,
+                       col.map = "gray60",
+                       lwd.map = 2,
+
+                       ## Color palette
+                       eems.colors = NULL,
+
+                       ## Properties of the color key
+                       add.colbar = TRUE,
+                       m.colscale = NULL,
+                       q.colscale = NULL,
+
+                       ## Remove demes with a single observation
+                       remove.singletons = TRUE,
+
+                       ## Add the line y = x to scatter plots
+                       add.abline = FALSE,
+
+                       ## Extra options
+                       add.title = TRUE,
+                       m.plot.xy = NULL,
+                       q.plot.xy = NULL)
 }
 \arguments{
 \item{mcmcpath}{A vector of EEMS output directories, for the same dataset. Warning: There is minimal checking that the given  directories are for the same dataset.}
@@ -55,7 +103,17 @@ eems.plots(mcmcpath, plotpath, longlat, plot.width = 7, plot.height = 7,
 
 \item{lwd.map}{The line width of the geographic map. Defaults to 2.}
 
-\item{eems.colorsh}{The EEMS color scheme as a vector of colors, ordered from low to high. Defaults to a DarkOrange to Blue divergent palette with six orange shades, white in the middle, six blue shades. Acknowledgement: The default color scheme is adapted from the \code{dichromat} package.}
+\item{eems.colors}{The EEMS color scheme as a vector of colors, ordered from low to high. Defaults to a DarkOrange to Blue divergent palette with six orange shades, white in the middle, six blue shades. Acknowledgement: The default color scheme is adapted from the \code{dichromat} package.}
+
+\item{add.colbar}{A logical value indicating whether to add the color bar (the key that shows how colors map to rates) to the right of the plot. Defaults to TRUE.}
+
+\item{m.colscale,q.colscale}{A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.}
+
+\item{remove.singletons}{Remove demes with a single observation from the diagnostic scatterplots. Defaults to TRUE.}
+
+\item{add.abline}{Add the line \code{y = x} to the diagnostic scatterplots of observed vs fitted genetic dissimilarities.}
+
+\item{add.title}{A logical value indicating whether to add the main title in the contour plots. Defaults to TRUE.}
 }
 \description{
 Given a vector of EEMS output directories, this function generates five figures to visualize EEMS results:
@@ -64,9 +122,10 @@ Given a vector of EEMS output directories, this function generates five figures 
  \item \code{plotpath}-qrates01 (effective diversity surface)
  \item \code{plotpath}-rdist01 (between-demes component of genetic dissimilarity)
  \item \code{plotpath}-rdist02 (within-demes component of genetic dissimilarity)
+ \item \code{plotpath}-rdist03 (between-demes dissimilarities vs geographic distances)
  \item \code{plotpath}-pilogl01 (posterior probability trace)
 }
-The three latter figures are helpful in checking that the MCMC sampler has converged (the trace plot) and that the EEMS model fits the data well (the scatter plots of genetic dissimilarities). \code{eems.plots} will work with a single EEMS output directory but it is better to run EEMS several times, randomly initializing the MCMC chain each time. In other words, it is a good idea to simulate several realizations of the Markov chain, each realization starting with a different value of the EEMS parameters.
+The latter figures are helpful in checking that the MCMC sampler has converged (the trace plot \code{pilogl01}) and that the EEMS model fits the data well (the scatter plots of genetic dissimilarities \code{rdist0*}). \code{eems.plots} will work with a single EEMS output directory but it is better to run EEMS several times, randomly initializing the MCMC chain each time. In other words, it is a good idea to simulate several realizations of the Markov chain, each realization starting with a different value of the EEMS parameters.
 }
 \examples{
 ## Use the provided example or supply the path to your own EEMS run.
@@ -152,6 +211,15 @@ eems.plots(mcmcpath = eems.results.to.plot,
            projection.in = "+proj=longlat +datum=WGS84",
            projection.out = "+proj=merc +datum=WGS84",
            eems.colors = brewer.pal(11,"RdBu"))
+
+## Specify the color scales for the migration and diversity rates
+eems.plots(mcmcpath = eems.results.to.plot,
+           plotpath = paste(name.figures.to.save,"-fix-colscales",sep=""),
+           longlat = TRUE,
+           add.outline = TRUE,
+           col.outline = "gray",
+           m.colscale = c(-3,3),
+           q.colscale = c(-0.3,+0.3))
 }
 \references{
 Light A and Bartlein PJ (2004). The End of the Rainbow? Color Schemes for Improved Data Graphics. EOS Transactions of the American Geophysical Union, 85(40), 385.

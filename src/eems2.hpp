@@ -33,11 +33,11 @@ struct Proposal {
     double newll; // log likelihood
     //double newsigma2; // variance scale
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
-    double newmrateMu; // overall (mean) migration rate, on the log10 scale; qrateMu is assumed to be 0
+    double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
     
-    VectorXd newqEffcts; // the diversity rate of each q tile, on the log10 scale
-    VectorXd newmEffcts; // the migration rate of each m tile, on the log10 scale and relative to the ovarall mrateMu
+    VectorXd newqEffcts; // the diversity rate of each q tile
+    VectorXd newmEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     

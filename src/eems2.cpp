@@ -192,7 +192,7 @@ MoveType EEMS2::choose_move_type( ) {
     // * birth/death (with equal probability)
     // * move a tile (chosen uniformly at random)
     // * update the rate of a tile (chosen uniformly at random)
-    // * update the mean migration rate or the degrees of freedom (with equal probability)
+    // * update the mean migration rate or the mean coalescent rate (with equal probability)
     MoveType move = UNKNOWN_MOVE_TYPE;
     if (u1 < 0.25) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
@@ -216,15 +216,8 @@ MoveType EEMS2::choose_move_type( ) {
             move = M_VORONOI_RATE_UPDATE;
         }
     } else {
-        if (u2 < 0.3333) {
+        if (u2 < 0.5) {
             move = M_MEAN_RATE_UPDATE;
-        /*} else if (u2 < 0.6666) {
-            move = Q_MEAN_RATE_UPDATE;
-        // remove df when done
-        } else {
-            move = DF_UPDATE;
-        }
-        */
         } else{
             move = Q_MEAN_RATE_UPDATE;
         }
@@ -420,7 +413,9 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
+                                    nowdf)
+        // CHECK
+                        + log((nowqtiles+params.negBiSize)/(newqtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowqtiles==2) { pBirth = 1.0; }
         newqtiles--;
@@ -440,7 +435,9 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
+                                    nowdf)
+        // CHECK
+                         + log((nowqtiles/params.negBiProb)/(newqtiles+params.negBiSize));
     }
     proposal.move = Q_VORONOI_BIRTH_DEATH;
     proposal.newqtiles = newqtiles;
@@ -471,7 +468,9 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
+                                    nowdf)
+        // CHECK
+                        + log((nowmtiles+params.negBiSize)/(newmtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowmtiles==2) { pBirth = 1.0; }
         newmtiles--;
@@ -490,7 +489,9 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
+                                    nowdf)
+        // CHECK
+                        + log((nowmtiles/params.negBiProb)/(newmtiles+params.negBiSize));
     }
     proposal.move = M_VORONOI_BIRTH_DEATH;
     proposal.newmtiles = newmtiles;
@@ -762,7 +763,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (!inrange) { return (-Inf); }
     
     // remove df when done
-    double logpi = - log(df)
+    double logpi =
     + dnegbinln(mtiles,params.negBiSize,params.negBiProb)
     + dnegbinln(qtiles,params.negBiSize,params.negBiProb)
     + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)

@@ -318,10 +318,14 @@ r = 1e-8
 t = seq(1, 50, by = 1)
 # pdf is gamma with alpha = 2, beta = 2*t*r
 plot(t,2/(t*2*r), log="xy", xlab = "generation", ylab = "expected Length in bp (L)", main = "excpted no of gen w/ no recombination")
-#plot(t, 2/(2*r*t)^2, col = "red", main = "variance in length in bp (L)", log="xy", xlab = #"generation", ylab = "Length in bp (L)")
+plot(t, sqrt(2/(2*r*t)^2), col = "red", main = "sd in length in bp (L)", log="xy", xlab = 
+       "#generation", ylab = "Length in bp (L)")
 ```
 
 # TWO DEME MODEL
+
+For LOD = 1
+
 ```{r, echo=FALSE}
 makeQ <- function(m, q){
   Q = matrix(nrow=4, ncol=4, 0)
@@ -397,7 +401,6 @@ genomeSize*calculateIntegral(Q, L, r, 2)
 
 ```
 
-Seems like something wrong here. The empirical mean is bigger than the analytical mean for within sharing and much smaller (0) than the analytical mean for within sharing. Could it be the choice of SNPs i.e. most SNPs arise because there is a mutation in one deme and it's absent in the other. Could this property bias you to call more IBD segments within a population and less between populations? More importantely, is this a concern for real data?
 
 # Ralph & Coop
 ![alt text](data/power_fp.png "Title")

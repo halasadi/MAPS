@@ -15,7 +15,6 @@ longlat <- FALSE
 
 
 eems.plots(mcmcpath,plotpath,longlat,
-           add.map=TRUE,
-           add.grid=TRUE, add.demes = TRUE, projection.in = '+proj=longlat +datum=WGS84',
-           standardize = TRUE, plot.height = 5, plot.width = 7)
+           add.map=TRUE, lwd.map = 1, col.map = "black",
+           add.grid=TRUE, add.demes = TRUE, projection.in = '+proj=longlat +datum=WGS84', plot.height = 5, plot.width = 7)
 
