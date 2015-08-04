@@ -60,12 +60,12 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     dfmax = 1e6;
     testing = false;
     
-    // let's assume a maximum population size of 2N = 100
-    // and maximum migration rate of m = 0.1
-    mEffctUpperBound = 0.1;
-    qEffctUpperBound = 0.01;
-    mrateMuUpperBound = 0.1;
-    qrateMuUpperBound = 0.01;
+    // let's assume a maximum population size of 2N = 500
+    // and maximum migration rate of m = 0.1. Remember, rates are paramterized on the log scale
+    mEffctUpperBound = -3; // log10(0.001)
+    qEffctUpperBound = -5; // log10(0.00001)
+    mrateMuUpperBound = -1; // log10(0.1)
+    qrateMuUpperBound = -3; // log10(0.001)
     
     //mEffctHalfInterval = 2.0;
     //qEffctHalfInterval = 0.1;
@@ -421,12 +421,14 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
  */
-double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {
+double dtrnormln(const double x, const double mu, const double sigma2, const double upperBnd) {
     double pln = -Inf;
-    if ( (sigma2>0) && (x>=0) && (x<=bnd)) {
+    // -100 is the lower bound
+    if ( (sigma2>0) && (x>=-100) && (x<=upperBnd)) {
         boost::math::normal pnorm(mu,sqrt(sigma2));
         pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
-        - log(cdf(pnorm,bnd) - cdf(pnorm,-bnd));
+        // CHECK
+        - log(cdf(pnorm,upperBnd) - cdf(pnorm,-100));
     }
     return (pln);
 }

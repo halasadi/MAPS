@@ -94,8 +94,9 @@ void EEMS2::initialize_state( ) {
     nowqrateS2 = draw.rinvgam(0.5,0.5);
     
     // Assign migration rates to the Voronoi tiles
-    nowmrateMu = params.mrateMuUpperBound*draw.runif();
-    nowqrateMu = params.qrateMuUpperBound*draw.runif();
+    double lowerBound = -100;
+    nowmrateMu = lowerBound + draw.runif() * (params.mrateMuUpperBound - lowerBound);
+    nowqrateMu = lowerBound + draw.runif() * (params.qrateMuUpperBound - lowerBound);
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(nowqrateMu, nowqrateS2, params.qEffctUpperBound, nowqEffcts);
@@ -283,7 +284,7 @@ void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( newqEffct >= 0 && newqEffct <= params.qEffctUpperBound) {
+    if ( newqEffct >= -100 && newqEffct <= params.qEffctUpperBound) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -305,7 +306,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( newmEffct >= 0 && newmEffct <= params.mEffctUpperBound) {
+    if ( newmEffct >= -100 && newmEffct <= params.mEffctUpperBound) {
         proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -323,7 +324,7 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on mrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    if ( newmrateMu <= params.mrateMuUpperBound && newmrateMu >= 0) {
+    if ( newmrateMu <= params.mrateMuUpperBound && newmrateMu >= -100) {
         proposal.newpi = nowpi;
         proposal.newll = eval_proposal_overall_mrate(proposal);
     } else {
@@ -340,7 +341,7 @@ void EEMS2::propose_overall_qrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on qrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    if ( newqrateMu <= params.qrateMuUpperBound && newqrateMu >= 0) {
+    if ( newqrateMu <= params.qrateMuUpperBound && newqrateMu >= -100) {
         proposal.newpi = nowpi;
         proposal.newll = eval_proposal_overall_qrate(proposal);
     } else {
@@ -598,7 +599,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(nowqEffcts(t));
+        mcmcqRates.push_back(pow(10.0, nowqEffcts(t)));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -607,7 +608,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(nowmEffcts(t));
+        mcmcmRates.push_back(pow(10.0, nowmEffcts(t)));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -626,14 +627,17 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << nowmtiles << endl;
     out.close( );
-    out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
+    /*out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << nowdf << endl;
     out.close( );
+    */
+    /*
     out.open((params.mcmcpath + "/lastdfpars.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << params.dfmin << " " << params.dfmax << endl;
     out.close( );
+    */
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << nowmrateMu << " " << nowmrateS2 << endl;
@@ -755,10 +759,10 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     }
     //if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
     //if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
-    if (qEffcts.minCoeff() < 0 || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
-    if (mEffcts.minCoeff() < 0 || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
-    if (mrateMu>params.mrateMuUpperBound || mrateMu < 0) { inrange = false; }
-    if (qrateMu>params.qrateMuUpperBound || qrateMu < 0) { inrange = false; }
+    if (qEffcts.minCoeff() < -100 || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
+    if (mEffcts.minCoeff() < -100 || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
+    if (mrateMu>params.mrateMuUpperBound || mrateMu < -100) { inrange = false; }
+    if (qrateMu>params.qrateMuUpperBound || qrateMu < -100) { inrange = false; }
     if ((df<params.dfmin) || (df>params.dfmax)) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
@@ -949,7 +953,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         //double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
         //W(alpha) = pow(10.0,log10q_alpha);
-        double q_alpha = qEffcts(qColors(alpha));
+        double q_alpha = pow(10.0, qEffcts(qColors(alpha)));
         W(alpha) = q_alpha;
     }
     
@@ -964,7 +968,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         //M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
         double m_alpha = mEffcts(mColors(alpha));
         double m_beta = mEffcts(mColors(beta));
-        M(alpha,beta) = 0.5 * m_alpha + 0.5 * m_beta;
+        M(alpha,beta) = 0.5 * pow(10.0, m_alpha) + 0.5 * pow(10.0, m_beta);
         M(beta,alpha) = M(alpha,beta);
     }
     // FOR TESTING ONLY
@@ -1022,8 +1026,8 @@ double EEMS2::getMigrationRate(const int edge) const {
      VectorXi mColors; 
      graph.index_closest_to_deme(nowmSeeds,mColors);
      */
-    double m_alpha = nowmEffcts(nowmColors(alpha));
-    double m_beta = nowmEffcts(nowmColors(beta));
+    double m_alpha = pow(10, nowmEffcts(nowmColors(alpha)));
+    double m_beta = pow(10, nowmEffcts(nowmColors(beta)));
     return (0.5 * m_alpha + 0.5 * m_beta);
     
 }
@@ -1037,7 +1041,7 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      VectorXi qColors;
      graph.index_closest_to_deme(nowqSeeds,qColors);  
      */
-    double q_alpha = nowqEffcts(nowqColors(alpha));
+    double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)));
     return (q_alpha);
 }
 
