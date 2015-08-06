@@ -4,9 +4,8 @@
 #include <ctime>
 #include <vector>
 
-
-const int nrow = 15;
-const int ncol = 15;
+const int nrow = 5;
+const int ncol = 5;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -457,14 +456,20 @@ int main()
         }
     }
     
+    double a = 0;
+    double b = 1;
     VectorXd mrates(ndemes);
     VectorXd W(ndemes);
     VectorXd ones = VectorXd::Ones(ndemes);
     W.setRandom(ndemes);
     mrates.setRandom(ndemes);
-    W = (0.00001/2) * (W + ones);
-    mrates = (0.1/2) * (mrates + ones);
-    
+    mrates = (mrates+ones)/2;
+    mrates = a*ones + (b-a)*mrates;
+    a = 0;
+    b = 0.00001;
+    W = (W+ones)/2;
+    W = a*ones + (b-a)*W;
+
     //cout << W << endl;
     //cout << mrates << endl;
     
@@ -538,17 +543,20 @@ int main()
     //cout << "W:\n" << W << endl;
     //cout << "M:\n" << M << endl;
     
+
+    
     // dimension of krylov subpsace
     int m;
-    m = 100;
+    m = 50;
     MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
     calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
-    cout << "almost exact lambda: \n" << lambda.row(0) << endl;
+    //cout << "exact lambda:\n" << lambda.row(0) << endl;
     
     lambda.setZero();
     m = 15;
     calculateIntegralKrylov(M, W, lambda, L, r, nodes, m);
  
-    cout << "approx lambda:\n" << lambda.row(0) << endl;
+    cout << (approx-exact).norm() << endl;
+    //cout << "approx lambda:\n" << lambda.row(0) << endl;
     
 }
