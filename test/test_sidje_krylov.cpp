@@ -4,8 +4,8 @@
 #include <ctime>
 #include <vector>
 
-const int nrow = 2;
-const int ncol = 2;
+const int nrow = 9;
+const int ncol = 9;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -448,7 +448,7 @@ int main()
     }
     
     double a = 0;
-    double b = 0.001;
+    double b = 0.1;
     VectorXd mrates(ndemes);
     VectorXd W(ndemes);
     VectorXd ones = VectorXd::Ones(ndemes);
@@ -494,7 +494,7 @@ int main()
     MatrixXd Papprox(nstates, 10);
 
     
-    int m = 20;
+    int m = 30;
     int k1 = 2;
     double mxrej = 10; double btol = 1e-7;
     double gamma = 0.9; double delta = 1.2;
@@ -514,6 +514,7 @@ int main()
     MatrixXd V(nstates, m+1);
     MatrixXd H(m+2, m+2);
     MatrixXd Ht(m+2, m+2);
+    V.setZero();
     V(nstates-1, 0) = 1;
     VectorXd v = V.col(0);
     double normv = v.norm();
@@ -535,6 +536,7 @@ int main()
         H.setZero();
         V.col(0) = (1/beta)*w;
         for (int j = 0; j < m; j++){
+            p.setZero();
             p = A*V.col(j);
             for (int i = 0; i <= j; i++){
                 H(i,j) = V.col(i).dot(p);
@@ -542,7 +544,7 @@ int main()
             }
             
             s = p.norm();
-            if (s < btol){
+            if (s < btol & j > 1){
                 k1 = 0;
                 mb = j;
                 break;
@@ -581,22 +583,46 @@ int main()
         tnow = tnow + tstep;
         nstep += 1;
     }
+
     
+    // simple Krylov
+    MatrixXd Q(nstates, m);
+    MatrixXd H_s(m, m);
+    krylovProj(H_s, Q, M, W, nodes, m);
+    VectorXd l = VectorXd::Zero(nstates);
+    l[nstates-1] = 1.0;
+
+    // storing the probabilities
+    MatrixXd P_simple(nstates, 10);
+    MatrixXd E_s(m,m);
+    MatrixXd Ht_s(m,m);
     
+    for (int i = 0; i < 10 ; i++){
+        Ht_s = H_s*times[i];
+        padm(Ht_s, E_s);
+        P_simple.col(i) = (Q*E_s)*(Q.transpose()*l);
+    }
     
     // compare to TRUE ANSWER
     MatrixXd E(nstates, nstates);
-    
-    VectorXd l = VectorXd::Zero(nstates);
-    l[nstates-1] = 1.0;
-    
     MatrixXd At(nstates, nstates);
     MatrixXd Ptrue(nstates, 10);
+    MatrixXd temp(nstates, 3);
     for (int i = 0; i < 10 ; i++){
         At = A*times[i];
         padm(At, E);
         Ptrue.col(i) = E*l;
-        cout << (Papprox.col(i)-Ptrue.col(i)).norm() << endl;
+        //cout << "RESTARTED: " << (Papprox.col(i)-Ptrue.col(i)).norm() << endl;
+        //cout << "SIMPLE: " << (P_simple.col(i)-Ptrue.col(i)).norm() << endl;
+        cout << "FOR TIME = " << times[i] << endl;
+        temp.col(0) = Ptrue.col(i);
+        temp.col(1) =  P_simple.col(i);
+        temp.col(2) = Papprox.col(i);
+        cout << temp << "\n\n\n" << endl;
+        //cout << "TRUE: \n" << Ptrue.col(i) << "\n\n\n" << endl;
+        //cout << "SIMPLE: \n" << P_simple.col(i) << "\n\n\n" << endl;
+        //cout << "RESTARTED: \n" << Papprox.col(i) << "\n\n\n" << endl;
+
     }
 
     
