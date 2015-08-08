@@ -1,11 +1,15 @@
-#include "ibd.hpp"
+#include <iostream>
+using namespace std;
+#include "Eigen"
+#include "Eigen/Sparse"
+using namespace Eigen;
 #include <math.h>
 #include <fstream>
 #include <ctime>
 #include <vector>
 
-const int nrow = 9;
-const int ncol = 9;
+const int nrow = 10;
+const int ncol = 10;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -241,6 +245,67 @@ void makeFullMatrix(vector<node> &nodes, const MatrixXd &M, const MatrixXd &W, M
     }
 }
 
+void makeSparseMatrix(vector<node> &nodes, const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q){
+    int index;
+    node demei;
+    node demej;
+    int neighbor;
+    double sum;
+    // i < (nstates-1) because the last row of Q is all zeros
+    for (int i = 0; i < (nstates-1); i++){
+        demei = nodes[lookup[i][0]];
+        demej = nodes[lookup[i][1]];
+        sum = 0;
+        
+        // fix deme i and look at all the possble demes lineage i can go to (fix lineage j).
+        for (int k = 0; k < demei.neighbors.size(); k++){
+            neighbor = demei.neighbors[k];
+            index = revLookup(neighbor, demej.label);
+            sum += M(neighbor, demei.label);
+            Q.coeffRef(i,index) += M(neighbor, demei.label);
+        }
+        
+        for (int k = 0; k < demej.neighbors.size(); k++){
+            neighbor = demej.neighbors[k];
+            index = revLookup(demei.label, neighbor);
+            sum += M(neighbor, demej.label);
+            Q.coeffRef(i,index) += M(neighbor, demej.label);
+
+        }
+        
+        if (demei.label == demej.label){
+            sum += W(demei.label);
+            Q.coeffRef(i,nstates-1) += W(demei.label);
+
+        }
+        
+        Q.coeffRef(i,i) -= sum;
+        
+    }
+    Q.makeCompressed();
+    
+}
+
+void computeWeights20(VectorXd &w, VectorXd &x, double r, double L){
+    x << 0.17490675238661462808, 0.58730308063826856398, 1.238225101834236254115, 2.13139626007693336644,
+    3.27213313351698717505, 4.66749446588835560307, 6.3265361976738361974, 8.26067095201372850081,
+    10.48416738120822849889, 13.01484877215262843371, 15.87508701278475484784, 19.09325190760625061433,
+    22.70589388817313189969, 26.76117022937941365577, 31.32451613700752627862, 36.48870334614904728956,
+    42.39342274577448784959, 49.26881384986848543417, 57.55442097131480409236, 68.37703781455228081652;
+    
+    w << 0.043165637127123016042, 0.173393540003682950501, 0.2768639019724097882539, 0.256965148793469623307,
+    0.1571958051558628616272, 0.0669008636195318320127, 0.0203012066844198449656, 0.0044331674291972079917,
+    6.9623862451405933641E-4, 7.8005012015230761706E-5, 6.1411804007204543466E-6, 3.32160143764543229667E-7,
+    1.19590145840090781978E-8, 2.74408893224395016621E-10, 3.7769340269412110656E-12, 2.8584518010325666186E-14,
+    1.04277131616443520482E-16, 1.4763788135258949583E-19, 5.3790385783635671802E-23, 1.793160523059403199275E-27;
+    
+    // integral_0^{\inf} 2rte^(-2trL)f(t) = (1/L^2) \integral_0^{\inf} f(u/2rL) ue^(-u)
+    w = w*(1/(L*2.0*r*L));
+    x = x/(2*r*L);
+    
+}
+
+
 void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
     // REQUIRES: w and x vectors of length 30, r is recombination rate, and L (in base pairs) of cutoff.
     // MODIFIES: w and x
@@ -269,6 +334,134 @@ void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
     w = w*(1/(L*2.0*r*L));
     x = x/(2*r*L);
 }
+
+MatrixXd SidjeApprox(const MatrixXd &M, const VectorXd &W, vector<node> nodes, const int m, VectorXd &times) {
+  
+    int k1 = 2;
+    double btol = 1e-5;
+    double mb = m;
+    int nstep = 0;
+    double tstep;
+    double mx;
+    double t = (times.tail(1))(0);
+    double tnow = 0;
+    
+    MatrixXd Papprox(nstates, 30);
+    MatrixXd F(m+2, m+2);
+    MatrixXd V(nstates, m+1);
+    MatrixXd H(m+2, m+2);
+    MatrixXd Ht(m+2, m+2);
+    V.setZero();
+    V(nstates-1, 0) = 1;
+    double s;
+    VectorXd p(nstates, 1);
+    VectorXd w = V.col(0);
+    double beta = w.norm();
+    VectorXd v(nstates);
+    SparseMatrix<double> Q(nstates,nstates);
+    Q.reserve(VectorXi::Constant(nstates,30));
+    makeSparseMatrix(nodes, M, W, Q);
+    
+    
+    while (tnow < t) {
+        if (nstep == 0){
+            tstep = times[nstep];
+        }else{
+            tstep = times[nstep] - times[nstep-1];
+        }
+        V.setZero();
+        H.setZero();
+        V.col(0) = (1/beta)*w;
+        for (int j = 0; j < m; j++){
+            //p.setZero();
+            v = V.col(j);
+            //calculateProduct(p, v, M,W, nodes);
+            p = Q*v;
+            for (int i = 0; i <= j; i++){
+                H(i,j) = V.col(i).dot(p);
+                p = p - H(i,j)*V.col(i);
+            }
+            
+            s = p.norm();
+            if (s < btol & j > 1){
+                k1 = 0;
+                mb = j;
+                break;
+            }
+            H(j+1, j) = s;
+            V.col(j+1) = (1/s)*p;
+        }
+        
+        if (k1 != 0){
+            H(m+1, m) = 1;
+	}
+        mx = mb + k1;
+        if (mb < m){
+            Ht.resize(mx, mx);
+            F.resize(mx, mx);
+        }
+        Ht = H.block(0, 0, mx, mx);
+        Ht = Ht*tstep;
+        padm(Ht, F);
+        mx = mb + max(0, k1-1);
+        w = V.leftCols(mx)*(beta*F.block(0, 0, mx, 1));
+        beta = w.norm();
+        
+        /*int ineg = 0;
+        for (int i = 0; i < nstates; i++){
+            if (w(i) < 0){
+                w(i) = 0;
+                ineg += 1;
+            }
+        }
+        if (ineg > 0){
+            double wnorm = w.sum();
+            w = (1/wnorm)*w;
+        }
+         */
+        Papprox.col(nstep) = w;
+        tnow += tstep;
+        nstep += 1;
+    }
+
+  
+    return(Papprox);
+
+ }
+
+void calculateIntegralSidje(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, vector<node> &nodes, const int m){
+  
+    // weights for the gaussian quadrature
+    VectorXd w(30);
+    // abisca for the gaussian quadrature
+    VectorXd x(30);
+    
+    computeWeights(w, x, r, L);
+    
+    MatrixXd P(nstates, 30);
+    P = SidjeApprox(M, W, nodes, m, x);
+    VectorXd p(30);
+
+    int state;
+    for (int i = 0; i < ndemes; i++){
+        for (int j = i; j < ndemes; j++)
+        {
+            state = revLookup(i,j);
+            // estimate the probability mass function
+            p(0) = 0;
+            p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
+            // compute the integral
+            // 3e9 is genome size
+            lambda(i,j) = (3e9)*(w.dot(p));
+            //if (lambda(i,j) < 0){
+            //    throw std::exception();
+            //}
+            lambda(j,i) = lambda(i,j);
+        }
+    }
+
+}
+
 
 
 void calculateIntegralKrylov(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, vector<node> &nodes, const int m){
@@ -446,184 +639,67 @@ int main()
             ind += 1;
         }
     }
-    
-    double a = 0;
-    double b = 0.1;
-    VectorXd mrates(ndemes);
-    VectorXd W(ndemes);
-    VectorXd ones = VectorXd::Ones(ndemes);
-    W.setRandom(ndemes);
-    mrates.setRandom(ndemes);
-    mrates = (mrates+ones)/2;
-    mrates = a*ones + (b-a)*mrates;
-    a = 0;
-    b = 0.00001;
-    W = (W+ones)/2;
-    W = a*ones + (b-a)*W;
-
-    //cout << W << endl;
-    //cout << mrates << endl;
-    
-    // Must agree with ndemes above
-    // set up the graph here
-    const int nedges = (ncol-1)*nrow + (nrow-1)*ncol + (ncol-1)*(nrow-1);
-    MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
-    
-    make_edges(nrow, ncol, DemePairs);
-     
-    vector<node> nodes;
-    
-    populate_nodes(nodes, DemePairs);
-    
-    MatrixXd M = MatrixXd::Zero(ndemes,ndemes);
-    int alpha, beta1;
-    for ( int edge = 0 ; edge < nedges ; edge++ ) {
-        get_edge(edge,alpha,beta1, DemePairs);
-        double m_alpha = mrates(alpha);
-        double m_beta = mrates(beta1);
-        M(alpha,beta1) = 0.5 * m_alpha + 0.5 * m_beta;
-        M(beta1,alpha) = M(alpha,beta1);
-    }
-    
-    
-    double r = 1e-8;
-    double L = 4e6;
-    MatrixXd A(nstates, nstates);
-    A.setZero();
-    makeFullMatrix(nodes, M, W, A);
-    MatrixXd Papprox(nstates, 10);
-
-    
-    int m = 30;
-    int k1 = 2;
-    double mxrej = 10; double btol = 1e-7;
-    double gamma = 0.9; double delta = 1.2;
-    double mb = m;
-    int nstep = 0;
-    double s_error = 0;
-    double tstep;
-    double mx;
-    double tol = 1e-7;
-    
-    VectorXd times(10);
-    times << 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000;
-    double t = times[9];
-    double tnow = 0;
-    
-    MatrixXd F(m+2, m+2);
-    MatrixXd V(nstates, m+1);
-    MatrixXd H(m+2, m+2);
-    MatrixXd Ht(m+2, m+2);
-    V.setZero();
-    V(nstates-1, 0) = 1;
-    VectorXd v = V.col(0);
-    double normv = v.norm();
-    double beta = normv;
-    double sgn = 1;
-    double err_loc;
-    double s;
-    VectorXd p(nstates, 1);
-    
-    VectorXd w = v;
-    
-    while (tnow < t) {
-        if (nstep == 0){
-            tstep = times[nstep];
-        }else{
-            tstep = times[nstep] - times[nstep-1];
-        }
-        V.setZero();
-        H.setZero();
-        V.col(0) = (1/beta)*w;
-        for (int j = 0; j < m; j++){
-            p.setZero();
-            p = A*V.col(j);
-            for (int i = 0; i <= j; i++){
-                H(i,j) = V.col(i).dot(p);
-                p = p - H(i,j)*V.col(i);
-            }
-            
-            s = p.norm();
-            if (s < btol & j > 1){
-                k1 = 0;
-                mb = j;
-                break;
-            }
-            H(j+1, j) = s;
-            V.col(j+1) = (1/s)*p;
-        }
+    int nreps = 1;
+    for (int ii = 0; ii < nreps; ii++){
         
-        if (k1 != 0){
-            H(m+1, m) = 1;
-            //avnorm = (A*V.col(m)).norm();
-        }
-        mx = mb + k1;
-        cout << mx << endl;
-        Ht.resize(mx, mx);
-        F.resize(mx, mx);
-        Ht = H.block(0, 0, mx, mx);
-        Ht = Ht*tstep;
-        padm(Ht, F);
-        mx = mb + max(0, k1-1);
-        w = V.leftCols(mx)*(beta*F.block(0, 0, mx, 1));
-        beta = w.norm();
+        double a = 0;
+        double b = 0.1;
+        VectorXd mrates(ndemes);
+        VectorXd W(ndemes);
+        VectorXd ones = VectorXd::Ones(ndemes);
+        W.setRandom(ndemes);
+        mrates.setRandom(ndemes);
+        mrates = (mrates+ones)/2;
+        mrates = a*ones + (b-a)*mrates;
+        a = -16;
+        b = -6.9;
+        W = (W+ones)/2;
+        W = a*ones + (b-a)*W;
+        W = (VectorXd) W.array().exp();
         
-        int ineg = 0;
-        for (int i = 0; i < nstates; i++){
-            if (w(i) < 0){
-                w(i) = 0;
-                ineg += 1;
-            }
+        //cout << W << endl;
+        //cout << mrates << endl;
+        
+        // Must agree with ndemes above
+        // set up the graph here
+        const int nedges = (ncol-1)*nrow + (nrow-1)*ncol + (ncol-1)*(nrow-1);
+        MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
+        
+        make_edges(nrow, ncol, DemePairs);
+        
+        vector<node> nodes;
+        
+        populate_nodes(nodes, DemePairs);
+        
+        MatrixXd M = MatrixXd::Zero(ndemes,ndemes);
+        int alpha, beta1;
+        for ( int edge = 0 ; edge < nedges ; edge++ ) {
+            get_edge(edge,alpha,beta1, DemePairs);
+            double m_alpha = mrates(alpha);
+            double m_beta = mrates(beta1);
+            M(alpha,beta1) = 0.5 * m_alpha + 0.5 * m_beta;
+            M(beta1,alpha) = M(alpha,beta1);
         }
-        if (ineg > 0){
-            double wnorm = w.sum();
-            w = (1/wnorm)*w;
-        }
-        Papprox.col(nstep) = w;
-        tnow = tnow + tstep;
-        nstep += 1;
-    }
+        double L = 3e6;
+        double r = 1e-8;
+        MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
+        
+        clock_t begin_time = clock();
+        calculateIntegralSidje(M, W, lambda, L, r, nodes, 10);
+        cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
 
-    
-    // simple Krylov
-    MatrixXd Q(nstates, m);
-    MatrixXd H_s(m, m);
-    krylovProj(H_s, Q, M, W, nodes, m);
-    VectorXd l = VectorXd::Zero(nstates);
-    l[nstates-1] = 1.0;
-
-    // storing the probabilities
-    MatrixXd P_simple(nstates, 10);
-    MatrixXd E_s(m,m);
-    MatrixXd Ht_s(m,m);
-    
-    for (int i = 0; i < 10 ; i++){
-        Ht_s = H_s*times[i];
-        padm(Ht_s, E_s);
-        P_simple.col(i) = (Q*E_s)*(Q.transpose()*l);
+        cout << lambda.row(0) << "\n\n" << endl;
+        
+        
+        /*
+        begin_time = clock();
+        calculateIntegralSidje(M, W, lambda, L, r, nodes, 30);
+        cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
+        cout << lambda.row(0) << "\n" << endl;
+        */
+        
+        cout << "\n\n\n--------------------------\n" << endl;
     }
     
-    // compare to TRUE ANSWER
-    MatrixXd E(nstates, nstates);
-    MatrixXd At(nstates, nstates);
-    MatrixXd Ptrue(nstates, 10);
-    MatrixXd temp(nstates, 3);
-    for (int i = 0; i < 10 ; i++){
-        At = A*times[i];
-        padm(At, E);
-        Ptrue.col(i) = E*l;
-        //cout << "RESTARTED: " << (Papprox.col(i)-Ptrue.col(i)).norm() << endl;
-        //cout << "SIMPLE: " << (P_simple.col(i)-Ptrue.col(i)).norm() << endl;
-        cout << "FOR TIME = " << times[i] << endl;
-        temp.col(0) = Ptrue.col(i);
-        temp.col(1) =  P_simple.col(i);
-        temp.col(2) = Papprox.col(i);
-        cout << temp << "\n\n\n" << endl;
-        //cout << "TRUE: \n" << Ptrue.col(i) << "\n\n\n" << endl;
-        //cout << "SIMPLE: \n" << P_simple.col(i) << "\n\n\n" << endl;
-        //cout << "RESTARTED: \n" << Papprox.col(i) << "\n\n\n" << endl;
-
-    }
-
     
 }

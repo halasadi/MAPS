@@ -57,9 +57,9 @@ public:
                       const double df) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
                             VectorXd newqEffcts, double newmrateMu, double newdf) const;
-    void calculateProduct(VectorXd &z, VectorXd &q, const MatrixXd &M, const VectorXd &W) const;
-    void krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const VectorXd &W) const;
-    void calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &Lambda, double L, double r) const;
+    void makeSparseMatrix(const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q) const;
+    void krylovProj(const MatrixXd &M, const VectorXd &W, const int m, VectorXd &times, MatrixXd &Papprox) const;
+    void calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, const int m) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:

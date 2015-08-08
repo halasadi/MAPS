@@ -13,7 +13,7 @@ EEMS2::EEMS2(const Params &params) {
     d = graph.get_num_total_demes();
     nstates = (int) (d*(d+1))/2 + 1;
     // dimension of krylov subspace
-    dimKrylov = 20;
+    dimKrylov = 10;
     n = params.nIndiv;
     initialize_sims();
 }
@@ -800,96 +800,148 @@ int EEMS2::revLookup(double i, double j) const{
     return ((int) index);
 }
 
-void EEMS2::calculateProduct(VectorXd &z, VectorXd &q, const MatrixXd &M, const VectorXd &W) const {
+void EEMS2::makeSparseMatrix(const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q) const{
+    // populate lookup array
+    
+    int lookup[nstates-1][2];
+    int ind = 0;
+    for (int i = 0; i < d; i++){
+        for (int j=i; j < d; j++){
+            lookup[ind][0] = i;
+            lookup[ind][1] = j;
+            ind += 1;
+        }
+    }
+    
+    int index;
     node demei;
     node demej;
-    
-    // sum is to keep track of the row sum. So then we can fill in the diagonals
+    int neighbor;
     double sum;
-    
-    // sweeping across the entries of the vector z where z = A*q
-    int index = 0;
-    
-    // going from index to (i,j)
-    int state;
-    
-    for (int i = 0; i < d; i++){
-        for (int j = i; j < d; j++){
-            demei = graph.get_node(i);
-            demej = graph.get_node(j);
-            sum = 0.0;
-            
-            // let i move and fix j since only one step transitions are allowed. Need to look up the migration rate from i to the neighbor of i
-            for (int k = 0; k < demei.neighbors.size(); k++){
-                sum += M(i,demei.neighbors[k]);
-                // we're on the "indexth" row of A and looking at the "stateth" entry of this row
-                state = revLookup(demei.neighbors[k], j);
-                z[index] += M(i,demei.neighbors[k])*q(state);
-            }
-            
-            // let j move and fix i since only one step transitions are allowed. Need to look up the migration rate from j to the neightbor of j
-            for (int k = 0; k < demej.neighbors.size() ; k++){
-                sum += M(j,demej.neighbors[k]);
-                // we're on the "indexth" row of A and looking at the "stateth" entry of this row
-                state = revLookup(i, demej.neighbors[k]);
-                z[index] += M(j,demej.neighbors[k])*q(state);
-            }
-            
-            // both i and j coalescece
-            if (i == j){
-                sum += W(i);
-                z[index] += W(i) * q(nstates-1);
-            }
-            
-            // the diagonal
-            z[index] -= sum*q(index);
-            
-            index += 1;
-        }
-    }
-    z[nstates-1] = 0;
-}
-
-// when the Krylov subspace equals the dimension of A, then should Krylov approximation should
-// give exact answer but not working for me.
-void EEMS2::krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const VectorXd &W) const{
-    // REQUIRES: dimKrylov < nstates
-    // MODIFIES: H, Q
-    // EFFECTS: krylov projection of the rate matrix,e.g. if  A is rate matrix then
-    // finds the decomposition A=Q'HQ
-    
-    // set up storage
-    H.setZero();
-    Q.setZero();
-    VectorXd z(nstates);
-    VectorXd q(nstates);
-    
-    // initialize first kyrlov basis
-    Q(nstates-1, 0) = 1;
-    
-    // Arnoldi iteration
-    for (int k = 1; k < dimKrylov; k++){
-        q = Q.col(k-1);
-        z.setZero();
-        calculateProduct(z, q, M,W);
-        for (int i = 0; i < k; i++){
-            H(i, k-1) = Q.col(i).dot(z);
-            z = z - H(i, k-1) * Q.col(i);
+    for (int i = 0; i < (nstates-1); i++){
+        demei = graph.get_node(lookup[i][0]);
+        demej = graph.get_node(lookup[i][1]);
+        sum = 0;
+        
+        // fix deme i and look at all the possble demes lineage i can go to (fix lineage j).
+        for (int k = 0; k < demei.neighbors.size(); k++){
+            neighbor = demei.neighbors[k];
+            index = revLookup(neighbor, demej.label);
+            sum += M(neighbor, demei.label);
+            Q.coeffRef(i,index) += M(neighbor, demei.label);
         }
         
-        H(k, k-1) = z.norm();
-        if (H(k,k-1) == 0){
-            return;
+        for (int k = 0; k < demej.neighbors.size(); k++){
+            neighbor = demej.neighbors[k];
+            index = revLookup(demei.label, neighbor);
+            sum += M(neighbor, demej.label);
+            Q.coeffRef(i,index) += M(neighbor, demej.label);
+            
         }
-        Q.col(k) = z / H(k,k-1);
+        
+        if (demei.label == demej.label){
+            sum += W(demei.label);
+            Q.coeffRef(i,nstates-1) += W(demei.label);
+            
+        }
+        
+        Q.coeffRef(i,i) -= sum;
     }
+    Q.makeCompressed();
+    
 }
 
-void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r) const{
+
+void EEMS2::krylovProj(const MatrixXd &M, const VectorXd &W, const int m, VectorXd &times, MatrixXd &Papprox) const {
     
-    MatrixXd Q(nstates, dimKrylov);
-    MatrixXd H(dimKrylov, dimKrylov);
-    krylovProj(H, Q, M, W);
+    int k1 = 2;
+    double btol = 1e-5;
+    double mb = m;
+    int nstep = 0;
+    double tstep;
+    double mx;
+    double t = (times.tail(1))(0);
+    double tnow = 0;
+    
+    MatrixXd F(m+2, m+2);
+    MatrixXd V(nstates, m+1);
+    MatrixXd H(m+2, m+2);
+    MatrixXd Ht(m+2, m+2);
+    V.setZero();
+    V(nstates-1, 0) = 1;
+    double s;
+    VectorXd p(nstates, 1);
+    VectorXd w = V.col(0);
+    double beta = w.norm();
+    VectorXd v(nstates);
+    SparseMatrix<double> Q(nstates,nstates);
+    Q.reserve(VectorXi::Constant(nstates,30));
+    makeSparseMatrix(M, W, Q);
+    
+    while (tnow < t) {
+        if (nstep == 0){
+            tstep = times[nstep];
+        }else{
+            tstep = times[nstep] - times[nstep-1];
+        }
+        V.setZero();
+        H.setZero();
+        V.col(0) = (1/beta)*w;
+        for (int j = 0; j < m; j++){
+            v = V.col(j);
+            p = Q*v;
+            for (int i = 0; i <= j; i++){
+                H(i,j) = V.col(i).dot(p);
+                p = p - H(i,j)*V.col(i);
+            }
+            
+            s = p.norm();
+            if (s < btol & j > 1){
+                k1 = 0;
+                mb = j;
+                break;
+            }
+            H(j+1, j) = s;
+            V.col(j+1) = (1/s)*p;
+        }
+        
+        if (k1 != 0){
+            H(m+1, m) = 1;
+        }
+        mx = mb + k1;
+        if (mb < m){
+            Ht.resize(mx, mx);
+            F.resize(mx, mx);
+        }
+        Ht = H.block(0, 0, mx, mx);
+        Ht = Ht*tstep;
+        padm(Ht, F);
+        mx = mb + max(0, k1-1);
+        w = V.leftCols(mx)*(beta*F.block(0, 0, mx, 1));
+        beta = w.norm();
+        
+        /*
+        int ineg = 0;
+        for (int i = 0; i < nstates; i++){
+            if (w(i) < 0){
+                w(i) = 0;
+                ineg += 1;
+            }
+        }
+        if (ineg > 0){
+            double wnorm = w.sum();
+            w = (1/wnorm)*w;
+        }
+         */
+        Papprox.col(nstep) = w;
+        tnow = tnow + tstep;
+        nstep += 1;
+    }
+    
+    
+}
+
+void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, const int m) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -897,26 +949,11 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &la
     VectorXd x(30);
     
     computeWeights(w, x, r, L);
-    
-    // where to store the matrix exponential
-    MatrixXd E(dimKrylov,dimKrylov);
-    
-    // to get the last column
-    VectorXd l = VectorXd::Zero(nstates);
-    l[nstates-1] = 1.0;
-    
-    // storing the probabilities
+
     MatrixXd P(nstates, 30);
-    
-    MatrixXd Ht(dimKrylov,dimKrylov);
-    
-    for (int i = 0; i < x.size() ; i++){
-        Ht = H*x[i];
-        padm(Ht, E);
-        P.col(i) = (Q*E)*(Q.transpose()*l);
-    }
-    
+    krylovProj(M, W, m, x, P);
     VectorXd p(30);
+    
     int state;
     for (int i = 0; i < o; i++){
         for (int j = i; j < o; j++)
@@ -928,6 +965,9 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &la
             // compute the integral
             // 3e9 is genome size
             lambda(i,j) = (3e9)*(w.dot(p));
+            //if (lambda(i,j) < 0){
+            //    throw std::exception();
+            //}
             lambda(j,i) = lambda(i,j);
         }
     }
@@ -997,7 +1037,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double r = 1e-8;
     MatrixXd lambda(o,o);
     double cutOff = 4e6;
-    calculateIntegral(M, W, lambda, cutOff, r);
+    calculateIntegral(M, W, lambda, cutOff, r, dimKrylov);
     
     //cout << "OBSERVED:\n\n\n" << totalSharingM.array() / cMatrix.array() << endl;
     
