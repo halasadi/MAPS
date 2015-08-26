@@ -1,5 +1,6 @@
 library(expm)
 #source("myImagePlot.R")
+rm(list = ls())
 
 trapezoidal.integration = function(x, f)
 {
@@ -34,14 +35,40 @@ trapezoidal.integration = function(x, f)
   return(integral)
 }
 
-makeQ <- function(m, q){
+makeQSym <- function(M, q){
   Q = matrix(nrow=4, ncol=4, 0)
-  Q[1,2] = 2*m
+  # STATES:
+  # (1,1), (1,2), (2,2), C
+  Q[1,2] = 2*M[1,2]
   Q[1,4] = q[1]
-  Q[2,1] = m
-  Q[2,3] = m
-  Q[3,2] = 2*m
+  
+  Q[2,1] = M[2,1]
+  Q[2,3] = M[1,2]
+  
+  Q[3,2] = 2*M[2,1]
   Q[3,4] = q[2]
+  
+  diag(Q) = -rowSums(Q)
+  return(Q)
+}
+
+makeQ <- function(M, q){
+  Q = matrix(nrow=5, ncol=5, 0)
+  # STATES:
+  # (1,1), (1,2), (2,1), (2,2), C
+  Q[1,2] = M[1,2]
+  Q[1,3] = M[1,2]
+  Q[1,5] = q[1]
+  
+  Q[2,1] = M[2,1]
+  Q[2,4] = M[1,2]
+  
+  Q[3,1] = M[2,1]
+  Q[3,4] = M[1,2]
+  
+  Q[4,2] = M[2,1]
+  Q[4,3] = M[2,1]
+  Q[4,5] = q[2]
   diag(Q) = -rowSums(Q)
   return(Q)
 }
@@ -80,47 +107,80 @@ computeWeights <- function(u){
   return(list(w=w, x=x))
 }
 
-calculateIntegral2 <- function(L,r){
-  ret = computeWeights(u)
-  t = ret$x
-  w = ret$w
-  n = length(t)
-  P = rep(0, n)
-  print(t)
-  for (i in 1:n){
-    P[i] = expm(Q*t[i])[1,4]
-  }
-  p = c(0, diff(P)/(t[2:n]-t[1:(n-1)]))
-  int = w%*%p
-  return(int)
-}
+#calculateIntegral2 <- function(L,r){
+#  ret = computeWeights(u)
+#  t = ret$x
+#  w = ret$w
+#  n = length(t)
+#  P = rep(0, n)
+#  print(t)
+#  for (i in 1:n){
+#    P[i] = expm(Q*t[i])[1,4]
+#  }
+#  p = c(0, diff(P)/(t[2:n]-t[1:(n-1)]))
+#  int = w%*%p
+#  return(int)
+#}
 
-calculateIntegral <- function(L, r){
-  n = 50000
+calculateIntegral <- function(L, r, Q, M, q){
+  n = 10000
   tEnd = findtEnd(r*L)
   t = seq(0, tEnd, length.out=n)
+  # WITH THE CDF
   P = rep(0, n)
   for (i in 1:n){
-    P[i] = expm(Q*t[i])[2,4]
+    # (1,1) -> C
+    P[i] = expm(Q*t[i])[1,5]
   }
   p = c(0, diff(P)/(t[2:n]-t[1:(n-1)]))
+
   p = p*exp(-2*r*t*L)*2*r*t
-  plot(t,p)
   integral = trapezoidal.integration(t, p)
-  return(integral)
+  print(integral)
   
+  # WITH THE DENSITY
+  Q = Q[-5,]
+  Q = Q[,-5]
+  p = rep(0, n)
+  papprox = rep(0, n)
+  for (i in 1:n){
+    # exact
+    P = expm(Q*t[i])
+    p[i] = q[1]*P[1,1] + q[2]*P[1,4]
+    # approximation
+    Papprox= expm(M*t[i])
+    papprox[i] = q[1]*Papprox[1,1]*Papprox[1,1] + q[2]*Papprox[1,2]*Papprox[1,2]
+  }
+  p = p*exp(-2*r*t*L)*2*r*t
+  papprox = papprox*exp(-2*r*t*L)*2*r*t
+  
+  integral = trapezoidal.integration(t, p)
+  plot(t, p)
+  print(integral)
+  integral = trapezoidal.integration(t, papprox)
+  print(integral)
+  
+  ret = computeWeights(r, L)
+  x = ret$x
+  w = ret$w
+  papprox = rep(0, length(x))
+  for (i in 1:length(x)){
+    Papprox = expm(M*x[i])
+    papprox[i] = q[1]*Papprox[1,1]*Papprox[1,1] + q[2]*Papprox[1,2]*Papprox[1,2] 
+  }
+  print(w%*%papprox)
 }
 
-m = 0.0001
-N = c(1000, 1000)
+N = c(10000, 10000)
+m = c(0.0,0.0)
+M = matrix(nrow = 2, ncol =2, 0)
+M[1,2] = m[1]
+M[2,1] = m[2]
+diag(M) = -rowSums(M)
 q = 1/(2*N)
 r = 1e-8
-Q = makeQ(m,q)
+Q = makeQ(M,q)
 L = 3e6
-genomeSize = 2.99e9
 constantsize_m = (2*2*N*r)/(1+2*2*N*L*r)^2
-int = calculateIntegral(L, r)
-int2 = calculateIntegral2(L, r)
-
-print(int)
-print(int2)
+calculateIntegral(L, r, Q, M, q)
+#int2 = calculateIntegral2(L, r)

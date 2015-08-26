@@ -1,49 +1,5 @@
 library(expm)
 
-makeQ <- function(M, q){
-  Q = matrix(nrow=11, ncol=11, 0)
-  Q[1,2] = 2*M[1,2]
-  Q[1,3] = 2*M[1,3]
-  Q[1,11] = q[1]
-  Q[2,1] = M[2,1]
-  Q[2,4] = M[2,4]
-  Q[2,5] = M[1,2]
-  Q[2,6] = M[1,3]
-  Q[3,1] = M[3,1]
-  Q[3,4] = M[3,4]
-  Q[3,6] = M[1,2]
-  Q[3,8] = M[1,3]
-  Q[4,2] = M[4,2]
-  Q[4,3] = M[4,3]
-  Q[4,7] = M[1,2]
-  Q[4,9] = M[1,3]
-  Q[5,2] = 2*M[2,1]
-  Q[5,7] = 2*M[2,4]
-  Q[5,11] = q[2]
-  Q[6,2] = M[3,1]
-  Q[6,3] = M[2,1]
-  Q[6,7] = M[3,4]
-  Q[6,9] = M[2,4]
-  Q[7,2] = 0
-  Q[7,4] = M[2,1]
-  Q[7,5] = M[4,2]
-  Q[7,6] = M[4,3]
-  Q[7,10] = M[2,4]
-  Q[8,3] = 2*M[3,1]
-  Q[8,9] = 2*M[3,4]
-  Q[8,11] = q[3]
-  Q[9,4] = M[3,1]
-  Q[9,6] = M[4,2]
-  Q[9,8] = M[4,3]
-  Q[9,10] = M[3,4]
-  Q[10,7] = 2*M[4,2]
-  Q[10,9] = 2*M[4,3]
-  Q[10,11] = q[4]
-
-  diag(Q) = -rowSums(Q)
-  return(Q)
-}
-
 computeWeights <- function(r, L){
   x = c(0.118440697736960550688, 0.3973475034735802657556, 0.8365549141880933313119, 1.437175158191620443607,
         2.200789508440616292336, 3.129448303166859096349, 4.225699164493802071261, 5.492626704368934083587,
@@ -67,71 +23,65 @@ computeWeights <- function(r, L){
   return(list(w=w, x=x))
 }
 
+computeWeights50 <- function(r, L){
+  x = c()
+  w = c()
+  w = w*(1/(L*2*r*L))
+  x = x/(2*r*L)
+  return(list(w=w, x=x))
+}
+
 # the probability (density) that an IBD segment greater than u coalesces at time t
 erlang <- function(u,t){
   return(exp(-2*u*t)*(1+2*u))
 }
 norm_vec <- function(x) sqrt(sum(x^2))
 
-krylov <- function(Qrate, n, mkrylov, t){
-  Q = matrix(nrow=n, ncol = mkrylov, 0)
-  Q[n,1] = 1
-  H = matrix(nrow=mkrylov, ncol=mkrylov, 0)
-  for (k in 2:mkrylov){
-    q = Q[,k-1]
-    z = Qrate%*%q
-    for (i in 1:k){
-      H[i, k-1] = Q[,i]%*%z
-      z = z - H[i,k-1]*Q[,i]
-    }
-    H[k, k-1] = norm_vec(z)
-    if (H[k,k-1] == 0){
-      break
-    }
-    Q[,k] = z/H[k, k-1]
-  }
-  E = expm(H*t)
-  return(Q%*%E%*%t(Q)%*%Q[,1])
-}
 
-calculateIntegral <- function(r, L){
+calculateIntegral <- function(M, q, r, L){
   ret = computeWeights(r, L)
   x = ret$x
   w = ret$w
-  #P = matrix(0, nrow=length(x), ncol = 11)
-  Pkrylov = matrix(0, nrow=length(x), ncol = 11)
-  v = rep(0, 11)
-  v[11] = 1
-  for (i in 1:length(x)){
-    #P[i,] = expm(Q*x[i])%*%v
-    Pkrylov[i,] = krylov(Q, 11, 10, x[i])
+  d = nrow(M)
+  p = array(0, dim = c(d, d, length(x)))
+  lambda = matrix(0, nrow = d, ncol = d, 0)
+  for (t in 1:length(x)){
+    Pm = expm(M*x[t])
+    for (i in 1:d){
+      for (j in i:d){
+        #p[i,j, t] = sum(Pm[i,]*Pm[j,]*q)
+        lambda[i,j] = lambda[i,j] + w[t]*sum(Pm[i,]*Pm[j,]*q)
+      }
+    }
   }
-  
-  #print(Pkrylov)
-  
-  #int = rep(0, 11)
-  #for (i in 1:11){
-  #  p = c(0, diff(P[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
-  #  int[i] = w%*%p
+
+  #for (i in 1:d){
+  #  for (j in 1:d){
+  #    lambda[i,j] = w%*%p[i,j,]
+  #  }
   #}
   
-  intkrylov = rep(0, 11)
-  for (i in 1:11){
-    pkrylov = c(0, diff(Pkrylov[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
-    intkrylov[i] = w%*%pkrylov
-  }
-
-  return(intkrylov*3e9)
+  print(3e9*lambda)
 }
-
-q = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
+#N = c(10000, 10000)
+#q = 1/(2*N)
+q = c(0.00005, 0.00005, 0.00005, 0.00005)
+#m = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
+#M = matrix(nrow=4, ncol=4, 0)
+#m = runif(4, min = 0, max = 0.01)
+#M[1,2] = M[2,1] = (m[1]+m[2])/2
+#M[1,3] = M[3,1] = (m[1]+m[3])/2
+#M[2,4] = M[4,2] = (m[2]+m[4])/2
+#M[3,4] = M[4,3] = (m[3]+m[4])/2
 M = matrix(nrow = 4, ncol = 4, 0)
-M[1,2] = M[2,1] = 0.00375863
-M[1,3] = M[3,1] = 0.00289906 
-M[2,4] = M[4,2] = 0.00448912
-M[3,4] = M[4,3] = 0.00362955
+M[1,2] = M[2,1] = 0.099962
+M[1,3] = M[3,1] = 0.099962 
+M[2,3] = M[3,2] = 0.099962
+M[2,4] = M[4,2] = 0.099962
+M[3,4] = M[4,3] = 0.099962
+diag(M) = -rowSums(M)
 
-Q = makeQ(M,q)
 r = 1e-8
 L = 4e6
-int = calculateIntegral(r, L)
+constantsize_m = (2*2*N*r)/(1+2*2*N*L*r)^2
+int = calculateIntegral(M, q, r, L)

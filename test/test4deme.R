@@ -149,11 +149,38 @@ calculateIntegral <- function(r, L){
     pkrylov = c(0, diff(Pkrylov[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
     intkrylov[i] = w%*%pkrylov
   }
+  
+  print(intkrylov*3e9)
+  
+  ## Now try constant size 500 generations ago
+  Ps = matrix(0, nrow=length(x), ncol = 11)
+  temp = rep(0, 11)
+  for (i in 1:length(x)){
+    #P[i,] = expm(Q*x[i])%*%v
+    if (x[i] < 350){
+      Ps[i,] = krylov(Q, 11, 10, x[i])
+    }
+    else{
+      #temp = rep(exp(-x[i]/10000)*(1/10000), 11)
+      temp = rep(0, 11)
+      temp[11] = 1
+      Ps[i,] = temp
+    }
+  }
+  print(sum(x< 350)/length(x))
+  
+  int = rep(0, 11)
+  for (i in 1:11){
+    p = c(0, diff(Ps[,i])/(x[2:length(x)]-x[1:(length(x)-1)]))
+    int[i] = w%*%p
+  }
+  
+  print(int*3e9)
 
   return(intkrylov*3e9)
 }
 
-q = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
+q = c(7.82637e-8, 0.000000131538, 0.000155605,  0.00000000000045865)
 #m = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
 #M = matrix(nrow=4, ncol=4, 0)
 #m = runif(4, min = 0, max = 0.01)
@@ -163,7 +190,7 @@ q = c(7.82637e-09, 0.000131538, 0.000755605,  0.00045865)
 #M[3,4] = M[4,3] = (m[3]+m[4])/2
 M = matrix(nrow = 4, ncol = 4, 0)
 M[1,2] = M[2,1] = 0.00375863
-M[1,3] = M[3,1] = 0.00289906 
+M[1,3] = M[3,1] = 0.0289906 
 M[2,4] = M[4,2] = 0.00448912
 M[3,4] = M[4,3] = 0.00362955
 

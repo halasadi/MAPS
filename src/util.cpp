@@ -31,7 +31,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.001), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("dfProposalS2", po::value<double>(&dfProposalS2)->default_value(1000), "dfProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.05), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
@@ -100,8 +99,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
-    << "           dfProposalS2 = " << params.dfProposalS2 << endl
-    << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl;
+    << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
+    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
@@ -142,10 +141,10 @@ bool Params::check_input_params( ) const {
         cerr << "  Failed to find directory " << prevpath << " to previous EEMS output" << endl;
         error = true;
     }
-    if (!(mSeedsProposalS2>0) || !(mEffctProposalS2>0) || !(dfProposalS2>0) ||
-        !(qSeedsProposalS2>0) || !(qEffctProposalS2>0) || !(mrateMuProposalS2>0)) {
+    if (!(mSeedsProposalS2>0) || !(mEffctProposalS2>0) || !(mrateMuProposalS2>0) ||
+        !(qSeedsProposalS2>0) || !(qEffctProposalS2>0) || !(qrateMuProposalS2>0)) {
         cerr << "  Choose positive variance parameters for the proposal distributions:" << endl
-        << "  mrateMuProposalS2 = " << mrateMuProposalS2 << ", dfProposalS2 = " << dfProposalS2<< endl
+        << "  mrateMuProposalS2 = " << mrateMuProposalS2 << ", qrateMuProposalS2 = " << qrateMuProposalS2 << endl
         << "   mSeedsProposalS2 = " << mSeedsProposalS2 << ", mEffctProposalS2 = " << mEffctProposalS2 << endl
         << "   qSeedsProposalS2 = " << qSeedsProposalS2 << ", qEffctProposalS2 = " << qEffctProposalS2 << endl;
         error = true;
@@ -203,19 +202,7 @@ bool isposdef(const MatrixXd &A) {
     double minval = eig.eigenvalues().minCoeff();
     return (minval>0);
 }
-bool isdistmat(const MatrixXd &A) {
-    double a = A.minCoeff();
-    double b = A.diagonal().minCoeff();
-    double c = A.diagonal().maxCoeff();
-    double d = (A - A.transpose()).maxCoeff();
-    SelfAdjointEigenSolver<MatrixXd> eig(A,EigenvaluesOnly);
-    ArrayXd val = eig.eigenvalues().array();
-    double eps = 1e-12;
-    int negative = (val < -eps).count();
-    int positive = (val > eps).count();
-    int zero = ((val > -eps)&&(val < eps)).count();
-    return ((a>=0)&&(b==0)&&(c==0)&&(d==0)&&(positive==1)&&(zero==0));
-}
+
 double logdet(const MatrixXd &A) {
     return (A.selfadjointView<Lower>().ldlt().vectorD().array().log().sum());
 }
@@ -226,32 +213,22 @@ double pseudologdet(const MatrixXd &A, const int rank) {
 
 double poisln(const MatrixXd &lambda, const MatrixXd &totalSharingM, const MatrixXd &cMatrix){
     double ll = 0;
+    double epsilon = 1e-8;
     int n = lambda.rows();
+    double lam;
     for (int i = 0; i < n; i++){
         for (int j = i; j < n; j++){
-            ll += totalSharingM(i,j)*log(lambda(i,j))-cMatrix(i,j)*lambda(i,j);
+            if (lambda(i,j) < epsilon){
+                lam = epsilon;
+            } else{
+                lam = lambda(i,j);
+            }
+            ll += totalSharingM(i,j)*log(lam)-cMatrix(i,j)*lam;
         }
     }
     return(ll);
 }
 
-double wishpdfln(const MatrixXd &X, const MatrixXd &Sigma, const double df) {
-    double ldX = logdet(X);
-    double ldS = logdet(Sigma);
-    int n = X.rows();
-    return (0.5*(-df*ldS - Sigma.selfadjointView<Lower>().llt().solve(X).trace() +
-                 (df-n-1.0)*ldX - df*n*log_2) - mvgammaln(0.5*df,n));
-}
-// Not a general pseudowishpdfln (because L*Diff*L' at a single locus has rank 1
-double pseudowishpdfln(const MatrixXd &X, const MatrixXd &Sigma, const int df) {
-    int rank = 1;
-    double ldX = pseudologdet(X,rank);
-    double ldS = logdet(Sigma);
-    int n = X.rows();
-    int q = (df<n) ? df : n;
-    return (0.5*(-df*ldS - Sigma.selfadjointView<Lower>().llt().solve(X).trace() +
-                 (df-n-1.0)*ldX - df*n*log_2 - df*(n-q)*log_pi) - mvgammaln(0.5*df,q));
-}
 double mvgammaln(const double a, const int p) {
     double val = 0.25*log_pi*p*(p-1);
     for (int i = 0 ; i < p ; i++ ) {
@@ -462,77 +439,6 @@ double max(double a, double b){
         return(a);
     }
     return(b);
-}
-
-void padm(MatrixXd &H, MatrixXd &E){
-    // REQUIRES: H and E to be both MatrixXd of size NxN.
-    // MODIFIES: H and E. H is the input matrix and E is the output matrix
-    // EFFECTS: calculates the exponential of H and stores it into E.
-    // padm.m from expokit package translated to C++ by Hussein Al-Asadi
-    
-    
-    const int N = H.rows();
-    if (N != H.cols() || N != E.rows() || N != E.cols()){
-        cout << "ERROR: DIMENSIONS OF INPUT MATRICES ARE INCONSISTENT!" << endl;
-    }
-    
-    // recommended (6,6)-degree rational Pade approximation
-    const int p = 6;
-    
-    // pade coefficients
-    VectorXd c(p+1);
-    c[0] = 1.0;
-    for (int k = 1; k <= p; k++){
-        c(k) = c(k-1)*((p+1.0-k)/(k*(2.0*p+1.0-k)));
-    }
-    
-    // L-Infinity norm as defined by norm(H, 'inf') in Matlab
-    double s = H.cwiseAbs().rowwise().sum().maxCoeff();
-    
-    if (s > 0.5){
-        s = max(0, floor(log(s)/log(2)) + 2);
-        // modifies H here
-        H = pow(2, -s)*H;
-    }
-    
-    // Horner evaluation of the irreducible fraction
-    MatrixXd I = MatrixXd::Identity(N,N);
-    MatrixXd H2(N,N);
-    H2 = H*H;
-    MatrixXd Q = c(p)*I;
-    MatrixXd P = c(p-1)*I;
-    
-    int odd = 1;
-    for (int k = p-1; k > 0; k--){
-        if (odd == 1){
-            Q = Q*H2 + c(k-1)*I;
-        } else{
-            P = P*H2 + c(k-1)*I;
-        }
-        odd = 1 - odd;
-    }
-    if (odd == 1){
-        Q = Q*H;
-        Q = Q-P;
-        E = -1*(I + 2*Q.lu().solve(P));
-    }
-    else{
-        P = P*H;
-        Q = Q - P;
-        E = I + 2*Q.lu().solve(P);
-    }
-    
-    // Squaring
-    // loop floor(s) times
-    for (int k = 0; k < floor(s); k++){
-        E = E*E;
-    }
-}
-
-void swap(int &i, int &j){
-    int temp = i;
-    i = j;
-    j = temp;
 }
 
 void computeWeights(VectorXd &w, VectorXd &x, double r, double L){

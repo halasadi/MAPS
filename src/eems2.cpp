@@ -11,9 +11,6 @@ EEMS2::EEMS2(const Params &params) {
     graph.dlmwrite_grid(params.mcmcpath);
     o = graph.get_num_obsrv_demes();
     d = graph.get_num_total_demes();
-    nstates = (int) (d*(d+1))/2 + 1;
-    // dimension of krylov subspace
-    dimKrylov = 10;
     n = params.nIndiv;
     initialize_sims();
 }
@@ -94,7 +91,7 @@ void EEMS2::initialize_state( ) {
     nowqrateS2 = draw.rinvgam(0.5,0.5);
     
     // Assign migration rates to the Voronoi tiles
-    double lowerBound = -100;
+    double lowerBound = -10;
     nowmrateMu = lowerBound + draw.runif() * (params.mrateMuUpperBound - lowerBound);
     nowqrateMu = lowerBound + draw.runif() * (params.qrateMuUpperBound - lowerBound);
     
@@ -783,165 +780,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-
-int EEMS2::revLookup(double i, double j) const{
-    // sum_{k=0}^{i-1) n-k  + sum_{k=i}^{k=j} 1  - 1
-    // subtract the one at the end because matrices in C++ start with 0
-    
-    // we restrict i <= j
-    if (i > j){
-        swap(i,j);
-    }
-    double index = 0;
-    if (i >= 1){
-        index += 0.5*i*(2.0*(d)+1-i);
-    }
-    index += (j-i);
-    return ((int) index);
-}
-
-void EEMS2::makeSparseMatrix(const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q) const{
-    // populate lookup array
-    
-    int lookup[nstates-1][2];
-    int ind = 0;
-    for (int i = 0; i < d; i++){
-        for (int j=i; j < d; j++){
-            lookup[ind][0] = i;
-            lookup[ind][1] = j;
-            ind += 1;
-        }
-    }
-    
-    int index;
-    node demei;
-    node demej;
-    int neighbor;
-    double sum;
-    for (int i = 0; i < (nstates-1); i++){
-        demei = graph.get_node(lookup[i][0]);
-        demej = graph.get_node(lookup[i][1]);
-        sum = 0;
-        
-        // fix deme i and look at all the possble demes lineage i can go to (fix lineage j).
-        for (int k = 0; k < demei.neighbors.size(); k++){
-            neighbor = demei.neighbors[k];
-            index = revLookup(neighbor, demej.label);
-            sum += M(neighbor, demei.label);
-            Q.coeffRef(i,index) += M(neighbor, demei.label);
-        }
-        
-        for (int k = 0; k < demej.neighbors.size(); k++){
-            neighbor = demej.neighbors[k];
-            index = revLookup(demei.label, neighbor);
-            sum += M(neighbor, demej.label);
-            Q.coeffRef(i,index) += M(neighbor, demej.label);
-            
-        }
-        
-        if (demei.label == demej.label){
-            sum += W(demei.label);
-            Q.coeffRef(i,nstates-1) += W(demei.label);
-            
-        }
-        
-        Q.coeffRef(i,i) -= sum;
-    }
-    Q.makeCompressed();
-    
-}
-
-
-void EEMS2::krylovProj(const MatrixXd &M, const VectorXd &W, const int m, VectorXd &times, MatrixXd &Papprox) const {
-    
-    int k1 = 2;
-    double btol = 1e-5;
-    double mb = m;
-    int nstep = 0;
-    double tstep;
-    double mx;
-    double t = (times.tail(1))(0);
-    double tnow = 0;
-    
-    MatrixXd F(m+2, m+2);
-    MatrixXd V(nstates, m+1);
-    MatrixXd H(m+2, m+2);
-    MatrixXd Ht(m+2, m+2);
-    V.setZero();
-    V(nstates-1, 0) = 1;
-    double s;
-    VectorXd p(nstates, 1);
-    VectorXd w = V.col(0);
-    double beta = w.norm();
-    VectorXd v(nstates);
-    SparseMatrix<double> Q(nstates,nstates);
-    Q.reserve(VectorXi::Constant(nstates,30));
-    makeSparseMatrix(M, W, Q);
-    
-    while (tnow < t) {
-        if (nstep == 0){
-            tstep = times[nstep];
-        }else{
-            tstep = times[nstep] - times[nstep-1];
-        }
-        V.setZero();
-        H.setZero();
-        V.col(0) = (1/beta)*w;
-        for (int j = 0; j < m; j++){
-            v = V.col(j);
-            p = Q*v;
-            for (int i = 0; i <= j; i++){
-                H(i,j) = V.col(i).dot(p);
-                p = p - H(i,j)*V.col(i);
-            }
-            
-            s = p.norm();
-            if (s < btol & j > 1){
-                k1 = 0;
-                mb = j;
-                break;
-            }
-            H(j+1, j) = s;
-            V.col(j+1) = (1/s)*p;
-        }
-        
-        if (k1 != 0){
-            H(m+1, m) = 1;
-        }
-        mx = mb + k1;
-        if (mb < m){
-            Ht.resize(mx, mx);
-            F.resize(mx, mx);
-        }
-        Ht = H.block(0, 0, mx, mx);
-        Ht = Ht*tstep;
-        padm(Ht, F);
-        mx = mb + max(0, k1-1);
-        w = V.leftCols(mx)*(beta*F.block(0, 0, mx, 1));
-        beta = w.norm();
-        
-        /*
-        int ineg = 0;
-        for (int i = 0; i < nstates; i++){
-            if (w(i) < 0){
-                w(i) = 0;
-                ineg += 1;
-            }
-        }
-        if (ineg > 0){
-            double wnorm = w.sum();
-            w = (1/wnorm)*w;
-        }
-         */
-        Papprox.col(nstep) = w;
-        tnow = tnow + tstep;
-        nstep += 1;
-    }
-    
-    
-}
-
-void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, const int m) const {
+void EEMS2::calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &lambda, double L, double r) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -949,29 +788,41 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &la
     VectorXd x(30);
     
     computeWeights(w, x, r, L);
-
-    MatrixXd P(nstates, 30);
-    krylovProj(M, W, m, x, P);
-    VectorXd p(30);
     
-    int state;
-    for (int i = 0; i < o; i++){
-        for (int j = i; j < o; j++)
-        {
-            state = revLookup(i,j);
-            // estimate the probability mass function
-            p(0) = 0;
-            p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
-            // compute the integral
-            // 3e9 is genome size
-            lambda(i,j) = (3e9)*(w.dot(p));
-            //if (lambda(i,j) < 0){
-            //    throw std::exception();
-            //}
-            lambda(j,i) = lambda(i,j);
+    SelfAdjointEigenSolver<MatrixXd> es;
+    es.compute(M);
+    VectorXd eigenvalues = es.eigenvalues();
+    MatrixXd V = es.eigenvectors();
+    MatrixXd Dt(d, d);
+    MatrixXd p = MatrixXd::Zero(o,o);
+    MatrixXd P(d,d);
+    lambda.setZero();
+    
+    // To Do: clean up this code
+    for (int t = 0; t < x.size(); t++){
+        Dt = ((VectorXd)((eigenvalues.array() * x[t]).exp())).asDiagonal();
+        P = V*Dt*V.transpose();
+        for (int i = 0; i < o; i++){
+            for (int j = i; j < o; j++){
+                // make P.row(i) a column vector since W.array() is a column vector
+                // To do: Can vectorize this loop so p = ((MatrixXd) W'.array() * P.array()) * P^T
+                // where W' = [W; W; W; ... W]
+                p(i,j) = (W.array() * P.row(i).transpose().array() * P.row(j).transpose().array()).sum();
+     
+                //double temp = 0;
+                //for (int k = 0; k < d; k++){
+                //    temp += P(i,k)*P(j,k)*W(k);
+                //}
+                //p(i,j) = temp;
+                lambda(i,j) += p(i,j)*w(t);
+                lambda(j,i) = lambda(i,j);
+            }
         }
     }
     
+    // To do: use params.genomeSize
+    // 3e9 is genomeSize, should read it in
+    lambda = lambda*(3e9);
 }
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
@@ -1011,8 +862,10 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(alpha,beta) = 0.5 * pow(10.0, m_alpha) + 0.5 * pow(10.0, m_beta);
         M(beta,alpha) = M(alpha,beta);
     }
+    M.diagonal() = -1* M.rowwise().sum();
     // FOR TESTING ONLY
     
+
     /*
     M.setZero();
     W.setZero();
@@ -1021,23 +874,20 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     M(1,2) = M(2,1) = 0.099962;
     M(1,3) = M(3,1) = 0.099962;
     M(2,3) = M(3,2) = 0.099962;
-    M(2,4) = M(4,2) = 0.099962;
-    M(2,5) = M(5,2) = 0.099962;
-    M(3,5) = M(5,3) = 0.099962;
-    M(4,5) = M(5,4) = 0.099962;
+    M.diagonal() = -1* M.rowwise().sum();
 
     W(0) = 0.00005;
     W(1) = 0.00005;
     W(2) = 0.00005;
     W(3) = 0.00005;
-    W(4) = 0.01000;
-    W(5) = 0.00005;
-     */
+    */
 
     double r = 1e-8;
     MatrixXd lambda(o,o);
     double cutOff = 4e6;
-    calculateIntegral(M, W, lambda, cutOff, r, dimKrylov);
+    //clock_t begin_time = clock();
+    calculateIntegral(M, W, lambda, cutOff, r);
+    //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
     //cout << "OBSERVED:\n\n\n" << totalSharingM.array() / cMatrix.array() << endl;
     
@@ -1045,11 +895,15 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     cout << "Coalescent rates:\n" << W << endl;
     cout << "Average IBD:\n\n " << lambda << endl;
      */
-    
+ 
+    //cout << lambda << endl;
     //cout << "EXPECTED:\n\n\n" << lambda << endl;
 
     double logll = poisln(lambda, totalSharingM, cMatrix);
+    //double logll = -1;
+    //cout << logll << endl;
     if (logll != logll){
+        cout << "trouble with ll" << endl;
         throw std::exception();
     }
     return (logll);

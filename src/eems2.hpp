@@ -57,9 +57,7 @@ public:
                       const double df) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
                             VectorXd newqEffcts, double newmrateMu, double newdf) const;
-    void makeSparseMatrix(const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q) const;
-    void krylovProj(const MatrixXd &M, const VectorXd &W, const int m, VectorXd &times, MatrixXd &Papprox) const;
-    void calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, const int m) const;
+    void calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &lambda, double L, double r) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -103,7 +101,6 @@ public:
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
-    int revLookup(double i, double j) const;
     
 private:
     
@@ -116,8 +113,6 @@ private:
     int o; // number of observed demes
     int d; // total number of demes
     int n; // number of samples
-    int nstates; // number of states in the structured coalescent CTMC
-    int dimKrylov; // number of dimensions in krylov subspace
     MatrixXd totalSharingM; // observed means (for number of IBD blocks)
     MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts

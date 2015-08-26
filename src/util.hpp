@@ -69,20 +69,13 @@ public:
 };
 
 VectorXd split(const string &line);
-bool isdistmat(const MatrixXd &A);
-double logdet(const MatrixXd &A);
-double pseudologdet(const MatrixXd &A, const int rank);
-double pseudowishpdfln(const MatrixXd &X, const MatrixXd &Sigma, const int df);
 double mvgammaln(const double a, const int p);
-double wishpdfln(const MatrixXd &X, const MatrixXd &Sigma, const double df);
 double max(double a, double b);
 MatrixXd pairwise_distance(const MatrixXd &X, const MatrixXd &Y);
 MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void computeWeights(VectorXd &w, VectorXd &x, double L, double r);
-void padm(MatrixXd &H, MatrixXd &E);
-void swap(int &i, int &j);
-double poisln(const MatrixXd &Lambda, const MatrixXd &lambda, const MatrixXd &cMatrix);
+double poisln(const MatrixXd &lambda, const MatrixXd &totalSharingM, const MatrixXd &cMatrix);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);
