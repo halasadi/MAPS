@@ -17,10 +17,10 @@ hist(mmeans)
 hist(log(mvars))
 
 library(LearnBayes)
-cq = 0.001
-cw = 0.001
-dq = 1
-dm = 1
+cq = 0.001/2
+cw = 0.001/2
+dq = 1/2
+dm = 1/2
 D = rigamma(n = 10000, a = cq, b = dq)
 hist(log(D))
 

@@ -1,0 +1,41 @@
+Input parameter values:
+               datapath = ../test/data/popres/popres
+               mcmcpath = ../test/popres-EEMS2-test-sim
+               prevpath = 
+               gridpath = 
+               distance = euclidean
+                 nIndiv = 962
+                 nDemes = 20
+                   seed = 123
+            numMCMCIter = 1000000
+            numBurnIter = 500000
+            numThinIter = 1000
+              negBiSize = 2
+              negBiProb = 0.670000
+             qVoronoiPr = 0.500000
+             mrateShape = 0.001000
+             qrateShape = 0.001000
+             sigmaShape = 0.001000
+             qrateScale = 1.000000
+             mrateScale = 1.000000
+             sigmaScale = 1.000000
+       mSeedsProposalS2 = 0.500000
+       qSeedsProposalS2 = 0.500000
+       mEffctProposalS2 = 0.500000
+       qEffctProposalS2 = 0.500000
+      mrateMuProposalS2 = 10.000000
+      qrateMuProposalS2 = 10.000000
+
+Acceptance proportions:
+	(114459/124806) = 91.71% for type "qTileRate"
+	(98318/124759) = 78.81% for type "qTileMove"
+	(38217/124635) = 30.66% for type "qBirthDeath"
+	(83792/124691) = 67.20% for type "qMeanRate"
+	(115901/125458) = 92.38% for type "mTileRate"
+	(97908/125077) = 78.28% for type "mTileMove"
+	(33446/125470) = 26.66% for type "mBirthDeath"
+	(92742/125104) = 74.13% for type "mMeanRate"
+	(0/0) = nan% for type "d.f."
+
+Final log prior: -10.24
+Final log llike: -1.00
