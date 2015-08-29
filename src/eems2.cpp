@@ -281,7 +281,7 @@ void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( newqEffct >= -100 && newqEffct <= params.qEffctUpperBound) {
+    if ( newqEffct >= -10 && newqEffct <= params.qEffctUpperBound) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -303,7 +303,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( newmEffct >= -100 && newmEffct <= params.mEffctUpperBound) {
+    if ( newmEffct >= -10 && newmEffct <= params.mEffctUpperBound) {
         proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -321,7 +321,7 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on mrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    if ( newmrateMu <= params.mrateMuUpperBound && newmrateMu >= -100) {
+    if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= -10) {
         proposal.newpi = nowpi;
         proposal.newll = eval_proposal_overall_mrate(proposal);
     } else {
@@ -338,7 +338,7 @@ void EEMS2::propose_overall_qrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on qrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    if ( newqrateMu <= params.qrateMuUpperBound && newqrateMu >= -100) {
+    if (newqrateMu <= params.qrateMuUpperBound && newqrateMu >= -10) {
         proposal.newpi = nowpi;
         proposal.newll = eval_proposal_overall_qrate(proposal);
     } else {
@@ -596,7 +596,9 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0, nowqEffcts(t)));
+        //mcmcqRates.push_back(pow(10.0, nowqEffcts(t)));
+        // OUTPUT ON LOG SCALE -- NEED TO CHANGE
+        mcmcqRates.push_back(nowqEffcts(t));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -605,7 +607,9 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0, nowmEffcts(t)));
+        //mcmcmRates.push_back(pow(10.0, nowmEffcts(t)));
+        // OUTPUT ON LOG SCALE -- NEED TO CHANGE
+        mcmcmRates.push_back(nowmEffcts(t));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -637,31 +641,31 @@ bool EEMS2::output_current_state( ) const {
     */
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmrateMu << " " << nowmrateS2 << endl;
+    out << fixed << setprecision(10) << nowmrateMu << " " << nowmrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqrateMu << " " << nowqrateS2 << endl;
+    out << fixed << setprecision(10) << nowqrateMu << " " << nowqrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowpi << " " << nowll << endl;
+    out << fixed << setprecision(10) << nowpi << " " << nowll << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmEffcts << endl;
+    out << fixed << setprecision(10) << nowmEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmSeeds << endl;
+    out << fixed << setprecision(10) << nowmSeeds << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqEffcts << endl;
+    out << fixed << setprecision(10) << nowqEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqSeeds << endl;
+    out << fixed << setprecision(10) << nowqSeeds << endl;
     out.close( );
     return(error);
 }
@@ -694,19 +698,19 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     out.close( );
     out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(6) << mcmcthetas << endl;
+    out << fixed << setprecision(10) << mcmcthetas << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(6) << mcmcqhyper << endl;
+    out << fixed << setprecision(10) << mcmcqhyper << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(6) << mcmcmhyper << endl;
+    out << fixed << setprecision(10) << mcmcmhyper << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(6) << mcmcpilogl << endl;
+    out << fixed << setprecision(10) << mcmcpilogl << endl;
     out.close( );
     error = dlmcell(params.mcmcpath + "/mcmcmrates.txt",mcmcmtiles,mcmcmRates); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcxcoord.txt",mcmcmtiles,mcmcxCoord); if (error) { return(error); }
@@ -754,16 +758,14 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     for ( int i = 0 ; i < mtiles ; i++ ) {
         if (!habitat.in_point(mSeeds(i,0),mSeeds(i,1))) { inrange = false; }
     }
-    //if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
-    //if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
-    if (qEffcts.minCoeff() < -100 || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
-    if (mEffcts.minCoeff() < -100 || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
-    if (mrateMu>params.mrateMuUpperBound || mrateMu < -100) { inrange = false; }
-    if (qrateMu>params.qrateMuUpperBound || qrateMu < -100) { inrange = false; }
+    
+    if (qEffcts.minCoeff() < -10 || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
+    if (mEffcts.minCoeff() < -10 || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
+    if (mrateMu>params.mrateMuUpperBound || mrateMu < -10) { inrange = false; }
+    if (qrateMu>params.qrateMuUpperBound || qrateMu < -10) { inrange = false; }
     if ((df<params.dfmin) || (df>params.dfmax)) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
-    // remove df when done
     double logpi =
     + dnegbinln(mtiles,params.negBiSize,params.negBiProb)
     + dnegbinln(qtiles,params.negBiSize,params.negBiProb)
@@ -863,9 +865,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(beta,alpha) = M(alpha,beta);
     }
     M.diagonal() = -1* M.rowwise().sum();
-    // FOR TESTING ONLY
     
-
+    // FOR TESTING ONLY
     /*
     M.setZero();
     W.setZero();
@@ -896,12 +897,10 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     cout << "Average IBD:\n\n " << lambda << endl;
      */
  
-    //cout << lambda << endl;
     //cout << "EXPECTED:\n\n\n" << lambda << endl;
 
-    double logll = poisln(lambda, totalSharingM, cMatrix);
-    //double logll = -1;
-    //cout << logll << endl;
+    //double logll = poisln(lambda, totalSharingM, cMatrix);
+    double logll = -1;
     if (logll != logll){
         cout << "trouble with ll" << endl;
         throw std::exception();

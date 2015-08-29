@@ -13,8 +13,9 @@ plotpath <- 'plots'
 mcmcpath <- 'popres-EEMS2-test-sim'
 longlat <- FALSE
 
-
-eems.plots(mcmcpath,plotpath,longlat,
-           add.map=TRUE, lwd.map = 1, col.map = "black",
-           add.grid=TRUE, add.demes = TRUE, projection.in = '+proj=longlat +datum=WGS84', plot.height = 5, plot.width = 7)
-
+mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
+                                                     add.map=TRUE, add.demes=TRUE,
+                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
+                                                     lwd.map=2, col.map = "black",
+                                                     plot.height=8, plot.width=14, 
+                                                     projection.in = "+proj=longlat +datum=WGS84"))

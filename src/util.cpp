@@ -31,7 +31,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.001), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.05), "qVoronoiPr")
+        ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
         ("sigmaShape", po::value<double>(&sigmaShape_2)->default_value(0.001), "sigmaShape")
@@ -55,16 +55,19 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     sigmaScale_2 /= 2.0;
+
     dfmin = nIndiv;
     dfmax = 1e6;
     testing = false;
+
+    
     
     // let's assume a maximum population size of 2N = 500
     // and maximum migration rate of m = 0.1. Remember, rates are paramterized on the log scale
-    mEffctUpperBound = -3; // log10(0.001)
-    qEffctUpperBound = -5; // log10(0.00001)
-    mrateMuUpperBound = -1; // log10(0.1)
-    qrateMuUpperBound = -3; // log10(0.001)
+    mEffctUpperBound = -0.301; // log10(0.5)
+    qEffctUpperBound = -2.3; // log10(0.005)
+    mrateMuUpperBound = -0.301; // log10(0.5)
+    qrateMuUpperBound = -2.3; // log10(0.005)
     
     //mEffctHalfInterval = 2.0;
     //qEffctHalfInterval = 0.1;
@@ -400,12 +403,12 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  */
 double dtrnormln(const double x, const double mu, const double sigma2, const double upperBnd) {
     double pln = -Inf;
-    // -100 is the lower bound
-    if ( (sigma2>0) && (x>=-100) && (x<=upperBnd)) {
+    // -10 is the lower bound
+    if ( (sigma2>0) && (x>=-10) && (x<=upperBnd)) {
         boost::math::normal pnorm(mu,sqrt(sigma2));
         pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
-        // CHECK
-        - log(cdf(pnorm,upperBnd) - cdf(pnorm,-100));
+        // CHECK THIS
+        - log(cdf(pnorm,upperBnd) - cdf(pnorm,-10));
     }
     return (pln);
 }

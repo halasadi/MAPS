@@ -29,9 +29,9 @@ double Draw::rtrnorm(const double mu, const double var, const double upperBnd) {
   //  forces the x to be initialized outside the range. So it will have to enter the loop and call
   //  randraw(rnorm) at least once.
     
-    // lower bound is -100
-    double x = -100 - 1.0;
-    while ((x< -100) || (x>upperBnd)) { x = randraw(rnorm); }
+    // lower bound is -10
+    double x = -10 - 1.0;
+    while ((x< -10) || (x>upperBnd)) { x = randraw(rnorm); }
     return (x);
 }  
 double Draw::rinvgam(const double shape, const double scale) {
