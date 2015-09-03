@@ -1,7 +1,7 @@
 
 #include "util.hpp"
 
-// NEED TO DELETE THE SIGMA SCALE STUFF
+// NEED TO DELETE THE SIGMA SCALE STUFF???
 
 extern string dist_metric;
 
@@ -64,15 +64,15 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     // let's assume a maximum population size of 2N = 500
     // and maximum migration rate of m = 0.1. Remember, rates are paramterized on the log scale
-    mEffctUpperBound = -0.301; // log10(0.5)
-    qEffctUpperBound = -2.3; // log10(0.005)
     mrateMuUpperBound = -0.301; // log10(0.5)
     qrateMuUpperBound = -2.3; // log10(0.005)
     
-    //mEffctHalfInterval = 2.0;
-    //qEffctHalfInterval = 0.1;
-    //mrateMuHalfInterval = 2.4771; // log10(300)
-    //qrateMuHalfInterval = 2.4711;
+    mrateMuLowerBound = -10.0;
+    qrateMuLowerBound = -10.0;
+    
+    // this is a too wide for eems2
+    mEffctHalfInterval = 0.5;
+    qEffctHalfInterval = 0.5;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -401,14 +401,12 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
  */
-double dtrnormln(const double x, const double mu, const double sigma2, const double upperBnd) {
+double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {
     double pln = -Inf;
-    // -10 is the lower bound
-    if ( (sigma2>0) && (x>=-10) && (x<=upperBnd)) {
+    if ( (sigma2>0) && (x>=-bnd) && (x<=bnd) ) {
         boost::math::normal pnorm(mu,sqrt(sigma2));
         pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
-        // CHECK THIS
-        - log(cdf(pnorm,upperBnd) - cdf(pnorm,-10));
+        - log(cdf(pnorm,bnd) - cdf(pnorm,-bnd));
     }
     return (pln);
 }

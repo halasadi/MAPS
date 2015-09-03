@@ -52,8 +52,8 @@ public:
     long seed;
     bool diploid, testing;
     string datapath, mcmcpath, prevpath, gridpath;
-    //double qEffctHalfInterval, mEffctHalfInterval, mrateMuHalfInterval, qrateMuHalfInterval;
-    double mEffctUpperBound, qEffctUpperBound, mrateMuUpperBound, qrateMuUpperBound;
+    double qEffctHalfInterval, mEffctHalfInterval;
+    double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
     double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;

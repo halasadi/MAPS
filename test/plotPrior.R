@@ -17,10 +17,8 @@ hist(mmeans)
 hist(log(mvars))
 
 library(LearnBayes)
-cq = 0.001/2
-cw = 0.001/2
+cq = 4/2
 dq = 1/2
-dm = 1/2
 D = rigamma(n = 10000, a = cq, b = dq)
 hist(log(D))
 
@@ -50,8 +48,7 @@ pqvals = vector()
 for (i in 1:length(mcmcqrates)){
   for (j in 1:length(mcmcqrates[[i]])){
     #pqvals = c(pqvals, dnorm(log10(mcmcqrates[[i]][j]), mean = qmeans[i], sd = sqrt(qvars[i])))
-    pqvals = c(pqvals, dnorm(mcmcqrates[[i]][j], mean = qmeans[i], sd = sqrt(qvars[i])))
-    
+    pqvals = c(pqvals, 1-pnorm(mcmcqrates[[i]][j], mean = qmeans[i], sd = sqrt(qvars[i])))
   }
 }
 
@@ -59,9 +56,8 @@ for (i in 1:length(mcmcqrates)){
 pmvals = vector()
 for (i in 1:length(mcmcmrates)){
   for (j in 1:length(mcmcmrates[[i]])){
-    print(log10(mcmcmrates[[i]][j]))
     #pmvals = c(pmvals, dnorm(log10(mcmcmrates[[i]][j]), mean = mmeans[i], sd = sqrt(mvars[i])))
-    pmvals = c(pmvals, dnorm(mcmcmrates[[i]][j], mean = mmeans[i], sd = sqrt(mvars[i])))
+    pmvals = c(pmvals, 1-pnorm(mcmcmrates[[i]][j], mean = mmeans[i], sd = sqrt(mvars[i])))
     
   }
 }

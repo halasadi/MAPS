@@ -37,6 +37,7 @@ int main(int argc, char** argv)
         // Specify the distance metric in the params.ini file
         dist_metric = params.distance;
         
+        
         EEMS2 eems2(params);
         MCMC mcmc(params);
         
