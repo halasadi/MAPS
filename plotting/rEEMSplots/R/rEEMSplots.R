@@ -242,7 +242,7 @@ read.graph <- function(path,longlat) {
         file.exists(paste(path,'/outer.txt',sep=''))) {
         eems.output <- TRUE
     } else if (file.exists(paste(path,'.coord',sep='')) &&
-               file.exists(paste(path,'.diffs',sep='')) &&
+               file.exists(paste(path,'.sims',sep='')) &&
                file.exists(paste(path,'.outer',sep=''))) {
         eems.output <- FALSE
     }
@@ -312,9 +312,16 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates) {
 }
 standardize.rates <- function(mcmcpath,dimns,longlat,is.mrates) {
     voronoi <- read.voronoi(mcmcpath,longlat,is.mrates)
+    #print(paste0("Voronoi rates are: ", voronoi$rates))
     rates <- voronoi$rates
+    #print(paste0("Voronoi tiles are: ", voronoi$tiles))
+
     tiles <- voronoi$tiles
+    #print(paste0("Voronoi xseeds are: ", voronoi$xseed))
+
     xseed <- voronoi$xseed
+    #print(paste0("Voronoi yseeds are: ", voronoi$yseed))
+
     yseed <- voronoi$yseed
     Zvals <- .Call("rEEMSplots__rcppstandardize_rates", PACKAGE = "rEEMSplots",
                    tiles, rates, xseed, yseed, dimns$marks, dimns$nmrks, dimns$dist.metric)

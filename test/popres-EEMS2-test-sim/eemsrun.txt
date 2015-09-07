@@ -5,7 +5,7 @@ Input parameter values:
                gridpath = 
                distance = euclidean
                  nIndiv = 962
-                 nDemes = 20
+                 nDemes = 80
                    seed = 123
             numMCMCIter = 1000000
             numBurnIter = 500000
@@ -27,15 +27,15 @@ Input parameter values:
       qrateMuProposalS2 = 0.001000
 
 Acceptance proportions:
-	(52279/125114) = 41.79% for type "qTileRate"
-	(65332/125008) = 52.26% for type "qTileMove"
-	(4476/125349) = 3.57% for type "qBirthDeath"
-	(20919/124870) = 16.75% for type "qMeanRate"
-	(38918/124558) = 31.24% for type "mTileRate"
-	(56237/124892) = 45.03% for type "mTileMove"
-	(5642/125416) = 4.50% for type "mBirthDeath"
-	(14455/124793) = 11.58% for type "mMeanRate"
+	(60470/125425) = 48.21% for type "qTileRate"
+	(39200/124937) = 31.38% for type "qTileMove"
+	(4171/124994) = 3.34% for type "qBirthDeath"
+	(21076/124803) = 16.89% for type "qMeanRate"
+	(45312/125207) = 36.19% for type "mTileRate"
+	(30373/125125) = 24.27% for type "mTileMove"
+	(8048/125119) = 6.43% for type "mBirthDeath"
+	(14700/124390) = 11.82% for type "mMeanRate"
 	(0/0) = nan% for type "d.f."
 
-Final log prior: 6.64
-Final log llike: -48046.01
+Final log prior: 9.83
+Final log llike: -47881.65

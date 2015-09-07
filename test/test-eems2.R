@@ -5,12 +5,15 @@
 #} else {
 #  stop("Move to the directory that contains the rEEMSplots source to install the package.")
 #}
-
+#detach("package:rEEMSplots", unload=TRUE)
+#install.packages("../plotting/rEEMSplots", repos=NULL, type="source")
 library("rEEMSplots")
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-plotpath <- 'plots'
-mcmcpath <- 'popres-EEMS2-test-sim'
+#plotpath <- 'plots'
+#mcmcpath <- 'popres-EEMS2-test-sim'
+plotpath <- 'data/3x4_barrier/plot'
+mcmcpath <- 'data/3x4_barrier/3x4_barrier-EEMS2-test-sim'
 longlat <- FALSE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
@@ -19,3 +22,4 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      lwd.map=2, col.map = "black",
                                                      plot.height=8, plot.width=14, 
                                                      projection.in = "+proj=longlat +datum=WGS84"))
+

@@ -43,14 +43,12 @@ void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, Vector
 
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
-    MatrixXd Sims = readMatrixXd(params.datapath + ".diffs");
-    cout << Sims.rows() << endl;
-    cout << Sims.cols() << endl;
+    MatrixXd Sims = readMatrixXd(params.datapath + ".sims");
     if ((Sims.rows()!=n)||(Sims.cols()!=n)) {
-        cerr << "  Error reading similarities matrix " << params.datapath + ".diffs" << endl
+        cerr << "  Error reading similarities matrix " << params.datapath + ".sims" << endl
         << "  Expect a " << n << "x" << n << " matrix of pairwise similarities" << endl; exit(1);
     }
-    cerr << "  Loaded similarities matrix from " << params.datapath + ".diffs" << endl;
+    cerr << "  Loaded similarities matrix from " << params.datapath + ".sims" << endl;
     
     cerr << "[Sims::initialize] Done." << endl << endl;
     
@@ -58,7 +56,7 @@ void EEMS2::initialize_sims( ) {
     
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
-    totalSharingM = MatrixXd::Zero(o, o);
+    ibdMatrix = MatrixXd::Zero(o, o);
     int demei;
     int demej;
     // all (n choose 2) comparisons at the individual level
@@ -68,8 +66,8 @@ void EEMS2::initialize_sims( ) {
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += 1;
             cMatrix(demej, demei) += 1;
-            totalSharingM(demei, demej) += Sims(i,j);
-            totalSharingM(demej, demei) = totalSharingM(demei, demej);
+            ibdMatrix(demei, demej) += Sims(i,j);
+            ibdMatrix(demej, demei) = ibdMatrix(demei, demej);
         }
     }
     for ( int i = 0 ; i < n ; i ++ ) {
@@ -647,31 +645,31 @@ bool EEMS2::output_current_state( ) const {
     */
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowmrateMu << " " << nowmrateS2 << endl;
+    out << fixed << setprecision(14) << nowmrateMu << " " << nowmrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowqrateMu << " " << nowqrateS2 << endl;
+    out << fixed << setprecision(14) << nowqrateMu << " " << nowqrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowpi << " " << nowll << endl;
+    out << fixed << setprecision(14) << nowpi << " " << nowll << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowmEffcts << endl;
+    out << fixed << setprecision(14) << nowmEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowmSeeds << endl;
+    out << fixed << setprecision(14) << nowmSeeds << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowqEffcts << endl;
+    out << fixed << setprecision(14) << nowqEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(10) << nowqSeeds << endl;
+    out << fixed << setprecision(14) << nowqSeeds << endl;
     out.close( );
     return(error);
 }
@@ -696,27 +694,27 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
      */
     out.open((params.mcmcpath + "/mcmcqtiles.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << mcmcqtiles << endl;
+    out << fixed << setprecision(14) << mcmcqtiles << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcmtiles.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << mcmcmtiles << endl;
+    out << fixed << setprecision(14) << mcmcmtiles << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(10) << mcmcthetas << endl;
+    out << fixed << setprecision(14) << mcmcthetas << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(10) << mcmcqhyper << endl;
+    out << fixed << setprecision(14) << mcmcqhyper << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(10) << mcmcmhyper << endl;
+    out << fixed << setprecision(14) << mcmcmhyper << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    out << fixed << setprecision(10) << mcmcpilogl << endl;
+    out << fixed << setprecision(14) << mcmcpilogl << endl;
     out.close( );
     error = dlmcell(params.mcmcpath + "/mcmcmrates.txt",mcmcmtiles,mcmcmRates); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcxcoord.txt",mcmcmtiles,mcmcxCoord); if (error) { return(error); }
@@ -804,7 +802,7 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &la
     MatrixXd P(d,d);
     lambda.setZero();
     
-    // To Do: clean up this code
+    // To Do: Vectorize this code
     for (int t = 0; t < x.size(); t++){
         Dt = ((VectorXd)((eigenvalues.array() * x[t]).exp())).asDiagonal();
         P = V*Dt*V.transpose();
@@ -826,8 +824,6 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &la
         }
     }
     
-    // To do: use params.genomeSize
-    // 3e9 is genomeSize, should read it in
     lambda = lambda*(3e9);
 }
 
@@ -852,7 +848,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         W(alpha) = pow(10.0,log10q_alpha);
     }
     
-    // To Do: make this a sparse matrix to save space
     MatrixXd M = MatrixXd::Zero(d,d);
     int alpha, beta;
     // Transform the log10 migration parameters into migration rates on the original scale
@@ -883,22 +878,22 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     */
 
     double r = 1e-8;
-    MatrixXd lambda(o,o);
+    MatrixXd expectedIBD(o,o);
     double cutOff = 4e6;
     //clock_t begin_time = clock();
-    calculateIntegral(M, W, lambda, cutOff, r);
+    calculateIntegral(M, W, expectedIBD, cutOff, r);
     //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
-    //cout << "OBSERVED:\n\n\n" << totalSharingM.array() / cMatrix.array() << endl;
+    //cout << "OBSERVED:\n\n\n" << ibdMatrix.array() / cMatrix.array() << endl;
     
     /*cout << "Migration:\n" << M << endl;
     cout << "Coalescent rates:\n" << W << endl;
-    cout << "Average IBD:\n\n " << lambda << endl;
+    cout << "Average IBD:\n\n " << expectedIBD << endl;
      */
  
-    //cout << "EXPECTED:\n\n\n" << lambda << endl;
+    //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
 
-    double logll = poisln(lambda, totalSharingM, cMatrix);
+    double logll = poisln(expectedIBD, ibdMatrix, cMatrix);
     //double logll = -1;
     if (logll != logll){
         cout << "trouble with ll" << endl;

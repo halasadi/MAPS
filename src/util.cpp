@@ -12,7 +12,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         po::options_description eems_options("EEMS options from parameter file");
         eems_options.add_options()
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
-        ("datapath", po::value<string>(&datapath)->required(), "Path to coord/diffs/outer files")
+        ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
@@ -55,7 +55,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     sigmaScale_2 /= 2.0;
-
+    
     dfmin = nIndiv;
     dfmax = 1e6;
     testing = false;
@@ -69,10 +69,10 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
-    
-    // this is a too wide for eems2
-    mEffctHalfInterval = 0.5;
-    qEffctHalfInterval = 0.5;
+
+    // Ensure that mrateMuUpperBound + mEffectHalfInterval <= 0 so rates are between 0 and 1.
+    mEffctHalfInterval = 0.301;
+    qEffctHalfInterval = 2.0;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -89,7 +89,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "            numBurnIter = " << params.numBurnIter << endl
     << "            numThinIter = " << params.numThinIter << endl
     << "              negBiSize = " << params.negBiSize << endl
-    << fixed << setprecision(6)
+    << fixed << setprecision(10)
     << "              negBiProb = " << params.negBiProb << endl
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
     << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
@@ -126,9 +126,9 @@ bool Params::check_input_params( ) const {
         error = true;
     }
     if (!boost::filesystem::exists(datapath + ".coord") ||
-        !boost::filesystem::exists(datapath + ".diffs") ||
+        !boost::filesystem::exists(datapath + ".sims") ||
         !boost::filesystem::exists(datapath + ".outer")) {
-        cerr << "  Failed to find input files " << datapath << ".coord/diffs/outer" << endl;
+        cerr << "  Failed to find input files " << datapath << ".coord/sims/outer" << endl;
         error = true;
     }
     if (!gridpath.empty() &&
@@ -158,6 +158,7 @@ bool Params::check_input_params( ) const {
         << " genomeSize = " << genomeSize << endl;
         error = true;
     }
+     
     
     if (cutOff > genomeSize){
         cerr << "  Error with IBD cut off: " << endl
@@ -214,19 +215,19 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double poisln(const MatrixXd &lambda, const MatrixXd &totalSharingM, const MatrixXd &cMatrix){
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const MatrixXd &cMatrix){
     double ll = 0;
     double epsilon = 1e-8;
-    int n = lambda.rows();
-    double lam;
+    int n = expectedIBD.rows();
+    double lamda;
     for (int i = 0; i < n; i++){
         for (int j = i; j < n; j++){
-            if (lambda(i,j) < epsilon){
-                lam = epsilon;
+            if (expectedIBD(i,j) < epsilon){
+                lamda = epsilon;
             } else{
-                lam = lambda(i,j);
+                lamda = expectedIBD(i,j);
             }
-            ll += totalSharingM(i,j)*log(lam)-cMatrix(i,j)*lam;
+            ll += observedIBD(i,j)*log(lamda)-cMatrix(i,j)*lamda;
         }
     }
     return(ll);
@@ -313,7 +314,7 @@ bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double>
     vector<double>::const_iterator it = array.begin();
     for ( int i = 0 ; i < sizes.size() ; i++ ) {
         for ( int j = 0 ; j < sizes(i) ; j++ ) {
-            out << fixed << setprecision(6) << *it << " "; it++;
+            out << fixed << setprecision(14) << *it << " "; it++;
         }
         out << endl;
     }

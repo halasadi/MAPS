@@ -113,7 +113,7 @@ private:
     int o; // number of observed demes
     int d; // total number of demes
     int n; // number of samples
-    MatrixXd totalSharingM; // observed means (for number of IBD blocks)
+    MatrixXd ibdMatrix; // observed means (for number of IBD blocks)
     MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
 
