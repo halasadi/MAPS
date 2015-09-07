@@ -74,7 +74,7 @@ double max(double a, double b);
 MatrixXd pairwise_distance(const MatrixXd &X, const MatrixXd &Y);
 MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
-void computeWeights(VectorXd &w, VectorXd &x, double L, double r);
+void getWeights(VectorXd &w, VectorXd &x);
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const MatrixXd &cMatrix);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);

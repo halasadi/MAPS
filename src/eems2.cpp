@@ -50,8 +50,6 @@ void EEMS2::initialize_sims( ) {
     }
     cerr << "  Loaded similarities matrix from " << params.datapath + ".sims" << endl;
     
-    cerr << "[Sims::initialize] Done." << endl << endl;
-    
     // the number of comparisons for each deme.
     
     cMatrix = MatrixXd::Zero(o,o);
@@ -74,6 +72,10 @@ void EEMS2::initialize_sims( ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
     
+    cerr << "Observed IBD matrix:\n" << ibdMatrix <<  endl;
+    
+    cerr << "[Sims::initialize] Done." << endl << endl;
+
 }
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
@@ -89,16 +91,10 @@ void EEMS2::initialize_state( ) {
     nowqrateS2 = draw.rinvgam(0.5,0.5);
     
     // Assign migration rates to the Voronoi tiles
-    //double lowerBound = -10;
-    //nowmrateMu = lowerBound + draw.runif() * (params.mrateMuUpperBound - lowerBound);
-    //nowqrateMu = lowerBound + draw.runif() * (params.qrateMuUpperBound - lowerBound);
-    
     nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
     nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     // Assign rates to the Voronoi tiles
-    //nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(nowqrateMu, nowqrateS2, params.qEffctUpperBound, nowqEffcts);
-    //nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(nowmrateMu, nowmrateS2, params.mEffctUpperBound, nowmEffcts);
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
     nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,nowmrateS2,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
@@ -117,13 +113,6 @@ void EEMS2::load_final_state( ) {
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
     nowmtiles = tempi(0,0);
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
-    tempi = readMatrixXd(params.prevpath + "/lastthetas.txt");
-    if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
-    nowdf = tempi(0,0);
-    tempi = readMatrixXd(params.prevpath + "/lastdfpars.txt");
-    if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
-    params.dfmin = tempi(0,0);
-    params.dfmax = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastqhyper.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
     nowqrateS2 = tempi(0,0);
@@ -172,7 +161,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmcpilogl = MatrixXd::Zero(niters,2);
     mcmcmtiles = VectorXd::Zero(niters);
     mcmcqtiles = VectorXd::Zero(niters);
-    mcmcthetas = VectorXd::Zero(niters);
+    //mcmcthetas = VectorXd::Zero(niters);
     mcmcmRates.clear();
     mcmcqRates.clear();
     mcmcxCoord.clear();
@@ -255,6 +244,8 @@ double EEMS2::eval_proposal_move_one_mtile(Proposal &proposal) const {
 double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
 }
+
+// THIS IS A REMNANT OF EEMS1 - NOT USED ANYMORE
 void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
@@ -412,13 +403,10 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
           - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-        //proposal.newratioln = log(pDeath/pBirth)
-        //- dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctUpperBound);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        // CHECK
                         + log((nowqtiles+params.negBiSize)/(newqtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowqtiles==2) { pBirth = 1.0; }
@@ -434,13 +422,10 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         proposal.newratioln = log(pBirth/pDeath)
           + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
         
-        //proposal.newratioln = log(pBirth/pDeath)
-        //+ dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctUpperBound);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        // CHECK
                          + log((nowqtiles/params.negBiProb)/(newqtiles+params.negBiSize));
     }
     proposal.move = Q_VORONOI_BIRTH_DEATH;
@@ -467,13 +452,10 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
           - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-        //proposal.newratioln = log(pDeath/pBirth)
-        //- dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctUpperBound);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        // CHECK
                         + log((nowmtiles+params.negBiSize)/(newmtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowmtiles==2) { pBirth = 1.0; }
@@ -488,13 +470,10 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
           + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-        //proposal.newratioln = log(pBirth/pDeath)
-        //+ dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctUpperBound);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        // CHECK
                         + log((nowmtiles/params.negBiProb)/(newmtiles+params.negBiSize));
     }
     proposal.move = M_VORONOI_BIRTH_DEATH;
@@ -600,10 +579,9 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcpilogl(iter,1) = nowll;
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
-    mcmcthetas(iter) = nowdf;
+    //mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
-        //mcmcqRates.push_back(nowqEffcts(t) + nowqrateMu);
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -613,7 +591,6 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcmRates.push_back(pow(10.0,nowmEffcts(t) + nowmrateMu));
-        //mcmcmRates.push_back(nowmEffcts(t) + nowmrateMu);
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -632,17 +609,6 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << nowmtiles << endl;
     out.close( );
-    /*out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
-    if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowdf << endl;
-    out.close( );
-    */
-    /*
-    out.open((params.mcmcpath + "/lastdfpars.txt").c_str(),ofstream::out);
-    if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << params.dfmin << " " << params.dfmax << endl;
-    out.close( );
-    */
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(14) << nowmrateMu << " " << nowmrateS2 << endl;
@@ -700,10 +666,10 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcmtiles << endl;
     out.close( );
-    out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
-    if (!out.is_open()) { return false; }
-    out << fixed << setprecision(14) << mcmcthetas << endl;
-    out.close( );
+    //out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
+    //if (!out.is_open()) { return false; }
+    //out << fixed << setprecision(14) << mcmcthetas << endl;
+    //out.close( );
     out.open((params.mcmcpath + "/mcmcqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcqhyper << endl;
@@ -784,25 +750,35 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &lambda, double L, double r) const {
+void EEMS2::calculateIntegral(MatrixXd &M, const VectorXd &W, MatrixXd &expectedIBD, double L, double r) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
     // abisca for the gaussian quadrature
     VectorXd x(30);
     
-    computeWeights(w, x, r, L);
+    getWeights(w, x);
     
+    // integral_0^{\inf} 2rte^(-2trL)f(t) = (1/L^2) \integral_0^{\inf} f(u/2rL) ue^(-u)
+    w = w*(1/(L*2*r*L));
+    x = x/(2*r*L);
+    
+    // Make M into a rate matrix
+    M.diagonal() = -1* M.rowwise().sum();
+    
+    // eigen decompositon
     SelfAdjointEigenSolver<MatrixXd> es;
     es.compute(M);
     VectorXd eigenvalues = es.eigenvalues();
     MatrixXd V = es.eigenvectors();
+    
     MatrixXd Dt(d, d);
     MatrixXd p = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
-    lambda.setZero();
+    expectedIBD.setZero();
     
-    // To Do: Vectorize this code
+    // To Do: Vectorize and simplify this code
+    
     for (int t = 0; t < x.size(); t++){
         Dt = ((VectorXd)((eigenvalues.array() * x[t]).exp())).asDiagonal();
         P = V*Dt*V.transpose();
@@ -818,13 +794,14 @@ void EEMS2::calculateIntegral(const MatrixXd &M, const VectorXd &W, MatrixXd &la
                 //    temp += P(i,k)*P(j,k)*W(k);
                 //}
                 //p(i,j) = temp;
-                lambda(i,j) += p(i,j)*w(t);
-                lambda(j,i) = lambda(i,j);
+                expectedIBD(i,j) += p(i,j)*w(t);
+                expectedIBD(j,i) = expectedIBD(i,j);
             }
         }
     }
     
-    lambda = lambda*(3e9);
+    // read in genome size
+    expectedIBD = expectedIBD*(3e9);
 }
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
@@ -858,7 +835,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
         M(beta,alpha) = M(alpha,beta);
     }
-    M.diagonal() = -1* M.rowwise().sum();
     
     // FOR TESTING ONLY
     /*
@@ -880,17 +856,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double r = 1e-8;
     MatrixXd expectedIBD(o,o);
     double cutOff = 4e6;
+    
     //clock_t begin_time = clock();
     calculateIntegral(M, W, expectedIBD, cutOff, r);
     //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
     //cout << "OBSERVED:\n\n\n" << ibdMatrix.array() / cMatrix.array() << endl;
-    
-    /*cout << "Migration:\n" << M << endl;
-    cout << "Coalescent rates:\n" << W << endl;
-    cout << "Average IBD:\n\n " << expectedIBD << endl;
-     */
- 
     //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
 
     double logll = poisln(expectedIBD, ibdMatrix, cMatrix);

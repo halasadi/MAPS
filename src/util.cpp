@@ -443,7 +443,7 @@ double max(double a, double b){
     return(b);
 }
 
-void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
+void getWeights(VectorXd &w, VectorXd &x){
     // REQUIRES: w and x vectors of length 30, r is recombination rate, and L (in base pairs) of cutoff.
     // MODIFIES: w and x
     // EFFECTS: x will contain the x-values telling you where to evaluate P(T_mrca = x); w will contains the weights
@@ -467,7 +467,4 @@ void computeWeights(VectorXd &w, VectorXd &x, double r, double L){
     9.51695437836864011982E-25, 1.69046847745875738033E-27, 1.39738002075239812243E-30, 4.20697826929603166432E-34,
     2.89826026866498969507E-38, 1.411587124593531584E-43;
     
-    // integral_0^{\inf} 2rte^(-2trL)f(t) = (1/L^2) \integral_0^{\inf} f(u/2rL) ue^(-u)
-    w = w*(1/(L*2*r*L));
-    x = x/(2*r*L);
 }

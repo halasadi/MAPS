@@ -269,7 +269,6 @@ bool Graph::read_input_grid(const string &datapath, MatrixXd &DemeCoord, MatrixX
     if (DemeCoord.cols()!=2) { return (false); }
     // Read the connected pairs of demes
     MatrixXd tempi = readMatrixXd(datapath + ".edges");
-    cout << tempi << endl;
     if (tempi.cols()!=2) { exit(1); }
     DemePairs = tempi.cast<int>();
     DemePairs = DemePairs.array() - 1;

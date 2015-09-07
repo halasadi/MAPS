@@ -12,8 +12,8 @@ library("rEEMSplots")
 ## mcmcpath is a list of three output directories; the results will be averaged
 #plotpath <- 'plots'
 #mcmcpath <- 'popres-EEMS2-test-sim'
-plotpath <- 'data/3x4_barrier/plot'
-mcmcpath <- 'data/3x4_barrier/3x4_barrier-EEMS2-test-sim'
+plotpath <- 'data/3x4_uniform/plot'
+mcmcpath <- 'data/3x4_uniform/3x4_uniform-EEMS2-test-sim'
 longlat <- FALSE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
