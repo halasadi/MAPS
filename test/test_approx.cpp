@@ -8,7 +8,7 @@ using namespace Eigen;
 #include <ctime>
 #include <vector>
 
-const int nrow = 3;
+const int nrow = 4;
 const int ncol = 4;
 // total number of nodes
 const int ndemes = nrow*ncol;
@@ -121,33 +121,87 @@ void padm(MatrixXd &H, MatrixXd &E){
 }
 
 
-
-
-void krylovProj(MatrixXd &H, MatrixXd &Q, const MatrixXd &M, const int m) {
-    // REQUIRES: dimKrylov < nstates, Q.col(0) be the initial krylov basis vector
-    // MODIFIES: H, Q
-    // EFFECTS: krylov projection of the rate matrix,e.g. if  A is rate matrix then
-    // finds the decomposition A=Q'HQ
-    
-    // set up storage
-    H.setZero();
-    VectorXd z(ndemes);
-    
-    // Arnoldi iteration
-    for (int k = 1; k < m; k++){
-        z = M*Q.col(k-1);
-        for (int i = 0; i < k; i++){
-            H(i, k-1) = Q.col(i).dot(z);
-            z = z - H(i, k-1) * Q.col(i);
+// For testing purposes only
+// order goes like this for 2 deme model:
+// (1,1) -> 0
+// (1,2) -> 1
+// (2,2) -> 2
+// C     -> 3
+// Lookup and revLookup is just to go from (i,j) <-> k
+void makeFullMatrix(const vector<node> &nodes, const MatrixXd &M, const MatrixXd &W, MatrixXd &Q){
+    int index;
+    node demei;
+    node demej;
+    int neighbor;
+    Q.setZero();
+    // i < (nstates-1) because the last row of Q is all zeros
+    for (int i = 0; i < (nstates-1); i++){
+        demei = nodes[lookup[i][0]];
+        demej = nodes[lookup[i][1]];
+        
+        // fix deme i and look at all the possble demes lineage i can go to (fix lineage j).
+        for (int k = 0; k < demei.neighbors.size(); k++){
+            neighbor = demei.neighbors[k];
+            index = revLookup(neighbor, demej.label);
+            Q(i, index) += M(neighbor, demei.label);
         }
         
-        H(k, k-1) = z.norm();
-        if (H(k,k-1) == 0){
-            return;
+        for (int k = 0; k < demej.neighbors.size(); k++){
+            neighbor = demej.neighbors[k];
+            index = revLookup(demei.label, neighbor);
+            Q(i, index) += M(neighbor, demej.label);
         }
-        Q.col(k) = z / H(k,k-1);
+        
+        if (demei.label == demej.label){
+            Q(i, nstates-1) += W(demei.label);
+        }
+        
+        Q(i,i) = -1*(Q.row(i).sum());
+        
     }
 }
+
+void makeSparseMatrix(vector<node> &nodes, const MatrixXd &M, const MatrixXd &W, SparseMatrix<double> &Q){
+    int index;
+    node demei;
+    node demej;
+    int neighbor;
+    double sum;
+    // i < (nstates-1) because the last row of Q is all zeros
+    for (int i = 0; i < (nstates-1); i++){
+        demei = nodes[lookup[i][0]];
+        demej = nodes[lookup[i][1]];
+        sum = 0;
+        
+        // fix deme i and look at all the possble demes lineage i can go to (fix lineage j).
+        for (int k = 0; k < demei.neighbors.size(); k++){
+            neighbor = demei.neighbors[k];
+            index = revLookup(neighbor, demej.label);
+            sum += M(neighbor, demei.label);
+            Q.coeffRef(i,index) += M(neighbor, demei.label);
+        }
+        
+        for (int k = 0; k < demej.neighbors.size(); k++){
+            neighbor = demej.neighbors[k];
+            index = revLookup(demei.label, neighbor);
+            sum += M(neighbor, demej.label);
+            Q.coeffRef(i,index) += M(neighbor, demej.label);
+
+        }
+        
+        if (demei.label == demej.label){
+            sum += W(demei.label);
+            Q.coeffRef(i,nstates-1) += W(demei.label);
+
+        }
+        
+        Q.coeffRef(i,i) -= sum;
+        
+    }
+    Q.makeCompressed();
+    
+}
+
 
 void computeWeights(VectorXd &w, VectorXd &x, double r, double L, const int nquad){
     // REQUIRES: w and x vectors of length 30, r is recombination rate, and L (in base pairs) of cutoff.
@@ -224,61 +278,88 @@ void computeWeights(VectorXd &w, VectorXd &x, double r, double L, const int nqua
 
 }
 
+void calculateIntegralApprox(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, double L, double r){
+    
+    VectorXd w(50);
+    VectorXd x(50);
+    computeWeights(w, x, r, L, 50);
 
-
-/*void calculateIntegralKrylov(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, vector<node> &nodes, const int m){
-    MatrixXd Q(nstates, m);
-    MatrixXd H(m, m);
-    krylovProj(H, Q, M, W, nodes, m);
     
-    // weights for the gaussian quadrature
-    VectorXd w(30);
-    // abisca for the gaussian quadrature
-    VectorXd x(30);
+    // Make M into a rate matrix
+    M.diagonal() = -1* M.rowwise().sum();
     
-    computeWeights(w, x, r, L, 30);
+    // eigen decompositon
+    SelfAdjointEigenSolver<MatrixXd> es;
+    es.compute(M);
+    VectorXd eigenvalues = es.eigenvalues();
+    MatrixXd V = es.eigenvectors();
     
-    // where to store the matrix exponential
-    MatrixXd E(m,m);
+    MatrixXd Dt(ndemes, ndemes);
+    MatrixXd p = MatrixXd::Zero(ndemes,ndemes);
+    MatrixXd P(ndemes,ndemes);
     
-    // to get the last column
-    VectorXd l = VectorXd::Zero(nstates);
-    l[nstates-1] = 1.0;
+    expectedIBD.setZero();
     
-    // storing the probabilities
-    MatrixXd P(nstates, 30);
+    // To Do: Vectorize and simplify this code
     
-    MatrixXd Ht(m,m);
-    
-    for (int i = 0; i < x.size() ; i++){
-        Ht = H*x[i];
-        padm(Ht, E);
-        P.col(i) = (Q*E)*(Q.transpose()*l);
-    }
-    
-    VectorXd p(30);
-    int state;
-    for (int i = 0; i < ndemes; i++){
-        for (int j = i; j < ndemes; j++)
-        {
-            state = revLookup(i,j);
-            // estimate the probability mass function
-            p(0) = 0;
-            p.tail(29) = (P.row(state).tail(29)- P.row(state).head(29)).array()/(x.tail(29)-x.head(29)).transpose().array();
-            // compute the integral
-            // 3e9 is genome size
-            lambda(i,j) = (3e9)*(w.dot(p));
-            //if (lambda(i,j) < 0){
-            //    throw std::exception();
-            //}
-            lambda(j,i) = lambda(i,j);
+    for (int t = 0; t < x.size(); t++){
+        Dt = ((VectorXd)((eigenvalues.array() * x[t]).exp())).asDiagonal();
+        P = V*Dt*V.transpose();
+        for (int i = 0; i < ndemes; i++){
+            for (int j = i; j < ndemes; j++){
+                p(i,j) = (W.array() * P.row(i).transpose().array() * P.row(j).transpose().array()).sum();
+                expectedIBD(i,j) += p(i,j)*w(t);
+                expectedIBD(j,i) = expectedIBD(i,j);
+            }
         }
     }
-   
+    
+    expectedIBD = 3e9*expectedIBD;
     
 }
-*/
 
+void calculateIntegral(const MatrixXd &M, const MatrixXd &W, MatrixXd &lambda, double L, double r, const vector<node> &nodes){
+    VectorXd w(50);
+    VectorXd x(50);
+    computeWeights(w, x, r, L, 50);
+
+    MatrixXd E(nstates, nstates);
+    MatrixXd A(nstates, nstates);
+    A.setZero();
+    makeFullMatrix(nodes, M, W, A);
+    
+    //cout << "A: \n" << A << endl;
+
+    int state1;
+    int state2;
+    
+    
+    MatrixXd At(nstates, nstates);
+    for (int i = 0; i < x.size() ; i++){
+        At = A*x[i];
+        padm(At, E);
+        
+        for (int ii = 0; ii < ndemes; ii++){
+            for (int jj = ii; jj < ndemes; jj++){
+                state1 = revLookup(ii,jj);
+                double sum = 0;
+                for (int kk = 0; kk < ndemes; kk++){
+                    state2 = revLookup(kk,kk);
+                    sum += E(state1, state2)*W(kk);
+                }
+                
+                lambda(ii,jj) += sum*w(i);
+                lambda(jj,ii) = lambda(ii,jj);
+                
+            }
+        }
+        
+        
+    }
+    
+    lambda = 3e9*lambda;
+    
+}
 
 
 void populate_nodes(vector<node> &nodes, MatrixXi &DemePairs){
@@ -302,6 +383,21 @@ void populate_nodes(vector<node> &nodes, MatrixXi &DemePairs){
         nodes[beta].label = beta;
     }
 }
+
+
+double poisln(const MatrixXd &Lambda, const MatrixXd &lambda, const MatrixXd &cMatrix){
+    double ll = 0;
+    int n = Lambda.rows();
+    for (int i = 0; i < n; i++){
+        for (int j = i; j < n; j++){
+            cout << "i: " << i << ", j: " << j << endl;
+            ll += lambda(i,j)*log(Lambda(i,j))-cMatrix(i,j)*Lambda(i,j);
+        }
+    }
+    cout << "logl: " << ll << endl;
+    return(ll);
+}
+
 
 
 void get_edge(int edge, int &alpha, int &beta, MatrixXi &DemePairs)
@@ -336,6 +432,10 @@ void make_edges(int nrow, int ncol, MatrixXi &DemePairs){
     }
 }
 
+// NEED TO DO:
+// COMPARE TO ACTUAL DENSITY FUNCTION - MAYBE THAT IS THE PROBLEM
+
+
 int main()
 {
     // populate lookup array
@@ -347,63 +447,44 @@ int main()
             ind += 1;
         }
     }
-    double a = 0;
-    double b = 0.1;
-    VectorXd mrates(ndemes);
-    VectorXd W(ndemes);
-    VectorXd ones = VectorXd::Ones(ndemes);
-    W.setRandom(ndemes);
-    mrates.setRandom(ndemes);
-    mrates = (mrates+ones)/2;
-    mrates = a*ones + (b-a)*mrates;
-    a = -7;
-    b = -6.9;
-    W = (W+ones)/2;
-    W = a*ones + (b-a)*W;
-    W = (VectorXd) W.array().exp();
-
-    const int nedges = (ncol-1)*nrow + (nrow-1)*ncol + (ncol-1)*(nrow-1);
-    MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
     
-    make_edges(nrow, ncol, DemePairs);
+    double L = 4e6;
+    double r = 1e-8;
     
-    vector<node> nodes;
-    
-    populate_nodes(nodes, DemePairs);
-    
-    MatrixXd M = MatrixXd::Zero(ndemes,ndemes);
-    int alpha, beta1;
-    for ( int edge = 0 ; edge < nedges ; edge++ ) {
-        get_edge(edge,alpha,beta1, DemePairs);
-        double m_alpha = mrates(alpha);
-        double m_beta = mrates(beta1);
-        M(alpha,beta1) = 0.5 * m_alpha + 0.5 * m_beta;
-        M(beta1,alpha) = M(alpha,beta1);
-    }
-    M.diagonal() = -1* M.rowwise().sum();
-    
-    
-    int m = 10;
-    MatrixXd Q(ndemes, m);
-    Q.setZero();
-    Q(ndemes-1, 0) = 1;
-    MatrixXd H(m, m);
-    MatrixXd E(m,m);
-    krylovProj(H, Q, M, m);
-    VectorXd w = Q.col(m-1);
-
-    double t = 10;
-    MatrixXd P(ndemes, ndemes);
-    
-    int nreps = 10;
+    int nreps = 50;
     for (int ii = 0; ii < nreps; ii++){
         
-        /*
-        // randomly change migration matrix
-        int randint = rand() % (ndemes-1) + 1;
-        mrates(randint) = (0.05)*(((double) rand() / (RAND_MAX)) + 1);
+        double a = 0;
+        double b = 0.1;
+        VectorXd mrates(ndemes);
+        VectorXd W(ndemes);
+        VectorXd ones = VectorXd::Ones(ndemes);
+        W.setRandom(ndemes);
+        mrates.setRandom(ndemes);
+        mrates = (mrates+ones)/2;
+        mrates = a*ones + (b-a)*mrates;
+        a = -7;
+        b = -6.9;
+        W = (W+ones)/2;
+        W = a*ones + (b-a)*W;
+        W = (VectorXd) W.array().exp();
         
-        M.setZero();
+        cout << "coalescent rates: \n" << W << endl;
+        cout << "migration rates: \n" << mrates << endl;
+        cout << "\n\n";
+        
+        // Must agree with ndemes above
+        // set up the graph here
+        const int nedges = (ncol-1)*nrow + (nrow-1)*ncol + (ncol-1)*(nrow-1);
+        MatrixXi DemePairs = MatrixXd::Zero(nedges, 2).cast <int> ();
+        
+        make_edges(nrow, ncol, DemePairs);
+        
+        vector<node> nodes;
+        
+        populate_nodes(nodes, DemePairs);
+
+        MatrixXd M = MatrixXd::Zero(ndemes,ndemes);
         int alpha, beta1;
         for ( int edge = 0 ; edge < nedges ; edge++ ) {
             get_edge(edge,alpha,beta1, DemePairs);
@@ -412,35 +493,19 @@ int main()
             M(alpha,beta1) = 0.5 * m_alpha + 0.5 * m_beta;
             M(beta1,alpha) = M(alpha,beta1);
         }
-        M.diagonal() = -1* M.rowwise().sum();
-        
-        Q.setZero();
-        Q.col(0) = w;
-        H.setZero();
-        krylovProj(H, Q, M, m);
-        H = H*t;
-        padm(H,E);
-        P = (Q*E)*(Q.transpose());
-        cout << P.row(0) << "\n" << endl;
-        
-         */
-        
-        //cout << W << endl;
-        //cout << mrates << endl;
-        clock_t begin_time = clock();
-        SelfAdjointEigenSolver<MatrixXd> es;
-        es.compute(M);
-        cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
 
-        MatrixXd D = ((VectorXd) (t*es.eigenvalues().array()).exp()).asDiagonal();
-        MatrixXd V = es.eigenvectors();
-        P = V * D * V.transpose();
+        MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
+        calculateIntegral(M, W, lambda, L, r, nodes);
         
-
-        cout << P.row(0) << endl;
-        cout << "--------------\n\n\n\n" << endl;
+        cout << lambda << endl;
         
-        //w = Q.col(m-1);
+        lambda.setZero();
+        
+        calculateIntegralApprox(M, W, lambda, L, r);
+        
+        cout << endl << lambda << endl;
+        
+        cout << "\n--------------------------\n" << endl;
     }
     
     

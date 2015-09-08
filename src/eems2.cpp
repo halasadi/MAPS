@@ -9,6 +9,8 @@ EEMS2::EEMS2(const Params &params) {
     graph.generate_grid(params.datapath,params.gridpath,
                         habitat,params.nDemes,params.nIndiv);
     graph.dlmwrite_grid(params.mcmcpath);
+    
+    
     o = graph.get_num_obsrv_demes();
     d = graph.get_num_total_demes();
     n = params.nIndiv;
@@ -841,7 +843,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(beta,alpha) = M(alpha,beta);
     }
     
-    
     // FOR TESTING ONLY
     /*
     M.setZero();
@@ -873,7 +874,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double logll = poisln(expectedIBD, observedIBD, cMatrix);
     //double logll = -1;
     if (logll != logll){
-        cout << "trouble with ll" << endl;
+        cerr << "trouble with ll" << endl;
         throw std::exception();
     }
     return (logll);

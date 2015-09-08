@@ -16,22 +16,36 @@ void Graph::generate_grid(const string &datapath, const string &gridpath, const 
         map_indiv_to_deme(datapath,nIndiv);
     } else {
         cerr << "  Load population grid and sample assignment from " << datapath << endl;
+
         // Read the population grid (demes and edges)
         if (!read_input_grid(datapath,DemeCoord,DemePairs)) {
             cerr << "  Error reading population grid." << endl;
             exit(1);
         }
+        
         // Read the assignment of individuals to demes
         if (!read_indiv_to_deme(datapath,DemeCoord.rows(),indiv2deme)) {
             cerr << "  Error reading sample assignment." << endl;
             exit(1);
         }
+        
     }
     if (!this->is_connected()) {
         cerr << "  The population grid is not connected." << endl; exit(1);
     }
+    
+    
     // Finally, reorder the demes, whether the graph is constructed on the fly or loaded from files
     this->reindex_demes();
+    
+    /*for (int i=0; i< nodes.size();i++){
+        cout << "node: " << nodes[i].label << endl;
+        for (int j = 0; j < nodes[i].neighbors.size(); j++){
+            cout << nodes[i].neighbors[j] << endl;
+        }
+        cout << endl << endl;
+    }*/
+    
     int nDemes = this->get_num_total_demes();
     int oDemes = this->get_num_obsrv_demes();
     int nEdges = this->get_num_edges();
@@ -293,13 +307,10 @@ bool Graph::read_indiv_to_deme(const string &datapath, const int nDemes, VectorX
 void Graph::populate_nodes(){
     // MODIFIES: nodes
     const int nDemes = this -> get_num_total_demes();
+    
     nodes.resize(nDemes);
     
     for (int i = 0; i < nDemes; i++){
-        //std::cout << "neighbors of deme " << i <<  " are:";
-        //for (unsigned ii=0; ii< nodes[i].neighbors.size(); ii++)
-        //    std::cout << ' ' << nodes[i].neighbors[ii];
-        //std::cout << '\n';
         nodes[i].neighbors.clear();
     }
     
@@ -311,6 +322,7 @@ void Graph::populate_nodes(){
         nodes[alpha].label = alpha;
         nodes[beta].label = beta;
     }
+    
 }
 
 node Graph::get_node(int deme) const{
