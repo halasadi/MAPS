@@ -41,8 +41,6 @@ struct Proposal {
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
-    MatrixXd newexpectedIBD;
-    
 };
 
 class EEMS2 {
@@ -60,7 +58,7 @@ public:
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
                             VectorXd newqEffcts, double newmrateMu, double newdf) const;
     
-    void calculateIntegral(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, double L, double r) const;
+    void calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -116,11 +114,12 @@ private:
     int o; // number of observed demes
     int d; // total number of demes
     int n; // number of samples
-    MatrixXd ibdMatrix; // observed means (for number of IBD blocks)
+    MatrixXd observedIBD; // observed means (for number of IBD blocks)
     MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
     
     MatrixXd JtDhatJ;
+    mutable MatrixXd expectedIBD;
     
     // The current set of parameter values:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
@@ -132,8 +131,6 @@ private:
     
     VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
     VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
-    
-    MatrixXd nowexpectedIBD;
     
     // Variables to store the results in:
     // Fixed size:

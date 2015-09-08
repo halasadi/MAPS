@@ -54,7 +54,7 @@ void EEMS2::initialize_sims( ) {
     
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
-    ibdMatrix = MatrixXd::Zero(o, o);
+    observedIBD = MatrixXd::Zero(o, o);
     
     int demei;
     int demej;
@@ -65,18 +65,20 @@ void EEMS2::initialize_sims( ) {
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += 1;
             cMatrix(demej, demei) += 1;
-            ibdMatrix(demei, demej) += Sims(i,j);
-            ibdMatrix(demej, demei) = ibdMatrix(demei, demej);
+            observedIBD(demei, demej) += Sims(i,j);
+            observedIBD(demej, demei) = observedIBD(demei, demej);
         }
     }
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
     
-    cerr << "Observed IBD matrix:\n" << ibdMatrix <<  endl;
+    cerr << "Observed IBD matrix:\n" << observedIBD <<  endl;
     cerr << "[Sims::initialize] Done." << endl << endl;
     
     JtDhatJ = MatrixXd::Zero(o,o);
+    expectedIBD = MatrixXd::Zero(o,o);
+
     
 }
 
@@ -600,6 +602,8 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcyCoord.push_back(nowmSeeds(t,1));
     }
+    
+    JtDhatJ += expectedIBD;
 }
 bool EEMS2::output_current_state( ) const {
     ofstream out; bool error = false;
@@ -649,17 +653,15 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     if (!out.is_open()) { return false; }
     out << oDemes << endl;
     out.close( );
-    /*out.open((params.mcmcpath + "/rdistJtDobsJ.txt").c_str(),ofstream::out);
-     if (!out.is_open()) { return false; }
-     MatrixXd Pairs = cvec*cvec.transpose(); Pairs -= cvec.asDiagonal();
-     out << JtDobsJ.cwiseQuotient(Pairs) << endl;
-     out.close( );
-     out.open((params.mcmcpath + "/rdistJtDhatJ.txt").c_str(),ofstream::out);
-     if (!out.is_open()) { return false; }
-     int niters = mcmc.num_iters_to_save();
-     out << JtDhatJ/niters << endl;
-     out.close( );
-     */
+    out.open((params.mcmcpath + "/rdistJtDobsJ.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { return false; }
+    out << observedIBD.array() / cMatrix.array() << endl;
+    out.close( );
+    out.open((params.mcmcpath + "/rdistJtDhatJ.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { return false; }
+    int niters = mcmc.num_iters_to_save();
+    out << JtDhatJ/niters << endl;
+    out.close( );
     out.open((params.mcmcpath + "/mcmcqtiles.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcqtiles << endl;
@@ -752,7 +754,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, double L, double r) const {
+void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -777,6 +779,8 @@ void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, d
     MatrixXd Dt(d, d);
     MatrixXd p = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
+    
+    expectedIBD.setZero();
     
     // To Do: Vectorize and simplify this code
     
@@ -837,6 +841,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(beta,alpha) = M(alpha,beta);
     }
     
+    
     // FOR TESTING ONLY
     /*
     M.setZero();
@@ -859,15 +864,13 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
 
     //clock_t begin_time = clock();
-    MatrixXd expectedIBD = MatrixXd::Zero(o,o);
-    calculateIntegral(M, W, expectedIBD, cutOff, r);
-    
+    calculateIntegral(M, W, cutOff, r);
     //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
-    //cout << "OBSERVED:\n\n\n" << ibdMatrix.array() / cMatrix.array() << endl;
+    //cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
     //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
 
-    double logll = poisln(expectedIBD, ibdMatrix, cMatrix);
+    double logll = poisln(expectedIBD, observedIBD, cMatrix);
     //double logll = -1;
     if (logll != logll){
         cout << "trouble with ll" << endl;
