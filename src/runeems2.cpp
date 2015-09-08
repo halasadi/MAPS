@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     } catch(exception& e) {
         cerr << e.what() << endl;
         return(EXIT_FAILURE);
-    }    
+    }
     
     return(0);
 }

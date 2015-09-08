@@ -59,7 +59,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     dfmin = nIndiv;
     dfmax = 1e6;
     testing = false;
-
+    
     
     
     // let's assume a maximum population size of 2N = 500
@@ -69,7 +69,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
-
+    
     // Ensure that mrateMuUpperBound + mEffectHalfInterval <= 0 so rates are between 0 and 1.
     mEffctHalfInterval = 0.301;
     qEffctHalfInterval = 2.0;
@@ -154,17 +154,17 @@ bool Params::check_input_params( ) const {
     }
     
     /*if (genomeSize > 3.3e9){
-        cerr << "  Error with genome size: " << endl
-        << " genomeSize = " << genomeSize << endl;
-        error = true;
-    }
+     cerr << "  Error with genome size: " << endl
+     << " genomeSize = " << genomeSize << endl;
+     error = true;
+     }
      
-    
-    if (cutOff > genomeSize){
-        cerr << "  Error with IBD cut off: " << endl
-        << " cutOff = " << cutOff << endl;
-        error = true;
-    }
+     
+     if (cutOff > genomeSize){
+     cerr << "  Error with IBD cut off: " << endl
+     << " cutOff = " << cutOff << endl;
+     error = true;
+     }
      */
     
     if (!(numMCMCIter>0) || !(numBurnIter>=0) || !(numThinIter>=0) || !(numMCMCIter>numBurnIter) ||

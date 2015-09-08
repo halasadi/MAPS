@@ -55,6 +55,7 @@ void EEMS2::initialize_sims( ) {
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
     ibdMatrix = MatrixXd::Zero(o, o);
+    
     int demei;
     int demej;
     // all (n choose 2) comparisons at the individual level
@@ -73,10 +74,12 @@ void EEMS2::initialize_sims( ) {
     }
     
     cerr << "Observed IBD matrix:\n" << ibdMatrix <<  endl;
-    
     cerr << "[Sims::initialize] Done." << endl << endl;
-
+    
+    JtDhatJ = MatrixXd::Zero(o,o);
+    
 }
+
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
     nowdf = n;
@@ -145,7 +148,7 @@ void EEMS2::load_final_state( ) {
 }
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
-
+    
     // The deviation of move proposals is scaled by the habitat range
     params.mSeedsProposalS2x = params.mSeedsProposalS2 * habitat.get_xspan();
     params.mSeedsProposalS2y = params.mSeedsProposalS2 * habitat.get_yspan();
@@ -153,10 +156,10 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     params.qSeedsProposalS2y = params.qSeedsProposalS2 * habitat.get_yspan();
     // MCMC draws are stored in memory, rather than saved to disk,
     // so it is important to thin
-
+    
     int niters = mcmc.num_iters_to_save();
     mcmcmhyper = MatrixXd::Zero(niters,2);
-
+    
     mcmcqhyper = MatrixXd::Zero(niters,2);
     mcmcpilogl = MatrixXd::Zero(niters,2);
     mcmcmtiles = VectorXd::Zero(niters);
@@ -402,12 +405,12 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         insertElem(proposal.newqEffcts,newqEffct);
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
-          - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
+        - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-                        + log((nowqtiles+params.negBiSize)/(newqtiles/params.negBiProb));
+        + log((nowqtiles+params.negBiSize)/(newqtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowqtiles==2) { pBirth = 1.0; }
         newqtiles--;
@@ -420,13 +423,12 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         double oldqEffct = nowqEffcts(qtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-          + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-        
+        + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-                         + log((nowqtiles/params.negBiProb)/(newqtiles+params.negBiSize));
+        + log((nowqtiles/params.negBiProb)/(newqtiles+params.negBiSize));
     }
     proposal.move = Q_VORONOI_BIRTH_DEATH;
     proposal.newqtiles = newqtiles;
@@ -750,7 +752,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &M, const VectorXd &W, MatrixXd &expectedIBD, double L, double r) const {
+void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, double L, double r) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -775,7 +777,6 @@ void EEMS2::calculateIntegral(MatrixXd &M, const VectorXd &W, MatrixXd &expected
     MatrixXd Dt(d, d);
     MatrixXd p = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
-    expectedIBD.setZero();
     
     // To Do: Vectorize and simplify this code
     
@@ -854,11 +855,13 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     */
 
     double r = 1e-8;
-    MatrixXd expectedIBD(o,o);
     double cutOff = 4e6;
     
+
     //clock_t begin_time = clock();
+    MatrixXd expectedIBD = MatrixXd::Zero(o,o);
     calculateIntegral(M, W, expectedIBD, cutOff, r);
+    
     //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
     //cout << "OBSERVED:\n\n\n" << ibdMatrix.array() / cMatrix.array() << endl;
