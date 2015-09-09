@@ -17,8 +17,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
-        //("genomeSize", po::value<double>(&genomeSize)->default_value(3000000000), "genomeSize")
-        //("cutOff", po::value<double>(&cutOff)->default_value(3000000), "cutOff")
+        ("genomeSize", po::value<double>(&genomeSize)->default_value(3000000000), "genomeSize")
+        ("cutOff", po::value<double>(&cutOff)->default_value(4000000), "cutOff")
         ("nDemes", po::value<int>(&nDemes)->default_value(1), "nDemes")
         ("diploid", po::value<bool>(&diploid)->default_value(true), "diploid")
         ("distance", po::value<string>(&distance)->default_value("euclidean"), "distance")
@@ -81,8 +81,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "               gridpath = " << params.gridpath << endl
     << "               distance = " << params.distance << endl
     << "                 nIndiv = " << params.nIndiv << endl
-    //<< "             genomeSize = " << params.genomeSize << endl
-    //<< "                 cutOff = " << params.cutOff << endl
+    << "             genomeSize = " << params.genomeSize << endl
+    << "                 cutOff = " << params.cutOff << endl
     << "                 nDemes = " << params.nDemes << endl
     << "                   seed = " << params.seed << endl
     << "            numMCMCIter = " << params.numMCMCIter << endl
@@ -153,19 +153,19 @@ bool Params::check_input_params( ) const {
         error = true;
     }
     
-    /*if (genomeSize > 3.3e9){
-     cerr << "  Error with genome size: " << endl
-     << " genomeSize = " << genomeSize << endl;
-     error = true;
+    if (genomeSize > 3.3e9){
+        cerr << "  Error with genome size: " << endl
+        << " genomeSize = " << genomeSize << endl;
+        error = true;
      }
      
      
      if (cutOff > genomeSize){
-     cerr << "  Error with IBD cut off: " << endl
-     << " cutOff = " << cutOff << endl;
-     error = true;
+         cerr << "  Error with IBD cut off: " << endl
+         << " cutOff = " << cutOff << endl;
+         error = true;
      }
-     */
+    
     
     if (!(numMCMCIter>0) || !(numBurnIter>=0) || !(numThinIter>=0) || !(numMCMCIter>numBurnIter) ||
         !(numMCMCIter>numBurnIter+numThinIter)) {

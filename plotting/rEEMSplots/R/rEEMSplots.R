@@ -293,11 +293,15 @@ read.graph <- function(path,longlat) {
 read.voronoi <- function(mcmcpath,longlat,is.mrates) {
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
+        hist(rates, xlab = "unstandardized migration rates", main = "")
         tiles <- scan(paste(mcmcpath,'/mcmcmtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcxcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
     } else {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
+        # to turn the coalescent rates into population sizes
+        rates <- 1/(2*rates)
+        hist(rates, xlab = "unstandardized pop. sizes", main = "")
         tiles <- scan(paste(mcmcpath,'/mcmcqtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcwcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmczcoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -312,15 +316,9 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates) {
 }
 standardize.rates <- function(mcmcpath,dimns,longlat,is.mrates) {
     voronoi <- read.voronoi(mcmcpath,longlat,is.mrates)
-    #print(paste0("Voronoi rates are: ", voronoi$rates))
     rates <- voronoi$rates
-    #print(paste0("Voronoi tiles are: ", voronoi$tiles))
-
     tiles <- voronoi$tiles
-    #print(paste0("Voronoi xseeds are: ", voronoi$xseed))
-
     xseed <- voronoi$xseed
-    #print(paste0("Voronoi yseeds are: ", voronoi$yseed))
 
     yseed <- voronoi$yseed
     Zvals <- .Call("rEEMSplots__rcppstandardize_rates", PACKAGE = "rEEMSplots",
@@ -469,14 +467,12 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
     num.levels <- length(eems.colors)
     if (is.mrates) {
         eems.levels <- eems.colscale(Zmean,num.levels,plot.params$m.colscale)
-        main.title <- "Effective migration rates m : posterior mean"
-        #key.title <- expression(paste(log,"(",italic(m),")",sep=""))
+        main.title <- "Migration rates : posterior mean"
         key.title <- expression(paste(standardized, " (",italic(m),")",sep=""))
     } else {
         eems.levels <- eems.colscale(Zmean,num.levels,plot.params$q.colscale)
-        main.title <- "Effective diversity rates q : posterior mean"
-        #key.title <- expression(paste(log,"(",italic(q),")",sep=""))
-        key.title <- expression(paste(standardized," (",italic(q),")",sep=""))
+        main.title <- "Population sizes : posterior mean"
+        key.title <- expression(paste(standardized," (1/2q)",sep=""))
 
     }
     rr <- flip(raster::raster(t(Zmean),
@@ -512,7 +508,7 @@ average.eems.contours <- function(mcmcpath,dimns,longlat,plot.params,is.mrates,
             if (min(file.exists(Files))) { mcmcpath1 <- c(mcmcpath1,path) }
         }
     } else {
-        writeLines('Plotting effective diversity surface (posterior mean of q rates)')
+        writeLines('Plotting population size surface (posterior mean of 1/(2*q) rates)')
         for (path in mcmcpath) {
             Files <- paste(path,c('/mcmcqtiles.txt','/mcmcqrates.txt',
                                   '/mcmcwcoord.txt','/mcmczcoord.txt'),sep='')
@@ -552,7 +548,7 @@ voronoi.diagram <- function(mcmcpath,dimns,longlat,plot.params,mcmc.iters=NULL,i
         main.title <- 'Effective migration rates m'
         eems.levels <- eems.colscale(rates,num.levels,plot.params$m.colscale)
     } else {
-        main.title <- 'Effective diversity rates q'
+        main.title <- 'Effective population size (1/2*q)'
         eems.levels <- eems.colscale(rates,num.levels,plot.params$q.colscale)
     }
     if (is.null(mcmc.iters)) {
@@ -603,7 +599,7 @@ voronoi.diagram <- function(mcmcpath,dimns,longlat,plot.params,mcmc.iters=NULL,i
     return(list(colors=eems.colors,levels=eems.levels))    
 }
 plot.logposterior <- function(mcmcpath) {
-    writeLines('Plotting posterior probability trace')
+    writeLines('Plotting prior and likelihood trace')
     mcmcpath1 <- character()
     for (path in mcmcpath) {
         if (file.exists(paste(path,'/mcmcpilogl.txt',sep=''))) {
@@ -615,33 +611,53 @@ plot.logposterior <- function(mcmcpath) {
     if (nchains==0) { return(0) }
     colors <- rep_len(1:8,length.out=nchains)
     ltypes <- rep_len(1:3,length.out=nchains)
-    posteriors <- list()
-    yrange <- NULL
+    priors <- list()
+    logls <- list()
+    yrange_prior <- NULL
+    yrange_logl <- NULL
     niters <- NULL
     for (i in 1:nchains) {
         path <- mcmcpath[i]; writeLines(path)
         pilogl <- scan(paste(path,'/mcmcpilogl.txt',sep=''),quiet=TRUE)
         pilogl <- matrix(pilogl,ncol=2,byrow=TRUE)
-        posterior <- pilogl[,1] + pilogl[,2]
-        posteriors[[i]] <- posterior
-        yrange <- range(c(yrange,posterior))
-        niters <- max(niters,length(posterior))
+        prior <- pilogl[,1]
+        logl <- pilogl[,2]
+        priors[[i]] <- prior
+        logls[[i]] <- logl
+        #posterior <- pilogl[,1] + pilogl[,2]
+        #posteriors[[i]] <- posterior
+        #yrange <- range(c(yrange,posterior))
+        yrange_prior <- range(c(yrange_prior, prior))
+        yrange_logl <- range(c(yrange_logl, logl))
+        #niters <- max(niters,length(posterior))
+        niters <- max(niters, length(prior))
     }
-    plot(c(1,niters),yrange,type="n",xlab="MCMC iteration  (after burn-in and thinning)",ylab="log posterior")
-    if (nchains==1) {
-        mtext(side=3,line=2,cex=1.3,text="Has the MCMC chain converged?")
-        mtext(side=3,line=0.5,cex=1,text="If not, restart EEMS and/or increase numMCMCIter, numBurnIter, numThinIter")
-    } else {
-        mtext(side=3,line=2,cex=1.3,text="Have the MCMC chains converged?")
-        mtext(side=3,line=0.5,cex=1,text="If not, restart EEMS and/or increase numMCMCIter, numBurnIter, numThinIter")
-    }
+    
+    
+    #plot(c(1,niters),yrange,type="n",xlab="MCMC iteration  (after burn-in and thinning)",ylab="log posterior")
+    plot(c(1,niters),yrange_prior,type="n",xlab="MCMC iteration  (after burn-in and thinning)",ylab="log prior")
     for (i in 1:nchains) {
-        posterior <- posteriors[[i]]
-        niters <- length(posterior)
-        lines(1:niters,posterior,col=colors[i],lty=ltypes[i],lwd=2)
+        #posterior <- posteriors[[i]]
+        #niters <- length(posterior)
+        #lines(1:niters,posterior,col=colors[i],lty=ltypes[i],lwd=2)
+        prior <- priors[[i]]
+        niters <- length(prior)
+        lines(1:niters, prior, col = colors[i])
     }
     legend("topright",legend=1:nchains,col=colors[1:nchains],
            lty=ltypes[1:nchains],lwd=2,bty="n",inset=c(-0.12,0),cex=0.5)
+    
+    plot(c(1,niters),yrange_logl,type="n",xlab="MCMC iteration  (after burn-in and thinning)",ylab="log likelihood")
+    for (i in 1:nchains) {
+        logl <- logls[[i]]
+        niters <- length(logl)
+        lines(1:niters, logl, col = colors[i])
+    }
+    legend("topright",legend=1:nchains,col=colors[1:nchains],
+    lty=ltypes[1:nchains],lwd=2,bty="n",inset=c(-0.12,0),cex=0.5)
+
+
+           
 }
 geo.distm <- function(coord,longlat,plot.params) {
     if (longlat) {
@@ -653,28 +669,25 @@ geo.distm <- function(coord,longlat,plot.params) {
     }
     return(distm(coord,fun=distHaversine)/1000)
 }
-dist.scatterplot <- function(mcmcpath,longlat,plot.params,
-                             remove.singletons=TRUE,highlight=NULL,add.abline=FALSE) {
-    writeLines('Plotting average dissimilarities within and between demes')
+
+sim.scatterplot <- function(mcmcpath, longlat, plot.params, add.abline=TRUE){
+    writeLines('Plotting average similarities within and between demes')
     mcmcpath1 <- character()
     for (path in mcmcpath) {
         if (file.exists(paste(path,'/rdistJtDobsJ.txt',sep=''))&&
-            file.exists(paste(path,'/rdistJtDhatJ.txt',sep=''))&&
-            file.exists(paste(path,'/rdistoDemes.txt',sep=''))) {
+        file.exists(paste(path,'/rdistJtDhatJ.txt',sep=''))&&
+        file.exists(paste(path,'/rdistoDemes.txt',sep=''))) {
             mcmcpath1 <- c(mcmcpath1,path)
         }
     }
     mcmcpath <- mcmcpath1
     nchains <- length(mcmcpath)
     if (nchains==0) { return(NULL) }
-    ## List of observed demes, with number of samples taken collected
-    ## Each row specifies: x coordinate, y coordinate, n samples
+    
     oDemes <- scan(paste(mcmcpath[1],'/rdistoDemes.txt',sep=''),quiet=TRUE)
     oDemes <- matrix(oDemes,ncol=3,byrow=TRUE)
-    Distm <- geo.distm(oDemes[,1:2],longlat,plot.params)
-    sizes <- oDemes[,3]
     nPops <- nrow(oDemes)
-    demes <- seq(nPops)
+    
     JtDobsJ <- matrix(0,nPops,nPops)
     JtDhatJ <- matrix(0,nPops,nPops)
     for (path in mcmcpath) {
@@ -690,288 +703,16 @@ dist.scatterplot <- function(mcmcpath,longlat,plot.params,
     }
     JtDobsJ <- JtDobsJ/nchains
     JtDhatJ <- JtDhatJ/nchains
-    colnames(JtDobsJ) <- demes
-    rownames(JtDobsJ) <- demes
-    colnames(JtDhatJ) <- demes
-    rownames(JtDhatJ) <- demes
-    ## There should be NAs on the main diagonal of JtDobsJ -- these elements correspond to demes with
-    ## a single observed sample. And since there is a single sample taken, the average dissimilarity
-    ## between two distinct individuals from such demes cannot be observed.
-    obsW <- diag(JtDobsJ)
-    obsW[sizes==1] <- NA    
-    ## Instead, I will use the average within dissimilarity, W, across the demes with multiple samples.
-    ## This is make a difference only if remove.singletons = FALSE, which is not the default option.
-    aveW <- mean(obsW,na.rm=TRUE)
-    diag(JtDobsJ)[is.na(obsW)] = aveW
-    if (sum(sizes>1)<2) {
-        ypts <- JtDobsJ[upper.tri(JtDobsJ,diag=FALSE)]
-        xpts <- JtDhatJ[upper.tri(JtDhatJ,diag=FALSE)]
-        plot(xpts,ypts,type="n",
-             xlab=expression(paste("Fitted dissimilarity between individuals  ",Delta[i*j],sep="")),
-             ylab=expression(paste("Observed dissimilarity between individuals  ",D[i*j],sep="")))
-        if (add.abline) {
-            abline(a=0,b=1,col="red",lwd=2)
-        }
-        points(xpts,ypts)
-        mtext(side=3,line=1.5,cex=1.3,text="There should be at least two observed demes to plot pairwise dissimilarities")
-        writeLines('There should be at least two observed demes to plot pairwise dissimilarities')
-        return (NULL)
-    }    
-    if (remove.singletons) {
-        remove <- which(sizes<=1)
-        if (length(remove)) {
-            JtDobsJ <- JtDobsJ[-remove,-remove]
-            JtDhatJ <- JtDhatJ[-remove,-remove]
-            Distm <- Distm[-remove,-remove]
-            sizes <- sizes[-remove]
-            demes <- demes[-remove]
-            nPops <- length(demes)
-        }
-    }
-    Wobs <- diag(JtDobsJ)
-    What <- diag(JtDhatJ)
-    ones <- matrix(1,nPops,1)
-    Bobs <- JtDobsJ - (Wobs%*%t(ones) + ones%*%t(Wobs))/2
-    Bhat <- JtDhatJ - (What%*%t(ones) + ones%*%t(What))/2
-    diag(Bobs) <- NA
-    diag(Bhat) <- NA
-    Deme1 <- matrix(demes,nrow=nPops,ncol=nPops)
-    Deme2 <- t(Deme1)
-    tempi <- matrix(sizes,nPops,nPops)
-    Small <- pmin(tempi,t(tempi))
-    means <- apply(Bobs,1,median,na.rm=TRUE)
-    ypts <- Bobs[upper.tri(Bobs,diag=FALSE)]
-    xpts <- Bhat[upper.tri(Bhat,diag=FALSE)]
-    alpha <- Deme1[upper.tri(Deme1,diag=FALSE)]
-    beta <- Deme2[upper.tri(Deme2,diag=FALSE)]
-    cnts <- Small[upper.tri(Small,diag=FALSE)]    
-    if (!is.null(highlight) && !is.null(highlight$index)) {
-        add.highlight = TRUE
-        pch = 19
-        cex = 2
-        if (is.null(highlight$col)) { highlight$col = "red" }
-        if (is.null(highlight$cex)) { highlight$cex = 1 }
-        if (is.null(highlight$pch)) { highlight$pch = 4 }
-        if (is.null(highlight$lwd)) { highlight$lwd = 2 }
-        if (!nrow(highlight)) {
-            add.highlight = FALSE
-            pch = 1
-            cex = 1
-        } else {
-            ## Highlight the between-demes scatterplots 
-            ## once by alpha and once by beta, for each pair (alpha,beta)
-            ## But is really hard to decide how to order the highlights,
-            ## i.e., whether first by alpha or first by beta
-            ## So far I have implemented two ideas about the ordering
-
-            ## 1. Order (alpha,beta) so that
-            ## the group of demes with the same color as alpha
-            ## are -- on average -- more differentiated than
-            ## the group of demes with the same color as beta
-            ## means[alpha] is the average of Bobs[alpha,beta] for all beta != alpha
-            mu1 = means[as.character(alpha)]
-            mu2 = means[as.character(beta)]
-            pair.alpha = ifelse(mu1<mu2,alpha,beta)
-            pair.beta  = ifelse(mu1<mu2,beta,alpha)
-
-            ## 2. If one deme is to be highlighted but the other not,
-            ## order (alpha,beta) so that alpha is the deme to highlight
-            pair1highlight = match(pair.alpha,highlight$index)
-            pair2highlight = match(pair.beta ,highlight$index)
-            bool1 = is.na(pair1highlight)
-            bool2 = is.na(pair2highlight)
-            tempi2 = ifelse((bool1==TRUE&bool2==FALSE),pair.alpha,pair.beta)
-            tempi1 = ifelse((bool1==TRUE&bool2==FALSE),pair.beta,pair.alpha)
-            pair.alpha = tempi1
-            pair.beta  = tempi2
-            
-            ## Suppose there are oDemes (o) observed demes in the graph
-            ## dist.scatterplot assumes that they are indexed from 1 to o,
-            ## in the order implied by the "rdistoDemes.txt" file
-            ## Match these indices to the indices in the highlight data.frame
-            pair1highlight = match(pair.alpha,highlight$index)
-            pair2highlight = match(pair.beta ,highlight$index)
-
-            if (!sum(!is.na(pair1highlight)) ||
-                !sum(!is.na(pair2highlight))) {
-                add.highlight = FALSE
-                pch = 1
-                cex = 1
-            } else {
-                pair.alpha = which(!is.na(pair1highlight))
-                pair.beta  = which(!is.na(pair2highlight))
-                pair1highlight = pair1highlight[pair.alpha]
-                pair2highlight = pair2highlight[pair.beta]
-                deme2highlight = match(demes,highlight$index)
-                deme.alpha = which(!is.na(deme2highlight))
-                deme2highlight = deme2highlight[deme.alpha]
-            }
-        }
-    } else {
-        add.highlight = FALSE
-        pch = 1
-        cex = 1
-    }
-    col = c("black","gray60")[1+1*(cnts==1)]
-    ord = rev(sort.list(col))
-
-    B.component <- data.frame(alpha.x = oDemes[,1][alpha],
-                              alpha.y = oDemes[,2][alpha],
-                              beta.x = oDemes[,1][beta],
-                              beta.y = oDemes[,2][beta],
-                              Bfitted = xpts,
-                              Bobsrvd = ypts,
-                              size = cnts, col = col,
-                              stringsAsFactors = FALSE)
-    plot(xpts,ypts,type="n",
-         xlab=expression(paste("Fitted dissimilarity between demes:   ",
-             Delta[alpha*beta]," - (",Delta[alpha*alpha],"+",Delta[beta*beta],")/2",sep="")),
-         ylab=expression(paste("Observed dissimilarity between demes:   ",
-             D[alpha*beta]," - (",D[alpha*alpha],"+",D[beta*beta],")/2",sep="")))
+    
+    plot(c(JtDobsJ), c(JtDhatJ),
+    xlab="Fitted similarity between individuals  ",
+    ylab="Observed similarity between individuals  ")
     if (add.abline) {
         abline(a=0,b=1,col="red",lwd=2)
     }
-    points(xpts[ord],ypts[ord],col=col[ord],pch=pch,cex=cex)
-    if (remove.singletons) {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-        mtext(side=3,line=0.5,cex=1,text="Singleton demes, if any, are excluded from this plot (but not from EEMS)")
-    } else {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-        mtext(side=3,line=0.5,cex=1,text=expression(paste("Gray means that a single individual is sampled from either ",alpha," or ",beta,sep="")))
-    }
-    if (add.highlight) {
-        ord2 = rev(sort.list(highlight$col[pair1highlight]))
-        points(xpts[pair.alpha][ord2],
-               ypts[pair.alpha][ord2],
-               cex=highlight$cex[pair1highlight][ord2],
-               col=highlight$col[pair1highlight][ord2],
-               pch=highlight$pch[pair1highlight][ord2],
-               lwd=highlight$lwd[pair1highlight][ord2])
-        plot(xpts,ypts,type="n",
-             xlab=expression(paste("Fitted dissimilarity between demes:   ",
-                 Delta[alpha*beta]," - (",Delta[alpha*alpha],"+",Delta[beta*beta],")/2",sep="")),
-             ylab=expression(paste("Observed dissimilarity between demes:   ",
-                 D[alpha*beta]," - (",D[alpha*alpha],"+",D[beta*beta],")/2",sep="")))
-        if (add.abline) {
-            abline(a=0,b=1,col="red",lwd=2)
-        }
-        points(xpts[ord],ypts[ord],col=col[ord],pch=pch,cex=cex)
-        if (remove.singletons) {
-            mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-            mtext(side=3,line=0.5,cex=1,text="Singleton demes, if any, are excluded from this plot (but not from EEMS)")
-        } else {
-            mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-            mtext(side=3,line=0.5,cex=1,text=expression(paste("Gray means that a single individual is sampled from either ",alpha," or ",beta,sep="")))
-        }
-        ord2 = rev(sort.list(highlight$col[pair2highlight]))
-        points(xpts[pair.beta][ord2],
-               ypts[pair.beta][ord2],
-               cex=highlight$cex[pair2highlight][ord2],
-               col=highlight$col[pair2highlight][ord2],
-               pch=highlight$pch[pair2highlight][ord2],
-               lwd=highlight$lwd[pair2highlight][ord2])
-        B.component$highlight.col1 = NA
-        B.component$highlight.cex1 = NA
-        B.component$highlight.pch1 = NA
-        B.component$highlight.col2 = NA
-        B.component$highlight.cex2 = NA
-        B.component$highlight.pch2 = NA
-        B.component$highlight.col1[pair.alpha] = highlight$col[pair1highlight]
-        B.component$highlight.cex1[pair.alpha] = highlight$cex[pair1highlight]
-        B.component$highlight.pch1[pair.alpha] = highlight$pch[pair1highlight]
-        B.component$highlight.col2[pair.beta] = highlight$col[pair2highlight]
-        B.component$highlight.cex2[pair.beta] = highlight$cex[pair2highlight]
-        B.component$highlight.pch2[pair.beta] = highlight$pch[pair2highlight]
-    }
-    col <- c("black","gray60")[1+1*(sizes==1)]
-    W.component <- data.frame(alpha.x = oDemes[,1][demes],
-                              alpha.y = oDemes[,2][demes],
-                              Wfitted = What,
-                              Wobsrvd = Wobs,
-                              size = sizes,col = col,
-                              stringsAsFactors = FALSE)
-    ypts <- Wobs
-    xpts <- What
-    plot(xpts,ypts,type="n",
-         xlab=expression(paste("Fitted dissimilarity within demes:   ",Delta[alpha*alpha],sep="")),
-         ylab=expression(paste("Observed dissimilarity within demes:   ",D[alpha*alpha],sep="")))
-    if (add.abline) {
-        abline(a=0,b=1,col="red",lwd=2)
-    }
-    points(xpts,ypts,col=col,pch=pch,cex=cex)
-    if (remove.singletons) {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities within sampled demes ",alpha,sep="")))
-        mtext(side=3,line=0.5,cex=1,text="Singleton demes, if any, are excluded from this plot (but not from EEMS)")
-    } else {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities within sampled demes ",alpha,sep="")))
-        mtext(side=3,line=0.5,cex=1,text=expression(paste("Gray means that a single individual is sampled from ",alpha,sep="")))
-    }
-    if (add.highlight) {
-        ord2 = rev(sort.list(highlight$col[deme2highlight]))
-        points(xpts[demes][ord2],
-               ypts[demes][ord2],
-               cex=highlight$cex[deme2highlight][ord2],
-               col=highlight$col[deme2highlight][ord2],
-               pch=highlight$pch[deme2highlight][ord2],
-               lwd=highlight$lwd[deme2highlight][ord2])
-        W.component$highlight.col = NA
-        W.component$highlight.cex = NA
-        W.component$highlight.pch = NA
-        W.component$highlight.col[deme.alpha] = highlight$col[deme2highlight]
-        W.component$highlight.cex[deme.alpha] = highlight$cex[deme2highlight]
-        W.component$highlight.pch[deme.alpha] = highlight$pch[deme2highlight]
-    }
-    ## Under pure isolation by distance, we expect the genetic dissimilarities
-    ## between demes increase with the geographic distance separating them
-    ypts = Bobs[upper.tri(Bobs,diag=FALSE)]
-    xpts = Distm[upper.tri(Distm,diag=FALSE)]
-    col = c("black","gray60")[1+1*(cnts==1)]
-    ord = rev(sort.list(col))
-    plot(xpts,ypts,type="n",xlab="Great circle distance between demes (km)",
-         ylab=expression(paste("Observed dissimilarity between demes:   ",
-             D[alpha*beta]," - (",D[alpha*alpha],"+",D[beta*beta],")/2",sep="")))
-    points(xpts[ord],ypts[ord],col=col[ord],pch=pch,cex=cex)
-    if (remove.singletons) {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-        mtext(side=3,line=0.5,cex=1,text="Singleton demes, if any, are excluded from this plot (but not from EEMS)")
-    } else {
-        mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-        mtext(side=3,line=0.5,cex=1,text=expression(paste("Gray means that a single individual is sampled from either ",alpha," or ",beta,sep="")))
-    }
-    if (add.highlight) {
-        ord2 = rev(sort.list(highlight$col[pair1highlight]))
-        points(xpts[pair.alpha][ord2],
-               ypts[pair.alpha][ord2],
-               cex=highlight$cex[pair1highlight][ord2],
-               col=highlight$col[pair1highlight][ord2],
-               pch=highlight$pch[pair1highlight][ord2],
-               lwd=highlight$lwd[pair1highlight][ord2])
-        plot(xpts,ypts,type="n",
-             xlab=expression(paste("Fitted dissimilarity between demes:   ",
-                 Delta[alpha*beta]," - (",Delta[alpha*alpha],"+",Delta[beta*beta],")/2",sep="")),
-             ylab=expression(paste("Observed dissimilarity between demes:   ",
-                 D[alpha*beta]," - (",D[alpha*alpha],"+",D[beta*beta],")/2",sep="")))
-        if (add.abline) {
-            abline(a=0,b=1,col="red",lwd=2)
-        }
-        points(xpts[ord],ypts[ord],col=col[ord],pch=pch,cex=cex)
-        if (remove.singletons) {
-            mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-            mtext(side=3,line=0.5,cex=1,text="Singleton demes, if any, are excluded from this plot (but not from EEMS)")
-        } else {
-            mtext(side=3,line=2,cex=1.3,text=expression(paste("Dissimilarities between pairs of sampled demes (",alpha,",",beta,")",sep="")))
-            mtext(side=3,line=0.5,cex=1,text=expression(paste("Gray means that a single individual is sampled from either ",alpha," or ",beta,sep="")))
-        }
-        ord2 = rev(sort.list(highlight$col[pair2highlight]))
-        points(xpts[pair.beta][ord2],
-               ypts[pair.beta][ord2],
-               cex=highlight$cex[pair2highlight][ord2],
-               col=highlight$col[pair2highlight][ord2],
-               pch=highlight$pch[pair2highlight][ord2],
-               lwd=highlight$lwd[pair2highlight][ord2])
-    }    
-    return (list(B.component = B.component,W.component = W.component))
+    
 }
+
 ## By default, all figures are saved as bitmap PNG images. However,
 ## it is straightforward to use another format (Here the alternative is PDF)
 save.graphics <- function(plotpath,plot.params) {
@@ -1118,12 +859,11 @@ load.required.package <- function(package,required.by) {
 #'
 #' Given a vector of EEMS output directories, this function generates five figures to visualize EEMS results:
 #' \itemize{
-#'  \item \code{plotpath}-mrates01 (effective migration surface)
-#'  \item \code{plotpath}-qrates01 (effective diversity surface)
-#'  \item \code{plotpath}-rdist01 (between-demes component of genetic dissimilarity)
-#'  \item \code{plotpath}-rdist02 (within-demes component of genetic dissimilarity)
-#'  \item \code{plotpath}-rdist03 (between-demes dissimilarities vs geographic distances)
-#'  \item \code{plotpath}-pilogl01 (posterior probability trace)
+#'  \item \code{plotpath}-mrates01 (migration surface)
+#'  \item \code{plotpath}-popsizes01 (population size surface)
+#'  \item \code{plotpath}-rsim01 (between-demes component of genetic dissimilarity)
+#'  \item \code{plotpath}-pilogl01 (prior probability trace)
+#'  \item \code{plotpath}-pilogl02 (logl trace)
 #' }
 #' The latter figures are helpful in checking that the MCMC sampler has converged (the trace plot \code{pilogl01}) and that the EEMS model fits the data well (the scatter plots of genetic dissimilarities \code{rdist0*}). \code{eems.plots} will work with a single EEMS output directory but it is better to run EEMS several times, randomly initializing the MCMC chain each time. In other words, it is a good idea to simulate several realizations of the Markov chain, each realization starting with a different value of the EEMS parameters.
 #' @param mcmcpath A vector of EEMS output directories, for the same dataset. Warning: There is minimal checking that the given  directories are for the same dataset.
@@ -1330,15 +1070,15 @@ eems.plots <- function(mcmcpath,
     writeLines('Processing the following EEMS output directories :')
     writeLines(mcmcpath)
     
-    ## Plot filled contour of estimated effective migration rates
+    ## Plot filled contour of estimated migration rates
     save.graphics(paste(plotpath,'-mrates',sep=''),save.params)
     par(las=1,font.main=1,xpd=xpd)
     mrates.raster = average.eems.contours(mcmcpath,dimns,longlat,plot.params,
         is.mrates = TRUE,plot.xy = m.plot.xy)
     dev.off( )
 
-    ## Plot filled contour of festimated effective diversity rates
-    save.graphics(paste(plotpath,'-qrates',sep=''),save.params)
+    ## Plot filled contour of estimated population sizes
+    save.graphics(paste(plotpath,'-popsizes',sep=''),save.params)
     par(las=1,font.main=1,xpd=xpd)
     qrates.raster = average.eems.contours(mcmcpath,dimns,longlat,plot.params,
         is.mrates = FALSE,plot.xy = q.plot.xy)
@@ -1377,19 +1117,13 @@ eems.plots <- function(mcmcpath,
     save.params$width = 6.5
 
     ## Plot scatter plots of observed vs fitted genetic differences
-    save.graphics(paste(plotpath,'-rdist',sep=''),save.params)
+    save.graphics(paste(plotpath,'-rsim',sep=''),save.params)
     par(las=1,font.main=1,mar=c(5, 5, 4, 2) + 0.1)
-    B.and.W = dist.scatterplot(mcmcpath,longlat,plot.params,
-                               remove.singletons=remove.singletons,add.abline=add.abline)
+    sim.scatterplot(mcmcpath, longlat, plot.params, add.abline=add.abline)
     dev.off( )
 
-    if (!is.null(B.and.W)) {
-        B.component = B.and.W$B.component
-        W.component = B.and.W$W.component
-        save(B.component,W.component,file = paste(plotpath,'-rdist.RData',sep=''))
-    }
     
-    ## Plot trace plot of posterior probability to check convergence
+    ## Plot prior and log-likelihood to check convergence
     save.graphics(paste(plotpath,'-pilogl',sep=''),save.params)
     par(las=0,font.main=1,mar=c(5, 5, 4, 5) + 0.1,xpd=TRUE)
     plot.logposterior(mcmcpath)

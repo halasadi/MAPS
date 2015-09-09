@@ -16,7 +16,7 @@ void Graph::generate_grid(const string &datapath, const string &gridpath, const 
         map_indiv_to_deme(datapath,nIndiv);
     } else {
         cerr << "  Load population grid and sample assignment from " << datapath << endl;
-
+        
         // Read the population grid (demes and edges)
         if (!read_input_grid(datapath,DemeCoord,DemePairs)) {
             cerr << "  Error reading population grid." << endl;
@@ -39,12 +39,12 @@ void Graph::generate_grid(const string &datapath, const string &gridpath, const 
     this->reindex_demes();
     
     /*for (int i=0; i< nodes.size();i++){
-        cout << "node: " << nodes[i].label << endl;
-        for (int j = 0; j < nodes[i].neighbors.size(); j++){
-            cout << nodes[i].neighbors[j] << endl;
-        }
-        cout << endl << endl;
-    }*/
+     cout << "node: " << nodes[i].label << endl;
+     for (int j = 0; j < nodes[i].neighbors.size(); j++){
+     cout << nodes[i].neighbors[j] << endl;
+     }
+     cout << endl << endl;
+     }*/
     
     int nDemes = this->get_num_total_demes();
     int oDemes = this->get_num_obsrv_demes();

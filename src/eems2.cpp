@@ -1,4 +1,3 @@
-
 #include "eems2.hpp"
 
 EEMS2::EEMS2(const Params &params) {
@@ -80,7 +79,7 @@ void EEMS2::initialize_sims( ) {
     
     JtDhatJ = MatrixXd::Zero(o,o);
     expectedIBD = MatrixXd::Zero(o,o);
-
+    
     
 }
 
@@ -457,12 +456,12 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         insertElem(proposal.newmEffcts,newmEffct);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
-          - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-                        + log((nowmtiles+params.negBiSize)/(newmtiles/params.negBiProb));
+        + log((nowmtiles+params.negBiSize)/(newmtiles/params.negBiProb));
     } else {                      // Propose death
         if (nowmtiles==2) { pBirth = 1.0; }
         newmtiles--;
@@ -475,12 +474,12 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         double oldmEffct = nowmEffcts(mtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-          + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-                        + log((nowmtiles/params.negBiProb)/(newmtiles+params.negBiSize));
+        + log((nowmtiles/params.negBiProb)/(newmtiles+params.negBiSize));
     }
     proposal.move = M_VORONOI_BIRTH_DEATH;
     proposal.newmtiles = newmtiles;
@@ -588,6 +587,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     //mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
+        //mcmcqRates.push_back(1/(2*pow(10.0,nowqEffcts(t) + nowqrateMu)));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -795,7 +795,7 @@ void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) cons
                 // To do: Can vectorize this loop so p = ((MatrixXd) W'.array() * P.array()) * P^T
                 // where W' = [W; W; W; ... W]
                 p(i,j) = (W.array() * P.row(i).transpose().array() * P.row(j).transpose().array()).sum();
-     
+                
                 //double temp = 0;
                 //for (int k = 0; k < d; k++){
                 //    temp += P(i,k)*P(j,k)*W(k);
@@ -807,8 +807,7 @@ void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) cons
         }
     }
     
-    // read in genome size
-    expectedIBD = expectedIBD*(3e9);
+    expectedIBD = expectedIBD*(params.genomeSize);
 }
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
@@ -845,32 +844,30 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     // FOR TESTING ONLY
     /*
-    M.setZero();
-    W.setZero();
-    M(0,1) = M(1,0) = 0.099962;
-    M(0,2) = M(2,0) = 0.099962;
-    M(1,2) = M(2,1) = 0.099962;
-    M(1,3) = M(3,1) = 0.099962;
-    M(2,3) = M(3,2) = 0.099962;
-    M.diagonal() = -1* M.rowwise().sum();
-
-    W(0) = 0.00005;
-    W(1) = 0.00005;
-    W(2) = 0.00005;
-    W(3) = 0.00005;
-    */
-
-    double r = 1e-8;
-    double cutOff = 4e6;
+     M.setZero();
+     W.setZero();
+     M(0,1) = M(1,0) = 0.099962;
+     M(0,2) = M(2,0) = 0.099962;
+     M(1,2) = M(2,1) = 0.099962;
+     M(1,3) = M(3,1) = 0.099962;
+     M(2,3) = M(3,2) = 0.099962;
+     
+     W(0) = 0.00005;
+     W(1) = 0.00005;
+     W(2) = 0.00005;
+     W(3) = 0.00005;
+     */
     
-
+    // To Do: parameterize in centimorgan so recombination rate parameter disappears
+    double r = 1e-8;
+    
     //clock_t begin_time = clock();
-    calculateIntegral(M, W, cutOff, r);
+    calculateIntegral(M, W, params.cutOff, r);
     //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
     
     //cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
     //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
-
+    
     double logll = poisln(expectedIBD, observedIBD, cMatrix);
     //double logll = -1;
     if (logll != logll){
@@ -888,7 +885,7 @@ double EEMS2::getMigrationRate(const int edge) const {
      It will be highly inefficient to compute the mapping mColors every time we want to
      look up the migration rate of an edge (Therefore, nowmColors is updated after any
      update that can change the mapping of vertices/demes to mVoronoi tiles)
-     VectorXi mColors; 
+     VectorXi mColors;
      graph.index_closest_to_deme(nowmSeeds,mColors);
      */
     double m_alpha = pow(10, nowmEffcts(nowmColors(alpha)) + nowmrateMu);
@@ -904,7 +901,7 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      look up the coalescence rate of a deme (Therefore, nowqColors is updated after any
      update that can change the mapping of vertices/demes to qVoronoi tiles)
      VectorXi qColors;
-     graph.index_closest_to_deme(nowqSeeds,qColors);  
+     graph.index_closest_to_deme(nowqSeeds,qColors);
      */
     double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
     return (q_alpha);
@@ -928,5 +925,5 @@ void EEMS2::printMigrationAndCoalescenceRates( ) const {
         graph.get_edge(edge,alpha,beta);
         cout << "  edge = (" << alpha << "," << beta << "), m rate = " << getMigrationRate(edge) << endl;
     }
-
+    
 }
