@@ -432,10 +432,6 @@ void make_edges(int nrow, int ncol, MatrixXi &DemePairs){
     }
 }
 
-// NEED TO DO:
-// COMPARE TO ACTUAL DENSITY FUNCTION - MAYBE THAT IS THE PROBLEM
-
-
 int main()
 {
     // populate lookup array
@@ -451,27 +447,34 @@ int main()
     double L = 4e6;
     double r = 1e-8;
     
-    int nreps = 50;
+    int nreps = 5;
     for (int ii = 0; ii < nreps; ii++){
         
-        double a = 0;
-        double b = 0.1;
-        VectorXd mrates(ndemes);
-        VectorXd W(ndemes);
         VectorXd ones = VectorXd::Ones(ndemes);
-        W.setRandom(ndemes);
+
+
+        VectorXd mrates(ndemes);
         mrates.setRandom(ndemes);
+        double a = -10;
+        double b = -0.7;
         mrates = (mrates+ones)/2;
         mrates = a*ones + (b-a)*mrates;
-        a = -7;
-        b = -6.9;
+        mrates = (VectorXd) mrates.array().exp();
+        
+        VectorXd W(ndemes);
+        W.setRandom(ndemes);
+        a = -21;
+        b = -9;
         W = (W+ones)/2;
         W = a*ones + (b-a)*W;
         W = (VectorXd) W.array().exp();
         
-        cout << "coalescent rates: \n" << W << endl;
-        cout << "migration rates: \n" << mrates << endl;
-        cout << "\n\n";
+        ofstream myFile;
+        myFile.open("approx_stats.txt");
+        
+        myFile << "coalescent rates: \n" << W << endl;
+        myFile << "migration rates: \n" << mrates << endl;
+        myFile << "\n\n";
         
         // Must agree with ndemes above
         // set up the graph here
@@ -497,15 +500,16 @@ int main()
         MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
         calculateIntegral(M, W, lambda, L, r, nodes);
         
-        cout << lambda << endl;
+        myFile << "exact: " << endl << lambda << endl;
         
         lambda.setZero();
         
         calculateIntegralApprox(M, W, lambda, L, r);
         
-        cout << endl << lambda << endl;
+        myFile << "approxomation: " << endl << lambda << endl;
         
-        cout << "\n--------------------------\n" << endl;
+        myFile << "\n--------------------------\n" << endl;
+        myFile.close();
     }
     
     

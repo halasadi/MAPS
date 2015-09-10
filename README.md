@@ -1,4 +1,4 @@
-Inferring Recent Demographic Surfaces via Haplotyepe Sharing
+Inferring Recent Demographic Surfaces via Haplotype Sharing
 =====================================
 
 This in an internal repo.

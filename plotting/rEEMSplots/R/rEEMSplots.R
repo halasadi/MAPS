@@ -105,7 +105,7 @@ check.plot.params <- function(params) {
     }
 
     if (!is.null(params$m.colscale)) { params$m.colscale = set.colscale(params$m.colscale) }
-    if (!is.null(params$q.colscale)) { params$q.colscale = set.colscale(params$q.colscale) }
+    if (!is.null(params$N.colscale)) { params$N.colscale = set.colscale(params$N.colscale) }
     if ( is.null(params$eems.colors) ||
         sum(is.na(params$eems.colors)) ||
         sum(!is.color(params$eems.colors))) {
@@ -470,7 +470,7 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
         main.title <- "Migration rates : posterior mean"
         key.title <- expression(paste(standardized, " (",italic(m),")",sep=""))
     } else {
-        eems.levels <- eems.colscale(Zmean,num.levels,plot.params$q.colscale)
+        eems.levels <- eems.colscale(Zmean,num.levels,plot.params$N.colscale)
         main.title <- "Population sizes : posterior mean"
         key.title <- expression(paste(standardized," (1/2q)",sep=""))
 
@@ -549,7 +549,7 @@ voronoi.diagram <- function(mcmcpath,dimns,longlat,plot.params,mcmc.iters=NULL,i
         eems.levels <- eems.colscale(rates,num.levels,plot.params$m.colscale)
     } else {
         main.title <- 'Effective population size (1/2*q)'
-        eems.levels <- eems.colscale(rates,num.levels,plot.params$q.colscale)
+        eems.levels <- eems.colscale(rates,num.levels,plot.params$N.colscale)
     }
     if (is.null(mcmc.iters)) {
         mcmc.iters <- seq(niters)
@@ -888,7 +888,7 @@ load.required.package <- function(package,required.by) {
 #' @param col.map The color of the geographic map. Default is \code{gray60}.
 #' @param lwd.map The line width of the geographic map. Defaults to 2.
 #' @param eems.colors The EEMS color scheme as a vector of colors, ordered from low to high. Defaults to a DarkOrange to Blue divergent palette with six orange shades, white in the middle, six blue shades. Acknowledgement: The default color scheme is adapted from the \code{dichromat} package.
-#' @param m.colscale,q.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
+#' @param m.colscale,N.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
 #' @param add.colbar A logical value indicating whether to add the color bar (the key that shows how colors map to rates) to the right of the plot. Defaults to TRUE.
 #' @param remove.singletons Remove demes with a single observation from the diagnostic scatterplots. Defaults to TRUE.
 #' @param add.abline Add the line \code{y = x} to the diagnostic scatterplots of observed vs fitted genetic dissimilarities.
@@ -988,7 +988,7 @@ load.required.package <- function(package,required.by) {
 #'            add.outline = TRUE,
 #'            col.outline = "gray",
 #'            m.colscale = c(-3,3),
-#'            q.colscale = c(-0.3,+0.3))
+#'            N.colscale = c(-0.3,+0.3))
 
 eems.plots <- function(mcmcpath,
                        plotpath,
@@ -1033,7 +1033,7 @@ eems.plots <- function(mcmcpath,
                        ## Properties of the color key
                        add.colbar = TRUE,
                        m.colscale = NULL,
-                       q.colscale = NULL,
+                       N.colscale = NULL,
 
                        ## Remove demes with a single observation
                        remove.singletons = TRUE,
@@ -1046,7 +1046,7 @@ eems.plots <- function(mcmcpath,
                        m.plot.xy = NULL,
                        q.plot.xy = NULL) {
     
-    plot.params <- list(eems.colors=eems.colors,m.colscale=m.colscale,q.colscale=q.colscale,
+    plot.params <- list(eems.colors=eems.colors,m.colscale=m.colscale,N.colscale=N.colscale,
                         add.map=add.map,add.grid=add.grid,add.outline=add.outline,add.demes=add.demes,
                         col.map=col.map,col.grid=col.grid,col.outline=col.outline,col.demes=col.demes,
                         lwd.map=lwd.map,lwd.grid=lwd.grid,lwd.outline=lwd.outline,pch.demes=pch.demes,
@@ -1157,7 +1157,7 @@ eems.plots <- function(mcmcpath,
 #' @param col.demes The color of the demes. Defaults to \code{gray80}.
 #' @param pch.demes The symbol, specified as an integer, or the character to be used for plotting the demes. Defaults to 1.
 #' @param cex.demes The size of the deme symbol/character. Defaults to 1.
-#' @param m.colscale,q.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
+#' @param m.colscale,N.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
 #' @param add.colbar A logical value indicating whether to add the color bar (the key that shows how colors map to rates) to the right of the plot. Defaults to TRUE.
 #' @param add.title A logical value indicating whether to add the main title in the contour plots. Defaults to TRUE.
 #' @references Light A and Bartlein PJ (2004). The End of the Rainbow? Color Schemes for Improved Data Graphics. EOS Transactions of the American Geophysical Union, 85(40), 385.
@@ -1217,12 +1217,12 @@ eems.voronoi <- function(mcmcpath,
                          ## Properties of the color key
                          add.colbar = TRUE,
                          m.colscale = NULL,
-                         q.colscale = NULL,
+                         N.colscale = NULL,
                          
                          ## Extra options
                          add.title = TRUE) {
     
-    plot.params <- list(eems.colors=eems.colors,m.colscale=m.colscale,q.colscale=q.colscale,
+    plot.params <- list(eems.colors=eems.colors,m.colscale=m.colscale,N.colscale=N.colscale,
                         add.grid=add.grid,add.outline=add.outline,add.demes=add.demes,add.seeds=add.seeds,
                         col.grid=col.grid,col.outline=col.outline,col.demes=col.demes,col.seeds=col.seeds,
                         lwd.grid=lwd.grid,lwd.outline=lwd.outline,pch.demes=pch.demes,pch.seeds=pch.seeds,
