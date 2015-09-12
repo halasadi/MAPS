@@ -169,7 +169,6 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     
     int niters = mcmc.num_iters_to_save();
     mcmcmhyper = MatrixXd::Zero(niters,2);
-    
     mcmcqhyper = MatrixXd::Zero(niters,2);
     mcmcpilogl = MatrixXd::Zero(niters,2);
     mcmcmtiles = VectorXd::Zero(niters);
@@ -763,7 +762,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) const {
+void EEMS2::calculateIntegral(MatrixXd &V, VectorXd &eigenvalues, VectorXd &W, MatrixXd &outputMatrix, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd w(30);
@@ -771,25 +770,15 @@ void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) cons
     VectorXd x(30);
     
     getWeights(w, x);
-    
-    // integral_0^{\inf} 2rte^(-2trL)f(t) = (1/L^2) \integral_0^{\inf} f(u/2rL) ue^(-u)
-    w = w*(1/(L*2*r*L));
-    x = x/(2*r*L);
-    
-    // Make M into a rate matrix
-    M.diagonal() = -1* M.rowwise().sum();
-    
-    // eigen decompositon
-    SelfAdjointEigenSolver<MatrixXd> es;
-    es.compute(M);
-    VectorXd eigenvalues = es.eigenvalues();
-    MatrixXd V = es.eigenvectors();
+
+    w = w*(params.genomeSize/bnd)*(100/(2*bnd));
+    x = x/(2*bnd/100);
     
     MatrixXd Dt(d, d);
     MatrixXd p = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
     
-    expectedIBD.setZero();
+    outputMatrix.setZero();
     
     // To Do: Vectorize and simplify this code
     
@@ -808,13 +797,13 @@ void EEMS2::calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) cons
                 //    temp += P(i,k)*P(j,k)*W(k);
                 //}
                 //p(i,j) = temp;
-                expectedIBD(i,j) += p(i,j)*w(t);
-                expectedIBD(j,i) = expectedIBD(i,j);
+                outputMatrix(i,j) += p(i,j)*w(t);
+                outputMatrix(j,i) = outputMatrix(i,j);
             }
         }
     }
     
-    expectedIBD = expectedIBD*(params.genomeSize);
+    
 }
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
@@ -865,12 +854,23 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
      W(3) = 0.00005;
      */
     
-    // To Do: parameterize in centimorgan so recombination rate parameter disappears
-    double r = 1e-8;
+    // Make M into a rate matrix
+    M.diagonal() = -1* M.rowwise().sum();
     
-    //clock_t begin_time = clock();
-    calculateIntegral(M, W, params.cutOff, r);
-    //cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << "\n\n" << endl;
+    // eigen decompositon
+    SelfAdjointEigenSolver<MatrixXd> es;
+    es.compute(M);
+    VectorXd eigenvalues = es.eigenvalues();
+    MatrixXd V = es.eigenvectors();
+    
+    calculateIntegral(V, eigenvalues, W, expectedIBD, params.lowerBound);
+    
+    if (isfinite(params.upperBound)){
+        MatrixXd IBDMatrix(o, o);
+        calculateIntegral(V, eigenvalues, W, IBDMatrix, params.upperBound);
+        expectedIBD = expectedIBD - IBDMatrix;
+    }
+    
     
     //cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
     //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;

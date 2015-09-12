@@ -29,10 +29,14 @@ Sobs[Sobs > 0 & Sobs <= 0.2] = 2
 Sobs[Sobs == 0] = 1
 
 for (i in 1:nrow(Sobs)){
-  for (j in (i+1):(ncol(Sobs))){
-    if (Sobs[i,j] != 1){
-      segments(loc[i,1], loc[i,2], loc[j,1], loc[j,2], col = color_palette[col_index[Sobs[i,j]]])
-    }
+  if (i+1 < ncol(Sobs)){
+    
+    for (j in (i+1):(ncol(Sobs))){
+      if (Sobs[i,j] != 1){
+        segments(loc[i,1], loc[i,2], loc[j,1], loc[j,2], col = color_palette[col_index[Sobs[i,j]]])
+      }
+  }
+ 
   }
 }
 

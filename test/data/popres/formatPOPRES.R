@@ -1,11 +1,20 @@
 library(data.table)
-ibd_blocklens = read.csv("../notes\:reports/data/coop_popres/ibd-blocklens.csv")
-ibd_labels = read.csv("../notes\:reports/data/coop_popres/ibd-pop-info.csv")
+ibd_blocklens = read.table("ibd-blocklens.csv", sep = ",", header=TRUE)
+ibd_labels = read.csv("ibd-pop-info.csv", stringsAsFactors = FALSE)
 
 # in centimorgan
 cutOff = 4
 
 ibd_blocklens = subset(ibd_blocklens, ibd_blocklens$maplen > cutOff)
+
+unqids = unique(c(ibd_blocklens[,1], ibd_blocklens[,2]))
+nsamp = length(unqids)
+ibd_df <- data.frame(matrix(nrow = nsamp, ncol = nsamp))
+rownames(ibd_df) = unqids
+colnames(ibd_df) = unqids
+
+# to look up, use this for example
+ibd_df[paste0(37108), paste0(42842)]
 
 italy_ids = ibd_labels$SUBJID[which(ibd_labels$COUNTRY_SELF == "Italy")]
 uk_ids = ibd_labels$SUBJID[which(ibd_labels$COUNTRY_SELF == "United Kingdom")]

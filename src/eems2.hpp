@@ -58,7 +58,7 @@ public:
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
                             VectorXd newqEffcts, double newmrateMu, double newdf) const;
     
-    void calculateIntegral(MatrixXd &M, VectorXd &W, double L, double r) const;
+    void calculateIntegral(MatrixXd &V, VectorXd &eigenvalues, VectorXd &W, MatrixXd &outputMatrix, double bnd) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:

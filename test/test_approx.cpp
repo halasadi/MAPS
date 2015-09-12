@@ -447,7 +447,10 @@ int main()
     double L = 4e6;
     double r = 1e-8;
     
-    int nreps = 5;
+    ofstream myFile;
+    myFile.open("approx_stats.txt");
+    
+    int nreps = 10;
     for (int ii = 0; ii < nreps; ii++){
         
         VectorXd ones = VectorXd::Ones(ndemes);
@@ -468,9 +471,6 @@ int main()
         W = (W+ones)/2;
         W = a*ones + (b-a)*W;
         W = (VectorXd) W.array().exp();
-        
-        ofstream myFile;
-        myFile.open("approx_stats.txt");
         
         myFile << "coalescent rates: \n" << W << endl;
         myFile << "migration rates: \n" << mrates << endl;
@@ -509,8 +509,8 @@ int main()
         myFile << "approxomation: " << endl << lambda << endl;
         
         myFile << "\n--------------------------\n" << endl;
-        myFile.close();
     }
     
-    
+    myFile.close();
+
 }

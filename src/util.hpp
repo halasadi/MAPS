@@ -62,7 +62,7 @@ public:
     double sigmaShape_2, sigmaScale_2;
     double dfProposalS2, negBiProb;
     double dfmin, dfmax, qVoronoiPr;
-    double cutOff, genomeSize;
+    double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, negBiSize;
     string distance;

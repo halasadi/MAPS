@@ -17,8 +17,9 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
-        ("genomeSize", po::value<double>(&genomeSize)->default_value(3000000000), "genomeSize")
-        ("cutOff", po::value<double>(&cutOff)->default_value(4000000), "cutOff")
+        ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
+        ("lowerBound", po::value<double>(&lowerBound)->default_value(4), "lowerBound")
+        ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
         ("nDemes", po::value<int>(&nDemes)->default_value(1), "nDemes")
         ("diploid", po::value<bool>(&diploid)->default_value(true), "diploid")
         ("distance", po::value<string>(&distance)->default_value("euclidean"), "distance")
@@ -82,14 +83,14 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "               distance = " << params.distance << endl
     << "                 nIndiv = " << params.nIndiv << endl
     << "             genomeSize = " << params.genomeSize << endl
-    << "                 cutOff = " << params.cutOff << endl
+    << "             lowerBound = " << params.lowerBound << endl
+    << "             upperBound = " << params.upperBound << endl
     << "                 nDemes = " << params.nDemes << endl
     << "                   seed = " << params.seed << endl
     << "            numMCMCIter = " << params.numMCMCIter << endl
     << "            numBurnIter = " << params.numBurnIter << endl
     << "            numThinIter = " << params.numThinIter << endl
     << "              negBiSize = " << params.negBiSize << endl
-    << fixed << setprecision(10)
     << "              negBiProb = " << params.negBiProb << endl
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
     << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
@@ -153,18 +154,18 @@ bool Params::check_input_params( ) const {
         error = true;
     }
     
-    if (genomeSize > 3.3e9){
+    if (genomeSize > 3.3e3){
         cerr << "  Error with genome size: " << endl
         << " genomeSize = " << genomeSize << endl;
         error = true;
-     }
-     
-     
-     if (cutOff > genomeSize){
-         cerr << "  Error with IBD cut off: " << endl
-         << " cutOff = " << cutOff << endl;
-         error = true;
-     }
+    }
+    
+    
+    if (lowerBound < 0){
+        cerr << "  Error with IBD cut off: " << endl
+        << " lowerBound = " << lowerBound << endl;
+        error = true;
+    }
     
     
     if (!(numMCMCIter>0) || !(numBurnIter>=0) || !(numThinIter>=0) || !(numMCMCIter>numBurnIter) ||
@@ -444,7 +445,7 @@ double max(double a, double b){
 }
 
 void getWeights(VectorXd &w, VectorXd &x){
-    // REQUIRES: w and x vectors of length 30, r is recombination rate, and L (in base pairs) of cutoff.
+    // REQUIRES: w and x vectors of length 30
     // MODIFIES: w and x
     // EFFECTS: x will contain the x-values telling you where to evaluate P(T_mrca = x); w will contains the weights
     // This function allows user to compute an integral by computing \sum_i P(T_mrca = x_i) * w_i
