@@ -705,8 +705,8 @@ sim.scatterplot <- function(mcmcpath, longlat, plot.params, add.abline=TRUE){
     JtDhatJ <- JtDhatJ/nchains
     
     plot(c(JtDobsJ), c(JtDhatJ),
-    xlab="Fitted similarity between individuals  ",
-    ylab="Observed similarity between individuals  ")
+    xlab="Fitted similarity between demes  ",
+    ylab="Observed similarity between demes  ")
     if (add.abline) {
         abline(a=0,b=1,col="red",lwd=2)
     }

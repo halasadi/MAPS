@@ -5,15 +5,15 @@
 #} else {
 #  stop("Move to the directory that contains the rEEMSplots source to install the package.")
 #}
-#detach("package:rEEMSplots", unload=TRUE)
-#install.packages("../plotting/rEEMSplots", repos=NULL, type="source")
+detach("package:rEEMSplots", unload=TRUE)
+install.packages("../plotting/rEEMSplots", repos=NULL, type="source")
 library("rEEMSplots")
 
 ## mcmcpath is a list of three output directories; the results will be averaged
 #plotpath <- 'data/popers/plots'
 #mcmcpath <- 'data/popres/popres-EEMS2-test-sim'
-plotpath <- 'data/3x4_barrier/plot'
-mcmcpath <- 'data/3x4_barrier/3x4_barrier-EEMS2-test-sim'
+plotpath <- 'data/3x4_uniform_nsamp_40/plot'
+mcmcpath <- 'data/3x4_uniform_nsamp_40/3x4_uniform-EEMS2-test-sim'
 longlat <- TRUE
 
 Shat <- as.matrix(read.table(paste0(mcmcpath, "/rdistJtDhatJ.txt")))
@@ -24,8 +24,8 @@ plot(loc[,1], loc[,2], xlab = "lat", ylab = "long")
 color_palette <- c("white", "blue", "red")
 col_index = c(1, 2, 3)
 
-Sobs[Sobs > 0.2] = 3
-Sobs[Sobs > 0 & Sobs <= 0.2] = 2
+Sobs[Sobs > 0.05] = 3
+Sobs[Sobs > 0 & Sobs <= 0.05] = 2
 Sobs[Sobs == 0] = 1
 
 for (i in 1:nrow(Sobs)){
@@ -44,8 +44,8 @@ for (i in 1:nrow(Sobs)){
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=TRUE, add.demes=TRUE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
-                                                     lwd.map=2, col.map = "black", m.colscale = c(-0.4, 0.4), add.abline=TRUE,
-                                                     N.colscale = c(-0.4, 0.4),
+                                                     lwd.map=2, col.map = "black", m.colscale = c(-0.5, 0.5), add.abline=TRUE,
+                                                     N.colscale = c(-0.5, 0.5),
                                                      plot.height=8, plot.width=14, 
                                                      projection.in = "+proj=longlat +datum=WGS84"))
 

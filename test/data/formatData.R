@@ -50,5 +50,5 @@ readIBD <- function(infile, nhaploids, cutOff)
 #ibdM = readIBD("3x4_barrier/3x4_l_1.3e8_N_1e4_nsamp_10_rs_10", 120, 3e6)
 #write.table(ibdM, file = "3x4_barrier.sims", quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
 
-ibdM = readIBD("3x4_uniform/3x4_l_1.3e8_N_1e4_nsamp_10_rs_10", 120, 4e6)
-write.table(ibdM, file = "3x4_uniform.sims", quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+ibdM = readIBD("3x4_uniform_nsamp_40/3x4_l_1.3e8_N_1e4_nsamp_40_rs_10", 480, 3.5e6)
+write.table(ibdM, file = "3x4_uniform_nsamp_40.sims", quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
