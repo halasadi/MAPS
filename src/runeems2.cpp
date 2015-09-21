@@ -36,8 +36,7 @@ int main(int argc, char** argv)
         
         // Specify the distance metric in the params.ini file
         dist_metric = params.distance;
-        
-        
+                
         EEMS2 eems2(params);
         MCMC mcmc(params);
         
@@ -110,7 +109,7 @@ int main(int argc, char** argv)
             if (iter>=0) {
                 eems2.print_iteration(mcmc);
                 eems2.save_iteration(mcmc);
-                eems2.printMigrationAndCoalescenceRates();
+                //eems2.printMigrationAndCoalescenceRates();
             }
         }
         error = eems2.output_results(mcmc);

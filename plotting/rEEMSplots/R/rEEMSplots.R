@@ -293,7 +293,7 @@ read.graph <- function(path,longlat) {
 read.voronoi <- function(mcmcpath,longlat,is.mrates) {
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        hist(rates, xlab = "unstandardized migration rates", main = "")
+        hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", mean(rates)), labels=TRUE)
         tiles <- scan(paste(mcmcpath,'/mcmcmtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcxcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -301,7 +301,7 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
         # to turn the coalescent rates into population sizes
         rates <- 1/(2*rates)
-        hist(rates, xlab = "unstandardized pop. sizes", main = "")
+        hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", mean(rates)), labels=TRUE)
         tiles <- scan(paste(mcmcpath,'/mcmcqtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcwcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmczcoord.txt',sep=''),what=numeric(),quiet=TRUE)
