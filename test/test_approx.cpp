@@ -308,6 +308,9 @@ void calculateIntegralApprox(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, do
         for (int i = 0; i < ndemes; i++){
             for (int j = i; j < ndemes; j++){
                 p(i,j) = (W.array() * P.row(i).transpose().array() * P.row(j).transpose().array()).sum();
+                //if (i == j){
+                //    p(i,j) = (1+W(i))*p(i,j);
+                //}
                 expectedIBD(i,j) += p(i,j)*w(t);
                 expectedIBD(j,i) = expectedIBD(i,j);
             }
@@ -447,8 +450,11 @@ int main()
     double L = 4e6;
     double r = 1e-8;
     
-    ofstream myFile;
-    myFile.open("approx_stats.txt");
+    ofstream approxFile;
+    approxFile.open("approx_stats.txt");
+    
+    ofstream exactFile;
+    exactFile.open("exact_stats.txt");
     
     int nreps = 10;
     for (int ii = 0; ii < nreps; ii++){
@@ -472,9 +478,9 @@ int main()
         W = a*ones + (b-a)*W;
         W = (VectorXd) W.array().exp();
         
-        myFile << "coalescent rates: \n" << W << endl;
-        myFile << "migration rates: \n" << mrates << endl;
-        myFile << "\n\n";
+        //myFile << "coalescent rates: \n" << W << endl;
+        //myFile << "migration rates: \n" << mrates << endl;
+        //myFile << "\n\n";
         
         // Must agree with ndemes above
         // set up the graph here
@@ -500,17 +506,17 @@ int main()
         MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
         calculateIntegral(M, W, lambda, L, r, nodes);
         
-        myFile << "exact: " << endl << lambda << endl;
+        exactFile << lambda << endl;
         
         lambda.setZero();
         
         calculateIntegralApprox(M, W, lambda, L, r);
         
-        myFile << "approxomation: " << endl << lambda << endl;
+        approxFile << lambda << endl;
         
-        myFile << "\n--------------------------\n" << endl;
     }
     
-    myFile.close();
+    exactFile.close();
+    approxFile.close();
 
 }

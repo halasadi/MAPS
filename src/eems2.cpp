@@ -765,9 +765,9 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
 void EEMS2::calculateIntegral(MatrixXd &V, VectorXd &eigenvalues, VectorXd &W, MatrixXd &outputMatrix, double bnd) const {
     
     // weights for the gaussian quadrature
-    VectorXd w(30);
+    VectorXd w(50);
     // abisca for the gaussian quadrature
-    VectorXd x(30);
+    VectorXd x(50);
     
     getWeights(w, x);
 
