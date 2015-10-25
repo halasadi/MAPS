@@ -9,15 +9,16 @@ loc_info <- read.csv("countries.txt", header=TRUE, sep = ",", stringsAsFactors =
 row.names(loc_info) <- loc_info$country
 
 # in centimorgan
-lowerBound = 8
-upperBound = Inf
+lowerBound = 3.5
+upperBound = 6
 
 ibd_blocklens = subset(ibd_blocklens, ibd_blocklens$maplen > lowerBound & ibd_blocklens$maplen < upperBound)
 
-#countries_to_keep = c("Italy", "United Kingdom", "France", "Ireland", "Portugal", "Spain", "Germany", 
-#                      "Switzerland", "Austria", "Belgium", "Netherlands", "Czech Republic", "Slovenia")
+countries_to_keep = c("Italy", "United Kingdom", "France", "Ireland", "Portugal", "Spain", "Germany",
+                      "Switzerland", "Austria", "Belgium", "Netherlands", "Czech Republic", "Hungary", "Bosnia", "Slovenia", "Croatia",
+                      "Poland", "Kosovo", "Albania", "Serbia", "Macedonia")
 
-countries_to_keep = c("France", "Ireland", "Italy", "Portugal", "Spain", "United Kingdom", "Germany", "Austria", "Belgium")
+#countries_to_keep = c("France", "Ireland", "Italy", "Portugal", "Spain", "United Kingdom", "Germany", "Austria", "Belgium")
 
 ids_to_keep <- ibd_labels$SUBJID[which(ibd_labels$COUNTRY_SELF %in% countries_to_keep)]
 

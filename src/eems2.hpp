@@ -109,7 +109,7 @@ private:
     Graph graph;
     Params params;
     Habitat habitat;
-    
+        
     // Diffs:
     int o; // number of observed demes
     int d; // total number of demes

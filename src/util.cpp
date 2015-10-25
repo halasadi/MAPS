@@ -216,7 +216,7 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const MatrixXd &cMatrix){
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const MatrixXd &cMatrix, const VectorXd &cvec){
     double ll = 0;
     double epsilon = 1e-8;
     int n = expectedIBD.rows();
@@ -228,7 +228,15 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ma
             } else{
                 lamda = expectedIBD(i,j);
             }
-            ll += observedIBD(i,j)*log(lamda)-cMatrix(i,j)*lamda;
+            //ll += observedIBD(i,j)*log(lamda)-cMatrix(i,j)*lamda;
+            
+            // weighted composite likelihood
+            if (i == j){
+                ll += cvec(i)*((observedIBD(i,j)/cMatrix(i,j))*log(lamda)-lamda);
+            } else{
+                ll += (cvec(i)+cvec(j))*((observedIBD(i,j)/cMatrix(i,j))*log(lamda)-lamda);
+            }
+            // end weighted
         }
     }
     return(ll);

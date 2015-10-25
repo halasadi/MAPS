@@ -80,9 +80,11 @@ Eigen::MatrixXd rcppstandardize_rates(const Eigen::VectorXd &tiles, const Eigen:
     now_seeds << now_xseed,now_yseed;
     if (use_weighted_mean) {
       compute_contour_vals(zvals,marks,now_rates,now_seeds,distm);
+      //comment out to unstandardize
       zvals = zvals.array() - zvals.mean();
     } else {
       now_rates = now_rates.array() - now_rates.mean();
+        //comment out to unstandardize
       compute_contour_vals(zvals,marks,now_rates,now_seeds,distm);
     }
     Zvals += zvals; pos += now_tiles;

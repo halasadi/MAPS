@@ -611,6 +611,11 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmcyCoord.push_back(nowmSeeds(t,1));
     }
     
+    
+    /*cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
+    cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
+     */
+    
     JtDhatJ += expectedIBD;
 }
 bool EEMS2::output_current_state( ) const {
@@ -667,7 +672,7 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     out.close( );
     out.open((params.mcmcpath + "/rdistJtDhatJ.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
-    int niters = mcmc.num_iters_to_save();
+    double niters = mcmc.num_iters_to_save();
     out << JtDhatJ/niters << endl;
     out.close( );
     out.open((params.mcmcpath + "/mcmcqtiles.txt").c_str(),ofstream::out);
@@ -857,6 +862,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
     
+    
     // eigen decompositon
     SelfAdjointEigenSolver<MatrixXd> es;
     es.compute(M);
@@ -871,11 +877,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         expectedIBD = expectedIBD - IBDMatrix;
     }
     
-    
-    //cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
-    //cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
-    
-    double logll = poisln(expectedIBD, observedIBD, cMatrix);
+    double logll = poisln(expectedIBD, observedIBD, cMatrix, cvec);
     //double logll = -1;
     if (logll != logll){
         cerr << "trouble with ll" << endl;
