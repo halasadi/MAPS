@@ -1,0 +1,40 @@
+# names of the demes in demes.txt (in order)
+labels <- c("United Kingdom", "Italy", "Ireland", "Portugal", "Hungary", "Italy", "France", "Albania", 
+            "Macedonia", "Belgium", "Switzerland", "Germany", "Croatia", "Bosnia", "Poland", "Czech Republic",
+            "Serbia", "Netherlands", "Austria")
+
+sims <- as.matrix(read.table("popres_6_Inf_mean_sims.txt"))
+rownames(sims) <- labels
+colnames(sims) <- labels
+hc <- hclust(dist(sims))
+plot(hc)
+fit <- cmdscale(dist(sims), eig=TRUE, k =2)
+x <- fit$points[,1]
+y <- fit$points[,2]
+plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2", 
+     main="Metric	MDS",	type="n")
+text(x, y, labels = labels, cex=.7)
+
+plot(1:length(diag(sims)), diag(sims), ylab = "within deme similarity", type = "n", xaxt = "n", xlab = "")
+text(1:length(diag(sims)), diag(sims), labels =  substr(labels, start=1, stop=3), cex = 0.7)
+
+#raw_sims <- as.matrix(read.table("popres_lowerBnd_6_upperBnd_Inf.sims"))
+#ipmap <- as.matrix(read.table("ipmap.txt"))
+#rownames(raw_sims) <- substr(labels[ipmap], start = 1, stop = 2)
+#colnames(raw_sims) <- substr(labels[ipmap], start = 1, stop = 2)
+#fit <- cmdscale(dist(raw_sims), eig=TRUE, k =2)
+#x <- fit$points[,1]
+#y <- fit$points[,2]
+#plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2", 
+#     main="Metric	MDS",	type="n")
+#text(x, y, labels = substr(labels[ipmap], start = 1, stop = 2), cex=.7)
+
+palf <- colorRampPalette(c("gold", "dark orange")) 
+heatmap(log(sims), Rowv = NA, Colv = NA, 
+        scale="none", margins=c(10,10), col = palf(100))
+
+library(igraph)
+net=graph.adjacency(sims,mode="undirected",weighted=TRUE,diag=FALSE)
+node.size <- 50*diag(sims)
+plot.igraph(net,vertex.label=V(net)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=5*E(net)$weight,
+            vertex.size=node.size)
