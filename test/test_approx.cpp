@@ -8,8 +8,8 @@ using namespace Eigen;
 #include <ctime>
 #include <vector>
 
-const int nrow = 4;
-const int ncol = 4;
+const int nrow = 6;
+const int ncol = 6;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -504,15 +504,13 @@ int main()
         }
 
         MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
-        calculateIntegral(M, W, lambda, L, r, nodes);
         
-        exactFile << lambda << endl;
-        
-        lambda.setZero();
+	calculateIntegral(M, W, lambda, L, r, nodes);
+        exactFile << lambda.row(0) << endl;
+	lambda.setZero();
         
         calculateIntegralApprox(M, W, lambda, L, r);
-        
-        approxFile << lambda << endl;
+        approxFile << lambda.row(0) << endl;
         
     }
     

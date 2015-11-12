@@ -39,16 +39,37 @@ readIBD <- function(infile, nhaploids, cutOff)
     jj = toIndex[hbd$V3[i], hbd$V4[i]]
     diff = hbd$V7[i]-hbd$V6[i]
     if (diff > cutOff){
-      ibdM[ii,jj] = ibdM[ii,jj] + 1
+      # number of segments
+      #ibdM[ii,jj] = ibdM[ii,jj] + 1
+      # total fraction
+      ibdM[ii,jj] = ibdM[ii,jj] + (diff/1e6)
+      print(diff/1e6)
       ibdM[jj,ii] = ibdM[ii,jj]
     }
   }
   
+  ibdM = ibdM/(260)
   return(ibdM)
 }
 
-ibdM = readIBD("3x4_uniform/3x4_l_1.3e8_N_1e4_nsamp_50_rs_10", 600, 4e6)
-write.table(ibdM, file = "3x4_uniform.sims", quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+workingDir <- "/Users/halasadi/eems2/test/data/one_deme_N_10000/"
+ibdM = readIBD(paste0(workingDir, "l_1.3e8_N_10000_n_100_u_1.25e-8_r_1e-8_s_10"), 100, 4e6)
+#write.table(ibdM, file = paste0(workingDir, "eems.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+
+#### computing variance of IBD empirically
+#m = 4
+#L = 264
+#N = 1e4
+#analytical_m <- 100*(25+m*N)/((50+m*N)^2)
+#analytical_v <- (100/(N*L))*log(L/m)
+#num = 0
+#denom = 0
+#for (i in 1:22){
+#  num = num + 12*log(12/m)
+#  denom = denom + 12
+#}
+#denom = denom^2
+#analytical_v <- (100/N)*(num/denom)
 
 #ibdM = readIBD("3x4_barrier5/3x4_l_1.3e8_N_1e4_nsamp_20_rs_10", 240, 4e6)
 #write.table(ibdM, file = "3x4_l_1.3e8_N_1e4_nsamp_20_rs_10.sims", quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)

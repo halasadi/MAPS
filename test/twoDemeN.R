@@ -135,6 +135,7 @@ calculateIntegral <- function(L, r, Q, M, q){
   p = c(0, diff(P)/(t[2:n]-t[1:(n-1)]))
 
   p = p*exp(-2*r*t*L)*2*r*t
+  w = w*(1/(L*2*r*L))
   integral = trapezoidal.integration(t, p)
   print(integral)
   
@@ -181,6 +182,6 @@ q = 1/(2*N)
 r = 1e-8
 Q = makeQ(M,q)
 L = 3e6
-constantsize_m = (2*2*N*r)/(1+2*2*N*L*r)^2
+number_constantsize_m = (2*2*N*r)/(1+2*2*N*L*r)^2
 calculateIntegral(L, r, Q, M, q)
 #int2 = calculateIntegral2(L, r)
