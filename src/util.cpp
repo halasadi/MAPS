@@ -216,11 +216,14 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const MatrixXd &cMatrix, const VectorXd &cvec){
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec){
     double ll = 0;
     double epsilon = 1e-8;
     int n = expectedIBD.rows();
     double lamda;
+    double a = 0;
+    double b = 0;
+    double c = 0;
     for (int i = 0; i < n; i++){
         for (int j = i; j < n; j++){
             if (expectedIBD(i,j) < epsilon){
@@ -228,17 +231,20 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ma
             } else{
                 lamda = expectedIBD(i,j);
             }
-            //ll += observedIBD(i,j)*log(lamda)-cMatrix(i,j)*lamda;
-            
-            // weighted composite likelihood
             if (i == j){
-                ll += cvec(i)*((observedIBD(i,j)/cMatrix(i,j))*log(lamda)-lamda);
-            } else{
-                ll += (cvec(i)+cvec(j))*((observedIBD(i,j)/cMatrix(i,j))*log(lamda)-lamda);
+                a = a + cvec(i);
+                b = b + log(cvec(i)*(cvec(i)-1)/2);
+                ll += observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda;
             }
-            // end weighted
+            else{
+                c = c + log(cvec(i)*cvec(j));
+                ll += observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda;
+            }
+
         }
     }
+
+    ll = ll + log(a-1) - b - c;
     return(ll);
 }
 

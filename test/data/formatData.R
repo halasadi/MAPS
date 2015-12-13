@@ -1,4 +1,4 @@
-readIBD <- function(infile, nhaploids, cutOff)
+readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
 {
   # example
   # infile = data/run_7/l_1.3e8_N_1000_mu_1.25e-8_r_1e-8_1D
@@ -27,7 +27,7 @@ readIBD <- function(infile, nhaploids, cutOff)
     ii = toIndex[ibd$V1[i], ibd$V2[i]]
     jj = toIndex[ibd$V3[i], ibd$V4[i]]
     diff = ibd$V7[i]-ibd$V6[i]
-    if (diff > cutOff){
+    if (diff > lowerCutOff & diff < upperCutOff){
       ibdM[ii,jj] = ibdM[ii,jj] + 1
       ibdM[jj,ii] = ibdM[ii,jj]
     }
@@ -38,23 +38,19 @@ readIBD <- function(infile, nhaploids, cutOff)
     ii = toIndex[hbd$V1[i], hbd$V2[i]]
     jj = toIndex[hbd$V3[i], hbd$V4[i]]
     diff = hbd$V7[i]-hbd$V6[i]
-    if (diff > cutOff){
+    if (diff > lowerCutOff & diff < upperCutOff){
       # number of segments
-      #ibdM[ii,jj] = ibdM[ii,jj] + 1
-      # total fraction
-      ibdM[ii,jj] = ibdM[ii,jj] + (diff/1e6)
-      print(diff/1e6)
+      ibdM[ii,jj] = ibdM[ii,jj] + 1
       ibdM[jj,ii] = ibdM[ii,jj]
     }
   }
   
-  ibdM = ibdM/(260)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/one_deme_N_10000/"
-ibdM = readIBD(paste0(workingDir, "l_1.3e8_N_10000_n_100_u_1.25e-8_r_1e-8_s_10"), 100, 4e6)
-#write.table(ibdM, file = paste0(workingDir, "eems.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+workingDir <- "/Users/halasadi/eems2/test/data/4x5/uniform/"
+ibdM = readIBD(paste0(workingDir, "uniform_mt_300_nsamp_per_deme_20.merged"), 400, 4e6, Inf)
+write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
 
 #### computing variance of IBD empirically
 #m = 4

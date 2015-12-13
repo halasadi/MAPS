@@ -8,8 +8,8 @@ using namespace Eigen;
 #include <ctime>
 #include <vector>
 
-const int nrow = 6;
-const int ncol = 6;
+const int nrow = 4;
+const int ncol = 4;
 // total number of nodes
 const int ndemes = nrow*ncol;
 
@@ -284,10 +284,6 @@ void calculateIntegralApprox(MatrixXd &M, VectorXd &W, MatrixXd &expectedIBD, do
     VectorXd x(50);
     computeWeights(w, x, r, L, 50);
 
-    
-    // Make M into a rate matrix
-    M.diagonal() = -1* M.rowwise().sum();
-    
     // eigen decompositon
     SelfAdjointEigenSolver<MatrixXd> es;
     es.compute(M);
@@ -447,7 +443,8 @@ int main()
         }
     }
     
-    double L = 4e6;
+    double L_l = 4e6;
+    double L_u = 8e6;
     double r = 1e-8;
     
     ofstream approxFile;
@@ -456,7 +453,7 @@ int main()
     ofstream exactFile;
     exactFile.open("exact_stats.txt");
     
-    int nreps = 10;
+    int nreps = 1;
     for (int ii = 0; ii < nreps; ii++){
         
         VectorXd ones = VectorXd::Ones(ndemes);
@@ -503,15 +500,26 @@ int main()
             M(beta1,alpha) = M(alpha,beta1);
         }
 
-        MatrixXd lambda = MatrixXd::Zero(ndemes, ndemes);
+        MatrixXd lambda_low = MatrixXd::Zero(ndemes, ndemes);
+        MatrixXd lambda_upper = MatrixXd::Zero(ndemes, ndemes);
         
-	calculateIntegral(M, W, lambda, L, r, nodes);
-        exactFile << lambda.row(0) << endl;
-	lambda.setZero();
+        calculateIntegral(M, W, lambda_low, L_l, r, nodes);
+        calculateIntegral(M, W, lambda_upper, L_u, r, nodes);
+
+        exactFile << (lambda_low.row(0)-lambda_upper.row(0)) << endl;
         
-        calculateIntegralApprox(M, W, lambda, L, r);
-        approxFile << lambda.row(0) << endl;
+        lambda_low.setZero();
+        lambda_upper.setZero();
         
+        
+        // Make M into a rate matrix
+        M.diagonal() = -1* M.rowwise().sum();
+        
+
+        calculateIntegralApprox(M, W, lambda_low, L_l, r);
+        calculateIntegralApprox(M, W, lambda_upper, L_u, r);
+        
+        approxFile << (lambda_low.row(0)-lambda_upper.row(0)) << endl;
     }
     
     exactFile.close();

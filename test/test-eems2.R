@@ -13,21 +13,23 @@ library(rEEMSplots2)
 #plotpath <- 'data/popres/3.5_6/plots_lowerBnd_3.5_upperBnd_6'
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
 #plotpath <- 'data/popres/6_Inf/plots_lowerBnd_6_upperBnd_Inf'
-#mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
-#plotpath <- 'data/sim_output/barrier_L_8e+06_M_0.05_N_10000_nsamp_per_deme_10'
-#mcmcpath <- 'data/sim_output/barrier_L_8e+06_M_0.05_N_10000_nsamp_per_deme_10-EEMS2-test-sim'
-plotpath <- 'data/3x4_barrier_nsamp_10/plot'
-mcmcpath <- 'data/3x4_barrier_nsamp_10/3x4_l_1.3e8_N_1e4_nsamp_10_rs_10-EEMS2-test-sim' 
-#plotpath <- 'data/3x4_uniform/plot'
-#mcmcpath <- 'data/3x4_uniform/3x4_uniform_l_1.3e8_N_1e4_nsamp_50_rs_10-EEMS2-test-sim' 
-
+#plotpath <- 'data/3x4/recent_barrier_10gen/8_Inf_plot'
+#mcmcpath <- 'data/3x4/recent_barrier_10gen/eems_8_Inf-EEMS2-test-sim'
+#plotpath <- 'data/3x4/past_barrier_40gen/3_5_plot'
+#mcmcpath <- 'data/3x4/past_barrier_40gen/eems_3_5-EEMS2-test-sim' 
+#plotpath <- 'data/3x4/3x4_uniform/plot'
+#mcmcpath <- 'data/3x4/3x4_uniform/3x4_uniform-EEMS2-test-sim' 
+#plotpath  <- 'data/3x4/barrier_40gen_heter_popsizes/4_Inf_plot'
+#mcmcpath  <- 'data/3x4/barrier_40gen_heter_popsizes/eems_4_Inf-EEMS2-test-sim'
+plotpath <- 'data/4x5/uniform/plot'
+mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
 # FALSE FOR POPRES
 longlat <- TRUE
 
 #Shat <- as.matrix(read.table(paste0(mcmcpath, "/rdistJtDhatJ.txt")))
 #Sobs <- as.matrix(read.table(paste0(mcmcpath, "/rdistJtDobsJ.txt")))
 
-#loc <- as.matrix(read.table("/Users/halasadi/eems2/test/data/popres/8_Inf/popres_lowerBnd_8_upperBnd_Inf.demes"))
+#loc <- as.matrix(read.table("/Users/halasadi/eems2/test/data/3x4/barrier_40gen_heter_popsizes/eems_4_Inf.demes"))
 #plot(loc[,1], loc[,2], xlab = "lat", ylab = "long", bty='L')
 #edges <- as.matrix(read.table("/Users/halasadi/eems2/test/data/popres/8_Inf/popres_lowerBnd_8_upperBnd_Inf.edges"))
 #segments(loc[edges[,1],1], loc[edges[,1],2], loc[edges[,2],1], loc[edges[,2],2])
@@ -63,10 +65,10 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      q.log10transform = FALSE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
-                                                     #m.colscale = c(0.03, 0.15), 
+                                                     #m.colscale = c(0.005, 0.015), 
                                                      #m.colscale = c(0.000, 0.02),
                                                      add.abline=TRUE,
-                                                     #N.colscale = c(6000, 14000),
+                                                     #N.colscale = c(8000, 12000),
                                                      plot.height=8, plot.width=10, 
                                                      projection.in = "+proj=longlat +datum=WGS84"))
 

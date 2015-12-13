@@ -57,6 +57,8 @@ void EEMS2::initialize_sims( ) {
     cvec = VectorXd::Zero(o);
     observedIBD = MatrixXd::Zero(o, o);
     
+    //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
+    
     int demei;
     int demej;
     // all (n choose 2) comparisons at the individual level
@@ -767,7 +769,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &V, VectorXd &eigenvalues, VectorXd &W, MatrixXd &outputMatrix, double bnd) const {
+void EEMS2::calculateIntegral(const MatrixXd &V, const VectorXd &eigenvalues, const VectorXd &W, MatrixXd &outputMatrix, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd w(50);
@@ -852,13 +854,11 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
      M(1,2) = M(2,1) = 0.099962;
      M(1,3) = M(3,1) = 0.099962;
      M(2,3) = M(3,2) = 0.099962;
-     
-     W(0) = 0.00005;
-     W(1) = 0.00005;
-     W(2) = 0.00005;
-     W(3) = 0.00005;
-     */
-    
+    for (int i =0 ; i < d; i++) {
+        W(i) = 0.00005;
+    }
+    */
+
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
     
@@ -869,15 +869,19 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     VectorXd eigenvalues = es.eigenvalues();
     MatrixXd V = es.eigenvectors();
     
-    calculateIntegral(V, eigenvalues, W, expectedIBD, params.lowerBound);
+    MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
+    calculateIntegral(V, eigenvalues, W, lowerExpectedIBD, params.lowerBound);
     
     if (isfinite(params.upperBound)){
-        MatrixXd IBDMatrix(o, o);
-        calculateIntegral(V, eigenvalues, W, IBDMatrix, params.upperBound);
-        expectedIBD = expectedIBD - IBDMatrix;
+        MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
+        calculateIntegral(V, eigenvalues, W, upperExpectedIBD, params.upperBound);
+        expectedIBD = lowerExpectedIBD - upperExpectedIBD;
+    }
+    else{
+        expectedIBD = lowerExpectedIBD;
     }
     
-    double logll = poisln(expectedIBD, observedIBD, cMatrix, cvec);
+    double logll = poisln(expectedIBD, observedIBD, cvec);
     //double logll = -1;
     if (logll != logll){
         cerr << "trouble with ll" << endl;

@@ -1,39 +1,7 @@
 library(expm)
+library(Bolstad)
 #source("myImagePlot.R")
 rm(list = ls())
-
-trapezoidal.integration = function(x, f)
-{
-  ### 3 checks to ensure that the arguments are numeric and of equal lengths
-  # check if the variable of integration is numeric
-  if (!is.numeric(x))
-  {
-    stop('The variable of integration "x" is not numeric.')
-  }
-  
-  # check if the integrand is numeric
-  if (!is.numeric(f))
-  {
-    stop('The integrand "f" is not numeric.')
-  }
-  
-  # check if the variable of integration and the integrand have equal lengths
-  if (length(x) != length(f))
-  {
-    stop('The lengths of the variable of integration and the integrand do not match.')
-  }
-  
-  ### finish checks
-  
-  # obtain length of variable of integration and integrand
-  n = length(x)
-  
-  # integrate using the trapezoidal rule
-  integral = 0.5*sum((x[2:n] - x[1:(n-1)]) * (f[2:n] + f[1:(n-1)]))
-  
-  # print the definite integral
-  return(integral)
-}
 
 makeQSym <- function(M, q){
   Q = matrix(nrow=4, ncol=4, 0)
@@ -84,7 +52,18 @@ findtEnd <- function(u){
   return(max(which(p > thr)))
 }
 
-computeWeights <- function(d, L){
+computeWeights55 <- function(d, L){
+  
+  x <- unlist(as.vector(read.table("xvals.txt")))
+  w <- unlist(as.vector(read.table("weights.txt")))
+  
+  w = w/((d*L)/50)
+  x = x/((d*L)/50)
+  return(list(w=w, x=x))
+  
+}
+
+computeWeightsMean <- function(u){
   x = c(0.07053988969199015, 0.3721268180016133, 0.9165821024832778, 1.707306531028346,
         2.749199255309431, 4.048925313850894, 5.615174970861625, 7.459017453671069,
         9.594392869581098, 12.03880254696431, 14.81429344263073, 17.94889552051938,
@@ -97,15 +76,35 @@ computeWeights <- function(d, L){
         1.155014339500436e-17, 1.539522140582338e-20, 5.28644272556909e-24, 1.656456612498994e-28)
   
   
-  w = w*(d/x)
-  x = x/((d*L)/50)
+  w = w*(1+x)/(2*u)
+  x = x/(2*u)
   return(list(w=w, x=x))
 }
+  
+CalculateMean <- function(u, Q, q){
+  quad <- computeWeightsMean(u)
+  # in morgans
+  t = quad$x
+  w = quad$w
 
+  Q = Q[-5,]
+  Q = Q[,-5]
+  
+  p = rep(0, length(t))
+  
+  for (i in 1:length(t)){
+    # exact
+    P = expm(Q*t[i])
+    #p[i] = q[1]*P[1,1] + q[2]*P[1,4]
+    p[i] = q[1]*P[2,1] + q[2]*P[2,4]
+    
+  }
+  integral <- w%*%p
+  return(integral)
+}
 
-
-calculateInnerIntegral <- function(d, L, Q, M, q){
-  quad <- computeWeights(d, L)
+calculateInnerIntegral <- function(d, L, Q, q){
+  quad <- computeWeights55(d, L)
   # in morgans
   t = quad$x
   w = quad$w
@@ -118,38 +117,55 @@ calculateInnerIntegral <- function(d, L, Q, M, q){
     for (i in 1:length(t)){
     # exact
     P = expm(Q*t[i])
-    p[i] = q[1]*P[1,1] + q[2]*P[1,4]
- 
+    #p[i] = q[1]*P[1,1] + q[2]*P[1,4]
+    p[i] = q[1]*P[2,1] + q[2]*P[2,4]
   }
   integral <- w%*%p
   return(integral)
 }
 
-CalculateDoubleIntegral <- function(Q, M, q){
+CalculateDoubleIntegral <- function(m, L, Q, q){
   # in cM
-  m = 4
+  #m = 4
   # in cM
-  L = 278
+  #L = 278
   
-  n = 50000
+  n = 1000
   dgrid <- seq(from = m/L, to =1, length.out = n)
   f <- rep(0, n)
   for (i in 1:n){
-    f[i] <- (1-dgrid[i])*calculateInnerIntegral(dgrid[i], L, Q, M, q)
+    f[i] <- (1-dgrid[i])*calculateInnerIntegral(dgrid[i], L, Q, q)
   }
   
-  integral <- trapezoidal.integration(dgrid, f)
-  return(2*integral)
+  return(2*sintegral(dgrid, f, n =n)$value)
 }
 
 # diploid pop size
-N = c(10000, 10000)
-m = c(0.0,0.0)
+N = c(1000, 1000)
+mrates = c(0.01,0.01)
 M = matrix(nrow = 2, ncol =2, 0)
-M[1,2] = m[1]
-M[2,1] = m[2]
+M[1,2] = mrates[1]
+M[2,1] = mrates[2]
 diag(M) = -rowSums(M)
 q = 1/(2*N)
 Q = makeQ(M,q)
-#int <- calculateIntegral(r, L, Q, M, q)
-int <- CalculateDoubleIntegral(Q, M, q)
+L = 286
+m = 4
+#approx <- (log(L/m)-0.5) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+#int <- CalculateDoubleIntegral(m, L, Q, q)
+
+mrates <- seq(0.01, 0.5, length.out = 10)
+approxs <- rep(0, 10)
+ints <- rep(0, 10)
+for (i in 1:length(mrates)){
+  M = matrix(nrow = 2, ncol =2, 0)
+  M[1,2] = mrates[i]
+  M[2,1] = mrates[i]
+  Q = makeQ(M,q)
+  approxs[i] <- (log(L/m)-1+(m/L)) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+  #approxs[i] <- log(L/m) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+  ints[i] <- CalculateDoubleIntegral(m, L, Q, q)
+}
+
+plot(ints, approxs, log = "xy", main = "N=1000", xlab = "exact", ylab = "approx")
+abline(a = 0, b = 1, col = "red", lwd = 2)

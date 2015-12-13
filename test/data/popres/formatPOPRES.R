@@ -37,15 +37,11 @@ for (i in 1:nrow(ibd_blocklens)){
   id2 = toString(ibd_blocklens[i,]$id2)
   
   # number of segments
-  #ibd_df[id1, id2] = ibd_df[id1, id2] + 1
-  # total
-  ibd_df[id1, id2] = ibd_df[id1, id2] + ibd_blocklens[i,]$maplen
-  
+  ibd_df[id1, id2] = ibd_df[id1, id2] + 1
   ibd_df[id2,id1] = ibd_df[id1, id2]
 }
 
-# divide by 278 cM (total genome size)
-ibd_df = ibd_df/278
+
 
 #write.table(ibd_df, file = paste0("popres_fraction_lowerBnd_", lowerBound, "_upperBnd_", upperBound, ".sims"), row.names=FALSE, col.names=FALSE)
 

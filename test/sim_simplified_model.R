@@ -89,40 +89,43 @@ diag(M) = -rowSums(M);
 r = 1e-8;
 L = 8e6;
 
-ndemes = 12
+ndemes = 20
 int = calculateIntegral(M, q, r, L)
 nsamp_per_deme = 20
 
-fileName = paste0("data/sim_model/barrier_L_", L, "_M_", const, "_N_", N[1], "_nsamp_per_deme_", nsamp_per_deme)
+fileName = paste0("data/sim_model/ndemes_20", L, "_M_", const, "_N_", N[1], "_nsamp_per_deme_", nsamp_per_deme)
 
 lambda_row = matrix(rep(int, each = nsamp_per_deme), byrow = TRUE, ncol = ncol(int)*nsamp_per_deme)
 lambda_m = matrix(rep(lambda_row, each = nsamp_per_deme), byrow = FALSE, nrow = nrow(int)*nsamp_per_deme)
 
 # deme
 nsamp = nsamp_per_deme*ndemes
-Sobs = matrix(0, nsamp, nsamp)
-for (i in 1:nsamp){
-  for (j in i:nsamp){
-    Sobs[i,j] = rpois(n = 1, lambda = lambda_m[i,j])
-    Sobs[j,i] = Sobs[i,j]
-  }
-}
+#Sobs = matrix(0, nsamp, nsamp)
+#for (i in 1:nsamp){
+#  for (j in i:nsamp){
+#    Sobs[i,j] = rpois(n = 1, lambda = lambda_m[i,j])
+#    Sobs[j,i] = Sobs[i,j]
+#  }
+#}
 
-write.table(Sobs, file = paste0(fileName, ".sims"), quote = FALSE, row.names = FALSE, col.names = FALSE)
-deme_coords = matrix(nrow = 12, ncol = 2)
-deme_coords[,1] = c(0, 1, 2, 3, 0.5, 1.5, 2.5, 3.50, 0, 1, 2, 3)
-deme_coords[,2] = c(0, 0, 0, 0, 0.86600, 0.86600, 0.86600, 0.86600, 1.73210, 1.73210, 1.73210, 1.73210)
+#write.table(Sobs, file = paste0(fileName, ".sims"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+deme_coords = matrix(nrow = ndemes, ncol = 2)
+#deme_coords[,1] = c(0, 1, 2, 3, 0.5, 1.5, 2.5, 3.50, 0, 1, 2, 3)
+#deme_coords[,2] = c(0, 0, 0, 0, 0.86600, 0.86600, 0.86600, 0.86600, 1.73210, 1.73210, 1.73210, 1.73210)
+deme_coords[,1] = c(0, 1, 2, 3, 4, 0.5, 1.5, 2.5, 3.50, 4.5, 0, 1, 2, 3, 4, 0.5, 1.5, 2.5, 3.50, 4.5)
+deme_coords[,2] = c(0, 0, 0, 0, 0, 0.86600, 0.86600, 0.86600, 0.86600,  0.86600, 1.73210, 1.73210, 1.73210, 1.73210, 1.73210, 2.5981,2.5981,2.5981,2.5981,2.5981)
 write.table(deme_coords, file = paste0(fileName, ".demes"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 coords = matrix(rep(deme_coords, each = nsamp_per_deme), byrow = FALSE, nrow = nsamp, ncol = 2)
 write.table(coords, file = paste0(fileName, ".coord"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 
-write.table(matrix(sapply(1:12, function(x) rep(x, nsamp_per_deme)), byrow=TRUE), file = paste0(fileName, ".ipmap"), quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(matrix(sapply(1:ndemes, function(x) rep(x, nsamp_per_deme)), byrow=TRUE), file = paste0(fileName, ".ipmap"), quote=FALSE, row.names=FALSE, col.names=FALSE)
 
-outer_coords = matrix(nrow = 5, ncol = 2, c(0, 0, 0, 1.8, 3.5, 1.8, 3.5, 0, 0 ,0), byrow=TRUE)
+#outer_coords = matrix(nrow = 5, ncol = 2, c(0, 0, 0, 1.8, 3.5, 1.8, 3.5, 0, 0 ,0), byrow=TRUE)
+outer_coords = matrix(nrow = 5, ncol = 2, c(0, 0, 0, 2.7, 5.5, 2.7, 5.5, 0, 0 ,0), byrow=TRUE)
 write.table(outer_coords, file = paste0(fileName, ".outer"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 
-adjMatrix = matrix(0, nrow = 23, ncol = 2)
-adjMatrix[,1] = c(1, 2, 3, 5, 2, 5, 6, 6, 6, 7, 7, 8, 7, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12)
-adjMatrix[,2] = c(2, 3, 4, 1, 5, 6, 3, 7, 2, 3, 4, 4, 8, 5, 10, 5, 6, 11, 6, 7, 12, 7, 8)
-write.table(adjMatrix, file = paste0(fileName, ".edges"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+#adjMatrix = matrix(0, nrow = 23, ncol = 2)
+#adjMatrix[,1] = c(1, 2, 3, 5, 2, 5, 6, 6, 6, 7, 7, 8, 7, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12)
+#adjMatrix[,2] = c(2, 3, 4, 1, 5, 6, 3, 7, 2, 3, 4, 4, 8, 5, 10, 5, 6, 11, 6, 7, 12, 7, 8)
+#write.table(adjMatrix, file = paste0(fileName, ".edges"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 
