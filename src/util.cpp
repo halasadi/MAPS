@@ -221,9 +221,8 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
     double epsilon = 1e-8;
     int n = expectedIBD.rows();
     double lamda;
-    double a = 0;
-    double b = 0;
-    double c = 0;
+    double weight = 1;
+    // if unweighted, keep weight = 1
     for (int i = 0; i < n; i++){
         for (int j = i; j < n; j++){
             if (expectedIBD(i,j) < epsilon){
@@ -232,19 +231,18 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
                 lamda = expectedIBD(i,j);
             }
             if (i == j){
-                a = a + cvec(i);
-                b = b + log(cvec(i)*(cvec(i)-1)/2);
-                ll += observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda;
+                // comment out weight for unweighted
+                //weight = ((cvec(i)-1)/((cvec(i)*(cvec(i)-1))/2));
+                ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
             }
             else{
-                c = c + log(cvec(i)*cvec(j));
-                ll += observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda;
+                // comment out weight for unweighted
+                //weight = ((cvec(i)+cvec(j)-1)/(cvec(i)*cvec(j)));
+                ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
 
         }
     }
-
-    ll = ll + log(a-1) - b - c;
     return(ll);
 }
 
