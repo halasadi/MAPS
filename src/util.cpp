@@ -33,11 +33,11 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
-        ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
-        ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
+        ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.0001), "mrateShape")
+        ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.0001), "qrateShape")
         ("sigmaShape", po::value<double>(&sigmaShape_2)->default_value(0.001), "sigmaShape")
-        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(1.0), "qrateScale")
-        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(1.0), "mrateScale")
+        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(0.01), "qrateScale")
+        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(0.01), "mrateScale")
         ("sigmaScale", po::value<double>(&sigmaScale_2)->default_value(1.0), "sigmaScale")
         ("negBiProb", po::value<double>(&negBiProb)->default_value(0.67), "negBiProb")
         ("negBiSize", po::value<int>(&negBiSize)->default_value(10), "negBiSize") ;
@@ -232,12 +232,12 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
             }
             if (i == j){
                 // comment out weight for unweighted
-                //weight = ((cvec(i)-1)/((cvec(i)*(cvec(i)-1))/2));
+                weight = (cvec(i)-1)/((cvec(i)*(cvec(i)-1))/2);
                 ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
             }
             else{
                 // comment out weight for unweighted
-                //weight = ((cvec(i)+cvec(j)-1)/(cvec(i)*cvec(j)));
+                weight = ((cvec(i)+cvec(j)))/(cvec(i)*cvec(j));
                 ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
 

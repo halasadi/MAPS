@@ -12,7 +12,8 @@ library(rEEMSplots2)
 ## mcmcpath is a list of three output directories; the results will be averaged
 #plotpath <- 'data/popres/3.5_6/plots_lowerBnd_3.5_upperBnd_6'
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
-#plotpath <- 'data/popres/6_Inf/plots_lowerBnd_6_upperBnd_Inf'
+#plotpath <- 'data/popres/plots_lowerBnd_6_upperBnd_Inf'
+#mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
 #plotpath <- 'data/3x4/recent_barrier_10gen/8_Inf_plot'
 #mcmcpath <- 'data/3x4/recent_barrier_10gen/eems_8_Inf-EEMS2-test-sim'
 #plotpath <- 'data/3x4/past_barrier_40gen/3_5_plot'
@@ -65,7 +66,7 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      q.log10transform = FALSE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
-                                                     #m.colscale = c(0.005, 0.015), 
+                                                     #m.colscale = c(0.04, 0.06), 
                                                      #m.colscale = c(0.000, 0.02),
                                                      add.abline=TRUE,
                                                      #N.colscale = c(8000, 12000),
