@@ -14,16 +14,10 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
 #plotpath <- 'data/popres/plots_lowerBnd_6_upperBnd_Inf'
 #mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
-#plotpath <- 'data/4x5/recent_barrier/4_Inf_plot'
-#mcmcpath <- 'data/4x5/recent_barrier/eems_4_Inf-EEMS2-test-sim'
-#plotpath <- 'data/3x4/past_barrier_40gen/3_5_plot'
-#mcmcpath <- 'data/3x4/past_barrier_40gen/eems_3_5-EEMS2-test-sim' 
-#plotpath <- 'data/3x4/3x4_uniform/plot'
-#mcmcpath <- 'data/3x4/3x4_uniform/3x4_uniform-EEMS2-test-sim' 
-#plotpath  <- 'data/3x4/barrier_40gen_heter_popsizes/4_Inf_plot'
-#mcmcpath  <- 'data/3x4/barrier_40gen_heter_popsizes/eems_4_Inf-EEMS2-test-sim'
-plotpath <- 'data/4x5/uniform/plot'
-mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/recent_barrier/4_Inf_plot'
+mcmcpath <- 'data/4x5/recent_barrier/eems_4_Inf-EEMS2-test-sim'
+#plotpath <- 'data/4x5/uniform/plot'
+#mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
 # FALSE FOR POPRES
 longlat <- TRUE
 
@@ -60,9 +54,9 @@ longlat <- TRUE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=TRUE, add.demes=TRUE,
-                                                     m.standardize = FALSE,
+                                                     m.standardize = TRUE,
                                                      q.standardize = FALSE,
-                                                     m.log10transform = FALSE,
+                                                     m.log10transform = TRUE,
                                                      q.log10transform = FALSE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
                                                      lwd.map=2, col.map = "black", 

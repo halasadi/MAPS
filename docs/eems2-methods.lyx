@@ -1,0 +1,781 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass paper
+\begin_preamble
+
+\usepackage{amsfonts}\title{LDSP- Linear Detection of Selection in Pooled sequence data}
+
+
+\author{Hussein Al-Asadi, Matthew Stephens}
+\end_preamble
+\options draft
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package none
+\inputencoding utf8
+\fontencoding default
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize a4paper
+\use_geometry true
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 0
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1.3cm
+\topmargin 1.4cm
+\rightmargin 1.3cm
+\bottommargin 1.4cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+MAPS: recent Migration And Population Size surface estimation
+\end_layout
+
+\begin_layout Author
+Hussein Al-Asadi, Desislava Petkova, John Novembre, Matthew Stephens
+\end_layout
+
+\begin_layout Section
+Methods
+\end_layout
+
+\begin_layout Standard
+MAPS assumes a population genetic model of a 
+\begin_inset Formula $d$
+\end_inset
+
+ x 
+\begin_inset Formula $d$
+\end_inset
+
+ grid of demes with symmetric migration and per the stepping stone assumption,
+ only neighboring demes are connected.
+ Like EEMS, the density of the grid is prespecified by the user with the
+ consideration that the computational complexity is 
+\begin_inset Formula $O(d^{3})$
+\end_inset
+
+.
+ We use Bayesian inference to estimate the MAPS parameters: 
+\begin_inset Formula $m$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+.
+ Its key components are the likelihood, which measures how well the parameters
+ explain the observed data, and the prior, which captures the expectation
+ that m and q have some spatial structure (in particular, the idea that
+ nearby edges will tend to have similar migration and coalescent rates).
+\end_layout
+
+\begin_layout Subsection
+The Likelihood 
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $N_{i,j}^{u}$
+\end_inset
+
+ be the number of segments greater than 
+\begin_inset Formula $u$
+\end_inset
+
+ centimorgans between individuals 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+ that have not experienced any intervening recombination.
+ These UnRecombined segments (UnR) are commonly referred to as 
+\begin_inset Quotes eld
+\end_inset
+
+IBD
+\begin_inset Quotes erd
+\end_inset
+
+ segments; however, we do not refer to them as IBD segments to avoid confusing
+ them with the myriad other definitions of IBD.
+ As 
+\begin_inset Formula $u$
+\end_inset
+
+ increases, the coalescent times for the UnR segments become shorter and
+ and a result become increasingly sensitive to recent population structure
+ and in practice, become a function of only recent population structure.
+ In this study, we focus on characterizing population structure in the recent
+ past (e.g.
+ 
+\begin_inset Formula $<1500$
+\end_inset
+
+ years) and accordingly focus on UnR segments with short coalescent times
+ which we arbirtarily designate as UnR segments greater than 4cM.
+ Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
+ have high power and low false positive rates (Browning & Browning, 2007;
+ Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $\theta=(m,q)$
+\end_inset
+
+ encode the parameters of the demographic model, which are the migration
+ rates and population sizes of a 
+\begin_inset Formula $d$
+\end_inset
+
+ by 
+\begin_inset Formula $d$
+\end_inset
+
+ grid of demes.
+ Like Petkova et al 2015, we use the isolation by distance patterns widely
+ observed in data by imposing the stepping stone assumption.
+ 
+\end_layout
+
+\begin_layout Standard
+First we compute the expectation of 
+\begin_inset Formula $N_{i,j}^{u}$
+\end_inset
+
+.
+ Following Palamara et al.
+ 2012, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+E[N_{i,j}^{u}]\approx\frac{L\,E_{u}[f|\theta]}{E_{u}[s|\theta]}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $E[f|\theta]$
+\end_inset
+
+ is the expected fraction of the genome that lies in UnR segments greater
+ than 
+\begin_inset Formula $u$
+\end_inset
+
+cM, 
+\begin_inset Formula $L$
+\end_inset
+
+ the length of the genome in units of cM, and 
+\begin_inset Formula $E[s|\theta$
+\end_inset
+
+] the expected size of a UnR segment conditional on it is at least 
+\begin_inset Formula $u$
+\end_inset
+
+cM.
+ To gain intuition, it is helpful to see that equation (1) equates to saying
+ that the average size of each UnR segment (
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $E[s|\theta]$
+\end_inset
+
+)
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ multiplied by the average number of segments (
+\begin_inset Formula $E[N_{i,j}^{u}]$
+\end_inset
+
+) is approximately the total length of the genome that lies in UnR segments
+ (
+\begin_inset Formula $L\,E[f|\theta]$
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+Furthermore following Palamara et al.
+ 2012,
+\begin_inset Formula 
+\begin{equation}
+E_{u}[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\theta)/l\,dl}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+E_{s}[f|\theta]=\int_{u}^{\infty}p(l|\theta)dl
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $p(l|\theta)$
+\end_inset
+
+ is the probability that a randomly chosen base pair in the genome is contained
+ with an UnR segments of at least 
+\begin_inset Formula $u$
+\end_inset
+
+cM.
+ Combining both equations together,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+E[N_{i,j}^{u}]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Expanding 
+\begin_inset Formula $L\int_{u}^{\infty}p(l|\theta)/l\,dl$
+\end_inset
+
+, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t_{i,j}|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $p(l,t|\theta)=P(l|t,\theta)p(t|\theta)=p(l|t)p(t|\theta)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $p(l|t)$
+\end_inset
+
+ is the probability of observing a UnR segment of exactly length 
+\begin_inset Formula $l$
+\end_inset
+
+ given a coalescent event at time 
+\begin_inset Formula $t$
+\end_inset
+
+, this quantity can be derived by considering the probability of no recombinatio
+n for 
+\begin_inset Formula $t$
+\end_inset
+
+ generations (see Hein et al, 2005).
+ Namely, given a site 
+\begin_inset Formula $a$
+\end_inset
+
+, the probability of no recombination in 
+\begin_inset Formula $t$
+\end_inset
+
+ generations for 
+\begin_inset Formula $x$
+\end_inset
+
+ base pairs to the right of 
+\begin_inset Formula $a$
+\end_inset
+
+ is simply 
+\begin_inset Formula $e^{-rtx}$
+\end_inset
+
+ where 
+\begin_inset Formula $r$
+\end_inset
+
+ is the recombination rate.
+ Consider the length of no recombination to left of 
+\begin_inset Formula $a$
+\end_inset
+
+ (
+\begin_inset Formula $X_{L}$
+\end_inset
+
+) and to the right of 
+\begin_inset Formula $a$
+\end_inset
+
+ (
+\begin_inset Formula $X_{R}$
+\end_inset
+
+), then 
+\begin_inset Formula $l=X_{L}+X_{r}$
+\end_inset
+
+ is a convolution of two exponential random variables.
+ Therefore,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+p(l|t)=4r^{2}t^{2}le^{-2trl}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The next quantity to consider is 
+\begin_inset Formula $p(t|\theta)$
+\end_inset
+
+, where 
+\begin_inset Formula $\theta$
+\end_inset
+
+ encodes the demographic model.
+ Under the structured coalescent,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+p(T_{i,j}=t|\theta)=\sum_{k}q_{k}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which can be derived by considering all possible demes in which lineages
+ 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+ can coalesce (see appendix for the proof).
+ 
+\begin_inset Formula $q_{k}$
+\end_inset
+
+ is the coalescent rate of deme 
+\begin_inset Formula $k$
+\end_inset
+
+, 
+\begin_inset Formula $K(i)$
+\end_inset
+
+ denotes the deme which individual 
+\begin_inset Formula $i$
+\end_inset
+
+ belongs to, and 
+\begin_inset Formula $M$
+\end_inset
+
+ is the instantaneous rate matrix of the structured coalescent process for
+ a sample size of two, see (Wakeley, 2008) for a detailed explanation of
+ 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ 
+\begin_inset Formula $M$
+\end_inset
+
+ is a matrix of size 
+\begin_inset Formula $O(d^{2})$
+\end_inset
+
+ by 
+\begin_inset Formula $O(d^{2})$
+\end_inset
+
+ and as a result becomes practically impossible to exponentiate for large
+ 
+\begin_inset Formula $d$
+\end_inset
+
+.
+ Instead, we use an an approximation,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Rt})_{K(i)\rightarrow k}(e^{-Rt})_{K(j)\rightarrow k}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $R$
+\end_inset
+
+ is a 
+\begin_inset Formula $d$
+\end_inset
+
+ by 
+\begin_inset Formula $d$
+\end_inset
+
+ matrix encoding a random walk on 
+\begin_inset Formula $d$
+\end_inset
+
+ vertices such that,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+R_{\alpha,\beta}=m_{\alpha,\beta}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $m_{\alpha,\beta}$
+\end_inset
+
+ is the migration rate between individual deme 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and deme 
+\begin_inset Formula $\beta$
+\end_inset
+
+ and 
+\begin_inset Formula $m_{\alpha,\beta}=0$
+\end_inset
+
+ if demes 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and 
+\begin_inset Formula $\beta$
+\end_inset
+
+ are not connected in the grid.
+ We found this random walk approximation to work very well (see Supplementary
+ Fig 1).
+ Effectively, we are assuming coalescent events before time 
+\begin_inset Formula $t$
+\end_inset
+
+ do not occur which is approximately true for small 
+\begin_inset Formula $t$
+\end_inset
+
+ and small 
+\begin_inset Formula $q$
+\end_inset
+
+.
+ Having all the components of equation (1), we implement a gaussian quadrature
+ routine to evaluate the integral.
+ The routine only evaluates 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $p(T_{i,j}=t|\theta)$
+\end_inset
+
+ at small 
+\begin_inset Formula $t$
+\end_inset
+
+ because the probability of observing long UnR segments with deep coalescent
+ times is effectively zero.
+ 
+\end_layout
+
+\begin_layout Standard
+Now that we can efficiently compute 
+\begin_inset Formula $E[N_{i,j}^{u}]$
+\end_inset
+
+, we assume a poisson approximation such that
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}])
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which we found to be a good fit to the data, consistent with Ralph & Coop
+ 2008 and Palamara et al 2012.
+\end_layout
+
+\begin_layout Standard
+The composite likelihood of the data is, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\theta)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Composite likelihoods have been widely used in population genetics and have
+ been used in Bayesian population genetic methods (see Lawson et al 2012
+ for an example).
+ However, we found using the composite likelihood lead to poor mixing and
+ discouraged sharing of parameters between demes.
+ To remedy this, we found that using a weighted composite likelihood worked
+ well.
+ See (Vartin et al 2011) for an extensive review on weighted composite likelihoo
+ds and for applications of weighted composite likelihoods to compute confidence
+ intervals in population genetic methods (Coffman et al, 2015).
+ We applied a few strategies to compute weights, however, we ultimately
+ used a simple procedure that worked the best for MAPS.
+ In particular, the composite likelihood assumes there are 
+\begin_inset Formula ${n \choose 2}$
+\end_inset
+
+ independent data points (because there are that many pairs of individuals
+ from 
+\begin_inset Formula $n$
+\end_inset
+
+ total individuals), so we downweighted the composite likelihood so that
+ there are actually 
+\begin_inset Formula $O(n)$
+\end_inset
+
+ independent data points.
+ 
+\end_layout
+
+\begin_layout Subsection
+Computing 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $E[N_{i,j}^{R}]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Previously, we computed the expected number of UnR segments greater than
+ u cM.
+ It is also helpful to visualize UnR segments in a range 
+\begin_inset Formula $R=(u,v)$
+\end_inset
+
+, this is simply,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+E[N_{i,j}^{R}]=E[N_{i,j}^{u}]-E[N_{i,j}^{v}]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+See the appendix for a derivation.
+ 
+\end_layout
+
+\begin_layout Subsection
+The Prior
+\end_layout
+
+\begin_layout Standard
+We use the EEMS prior in Petkova et al 2015, except that we estimate an
+ additional overall mean rate for the coalescent rates wheras Petkova et
+ al fixed the analogous parameter to one.
+ 
+\end_layout
+
+\begin_layout Subsection
+Markov chain Monte Carlo estimation
+\end_layout
+
+\begin_layout Standard
+Like EEMS, MAPS uses MCMC to estimate the migration and coalescent rates
+ by sampling from their posterior distribution given the data.
+ 
+\end_layout
+
+\begin_layout Subsection
+Computational time
+\end_layout
+
+\begin_layout Standard
+The computational cost of MAPS is cubic in the size of the population grid,
+ and the current implementation does not scale well beyond 400 demes.
+ 
+\end_layout
+
+\end_body
+\end_document

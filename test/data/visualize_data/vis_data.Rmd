@@ -6,7 +6,7 @@ output: html_document
 
 ```{r, echo = FALSE}
 # names of the demes in demes.txt (in order)
-labels <- c("United Kingdom", "Italy", "Ireland", "Portugal", "Hungary", "Italy", "France", "Albania", 
+labels <- c("United Kingdom", "Spain", "Ireland", "Portugal", "Hungary", "Italy", "France", "Albania", 
             "Macedonia", "Belgium", "Switzerland", "Germany", "Croatia", "Bosnia", "Poland", "Czech Republic",
             "Serbia", "Netherlands", "Austria")
 
@@ -28,6 +28,14 @@ text(x, y, labels = labels, cex=.7)
 ```{r include = FALSE}
 library(corrplot)
 library(igraph)
+```
+
+Let's do some PCA
+```{r}
+
+popres.pca <- prcomp(sims, center = TRUE, scale. = TRUE)
+plot(popres.pca$x[,1], popres.pca$x[,2], type = "n", xlab = "PC1", ylab = "PC2")
+text(popres.pca$x[,1], popres.pca$x[,2], labels = labels, cex=.7)
 ```
 
 
