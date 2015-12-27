@@ -209,7 +209,7 @@ First we compute the expectation of
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-E[N_{i,j}^{u}]\approx\frac{L\,E_{u}[f|\theta]}{E_{u}[s|\theta]}
+E[N_{i,j}^{u}]\approx\frac{L\,E[f|\theta]}{E[s|\theta]}
 \end{equation}
 
 \end_inset
@@ -287,7 +287,7 @@ Furthermore, following Palamara et al.
  2012,
 \begin_inset Formula 
 \begin{equation}
-E_{u}[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\theta)/l\,dl}
+E[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\theta)/l\,dl}
 \end{equation}
 
 \end_inset
@@ -298,7 +298,7 @@ E_{u}[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\thet
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-E_{s}[f|\theta]=\int_{u}^{\infty}p(l|\theta)dl
+E[f|\theta]=\int_{u}^{\infty}p(l|\theta)dl
 \end{equation}
 
 \end_inset
@@ -312,7 +312,7 @@ where
 \end_inset
 
  is the probability that a randomly chosen base pair in the genome is contained
- with an UnR segments of at least 
+ with an UnR segment of at least 
 \begin_inset Formula $u$
 \end_inset
 
@@ -342,7 +342,7 @@ Expanding
 \begin_layout Standard
 \begin_inset Formula 
 \[
-L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t_{i,j}|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
+L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
 \]
 
 \end_inset
@@ -486,7 +486,7 @@ Thus, the inner integral
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-p(T_{i,j}=t|\theta)=\sum_{k}q_{k}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}
+p(T_{i,j}=t|\theta)=\sum_{k}q_{k}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}
 \end{equation}
 
 \end_inset
@@ -618,7 +618,7 @@ R_{\alpha,\beta}=m_{\alpha,\beta}
 \begin_inset Formula $\beta$
 \end_inset
 
- are not connected in the grid.
+ are unconnected.
  We found this random walk approximation to work very well (see Supplementary
  Fig 1).
  Effectively, we are assuming that coalescent events before time 
@@ -657,8 +657,8 @@ R_{\alpha,\beta}=m_{\alpha,\beta}
 \end_inset
 
  because the probability of observing long UnR segments with deep coalescent
- times is effectively zero.
- 
+ times is effectively zero, and therefore do not contribute any mass to
+ the integral.
 \end_layout
 
 \begin_layout Standard
@@ -732,8 +732,8 @@ p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\t
 Composite likelihoods have been widely used in population genetics and have
  been used in Bayesian population genetic methods (see Lawson et al 2012
  for an example).
- However, we found using the composite likelihood lead to poor mixing and
- discouraged sharing of parameters between demes.
+ However, we found using the composite likelihood lead to poor mixing in
+ the MCMC and discouraged sharing of parameters between demes.
  To remedy this, we used a weighted composite likelihood in which
 \end_layout
 
@@ -771,7 +771,7 @@ The idea behind the weight is that it gaurantees that the composite likelihood
 \end_inset
 
  independent data points.
- 
+ See the supplementary note for more information.
 \end_layout
 
 \begin_layout Subsection
