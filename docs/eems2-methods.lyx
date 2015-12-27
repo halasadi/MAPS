@@ -94,7 +94,7 @@ Methods
 \end_layout
 
 \begin_layout Standard
-MAPS assumes a population genetic model of a 
+MAPS assumes a population genetic model consisting of a 
 \begin_inset Formula $d$
 \end_inset
 
@@ -161,9 +161,9 @@ IBD
 \begin_inset Formula $u$
 \end_inset
 
- increases, the coalescent times for the UnR segments become shorter and
- and a result become increasingly sensitive to recent population structure
- and in practice, become a function of only recent population structure.
+ increases, UnR segments have shorter coalescent times and become increasingly
+ sensitive to recent population structure and in practice, become a function
+ of only recent population structure.
  In this study, we focus on characterizing population structure in the recent
  past (e.g.
  
@@ -192,9 +192,8 @@ Let
 \end_inset
 
  grid of demes.
- Like Petkova et al 2015, we use the isolation by distance patterns widely
- observed in data by imposing the stepping stone assumption.
- 
+ Like Petkova et al 2015, we only allow migration between adjacent demes
+ to utilize the isolation by distance patterns widely observed in data.
 \end_layout
 
 \begin_layout Standard
@@ -284,7 +283,7 @@ cM.
 \end_layout
 
 \begin_layout Standard
-Furthermore following Palamara et al.
+Furthermore, following Palamara et al.
  2012,
 \begin_inset Formula 
 \begin{equation}
@@ -324,7 +323,7 @@ cM.
 \begin_layout Standard
 \begin_inset Formula 
 \[
-E[N_{i,j}^{u}]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl
+E[N_{i,j}^{u}|\theta]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl
 \]
 
 \end_inset
@@ -439,7 +438,40 @@ p(l|t)=4r^{2}t^{2}le^{-2trl}
 \end_layout
 
 \begin_layout Standard
-The next quantity to consider is 
+Thus, the inner integral 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\int_{u}^{\infty}p(l|t)/l\,dl$
+\end_inset
+
+ can be computed analytically as 
+\begin_inset Formula $2rtle^{-2tru}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+.
+ The next quantity to consider is 
 \begin_inset Formula $p(t|\theta)$
 \end_inset
 
@@ -472,7 +504,7 @@ which can be derived by considering all possible demes in which lineages
 \begin_inset Formula $j$
 \end_inset
 
- can coalesce (see appendix for the proof).
+ can coalesce.
  
 \begin_inset Formula $q_{k}$
 \end_inset
@@ -518,7 +550,7 @@ which can be derived by considering all possible demes in which lineages
 \end_inset
 
 .
- Instead, we use an an approximation,
+ Instead, we approximate the coalescent process as a random walk where,
 \end_layout
 
 \begin_layout Standard
@@ -533,7 +565,6 @@ p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Rt})_{K(i)\rightarrow k}(e^{-Rt})_{K
 \end_layout
 
 \begin_layout Standard
-where 
 \begin_inset Formula $R$
 \end_inset
 
@@ -590,7 +621,7 @@ R_{\alpha,\beta}=m_{\alpha,\beta}
  are not connected in the grid.
  We found this random walk approximation to work very well (see Supplementary
  Fig 1).
- Effectively, we are assuming coalescent events before time 
+ Effectively, we are assuming that coalescent events before time 
 \begin_inset Formula $t$
 \end_inset
 
@@ -603,9 +634,9 @@ R_{\alpha,\beta}=m_{\alpha,\beta}
 \end_inset
 
 .
- Having all the components of equation (1), we implement a gaussian quadrature
- routine to evaluate the integral.
- The routine only evaluates 
+ Having all the components of equation (1), we are left to evaluate a single
+ integral which we do by gaussian quadrature.
+ The quadrature routine only evaluates 
 \family roman
 \series medium
 \shape up
@@ -635,13 +666,41 @@ Now that we can efficiently compute
 \begin_inset Formula $E[N_{i,j}^{u}]$
 \end_inset
 
-, we assume a poisson approximation such that
+, we can describe the distribution of 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $N_{i,j}^{u}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}])
+N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}|\theta])
 \end{equation}
 
 \end_inset
@@ -650,8 +709,8 @@ N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}])
 \end_layout
 
 \begin_layout Standard
-which we found to be a good fit to the data, consistent with Ralph & Coop
- 2008 and Palamara et al 2012.
+which we found to be an excellent fit to the POPRES data, consistent with
+ Ralph & Coop 2008 and Palamara et al 2012.
 \end_layout
 
 \begin_layout Standard
@@ -675,13 +734,28 @@ Composite likelihoods have been widely used in population genetics and have
  for an example).
  However, we found using the composite likelihood lead to poor mixing and
  discouraged sharing of parameters between demes.
- To remedy this, we found that using a weighted composite likelihood worked
- well.
- See (Vartin et al 2011) for an extensive review on weighted composite likelihoo
-ds and for applications of weighted composite likelihoods to compute confidence
- intervals in population genetic methods (Coffman et al, 2015).
- We applied a few strategies to compute weights, however, we ultimately
- used a simple procedure that worked the best for MAPS.
+ To remedy this, we used a weighted composite likelihood in which
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\theta)^{w}
+\]
+
+\end_inset
+
+The idea behind the weight is that it gaurantees that the composite likelihood
+ has the right curvature and recovers the right asymptotic variance in the
+ normal approximation to the composite likelihood, see (Vartin et al 2011)
+ for an excellent review of composite likelihoods and (Coffman et al, 2015)
+ for applications in population genetic methods.
+ We applied a few strategies to compute 
+\begin_inset Formula $w$
+\end_inset
+
+ such that used in (Coffman et al, 2015), however, we ultimately used a
+ simple procedure that worked the best for MAPS.
  In particular, the composite likelihood assumes there are 
 \begin_inset Formula ${n \choose 2}$
 \end_inset
@@ -739,11 +813,6 @@ E[N_{i,j}^{R}]=E[N_{i,j}^{u}]-E[N_{i,j}^{v}]
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-See the appendix for a derivation.
- 
 \end_layout
 
 \begin_layout Subsection

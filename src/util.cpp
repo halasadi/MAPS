@@ -232,12 +232,12 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
             }
             if (i == j){
                 // comment out weight for unweighted
-                weight = (2*cvec(i)-3)/((cvec(i)*(cvec(i)-1))/2);
+                weight = (5*cvec(i)-9)/((cvec(i)*(cvec(i)-1))/2);
                 ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
             }
             else{
                 // comment out weight for unweighted
-                weight = (2*(cvec(i)+cvec(j))-3)/(cvec(i)*cvec(j));
+                weight = (5*(cvec(i)+cvec(j))-9)/(cvec(i)*cvec(j));
                 ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
 
