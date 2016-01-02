@@ -10,7 +10,7 @@ labels <- c("United Kingdom", "Spain", "Ireland", "Portugal", "Hungary", "Italy"
             "Macedonia", "Belgium", "Switzerland", "Germany", "Croatia", "Bosnia", "Poland", "Czech Republic",
             "Serbia", "Netherlands", "Austria")
 
-sims <- as.matrix(read.table("popres_6_Inf_mean_sims.txt"))
+sims <- as.matrix(read.table("data/popres/popres_6_Inf_mean_sims.txt"))
 rownames(sims) <- labels
 colnames(sims) <- labels
 ```

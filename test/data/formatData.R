@@ -48,9 +48,9 @@ readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/4x5/heter_popsizes/"
-ibdM = readIBD(paste0(workingDir, "heter_popsizes_mt_300_nsamp_per_deme_20.merged"), 400, 4e6, Inf)
-write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+workingDir <- "/Users/halasadi/eems2/test/data/4x5/past_barrier/"
+ibdM = readIBD(paste0(workingDir, "past_barrier_mt_600_nsamp_per_deme_20.merged"), 400, 2e6, 6e6)
+write.table(ibdM, file = paste0(workingDir, "eems_2_6.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
 
 #### computing variance of IBD empirically
 #m = 4

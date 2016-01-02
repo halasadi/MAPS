@@ -18,10 +18,10 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_8-EEMS2-test-sim' 
-#plotpath <- 'data/4x5/past_barrier/eems_4_6_plot'
-#mcmcpath <- 'data/4x5/past_barrier/eems_4_6-EEMS2-test-sim' 
-plotpath <- 'data/4x5/heter_popsizes/plot'
-mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
+mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/heter_popsizes/plot'
+#mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
 # FALSE FOR POPRES
 longlat <- TRUE
 
@@ -64,10 +64,10 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      q.log10transform = FALSE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
-                                                     #m.colscale = c(0.04, 0.06), 
+                                                     #m.colscale = c(0.09, 0.11), 
                                                      #m.colscale = c(0.000, 0.02),
                                                      add.abline=TRUE,
-                                                     #N.colscale = c(8000, 12000),
+                                                     N.colscale = c(8000, 12000),
                                                      plot.height=8, plot.width=10, 
                                                      projection.in = "+proj=longlat +datum=WGS84"))
 
