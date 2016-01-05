@@ -63,24 +63,24 @@ void EEMS2::initialize_sims( ) {
     int demej;
     // all (n choose 2) comparisons at the individual level
     // TO DO: I think there is a more simple way to fill in cMatrix (or get it from cvec)
+    
+    int nchr = 1;
+    if (params.diploid){
+        nchr = 2;
+    }
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
-            
-            if (demei == demej){
-                cMatrix(demei, demej) += 1;
-            }
-            else{
-                cMatrix(demei, demej) += 1;
-                cMatrix(demej, demei) += 1;
-            }
+            cMatrix(demei, demej) += nchr;
+            cMatrix(demej, demei) = cMatrix(demei, demej);
+        
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
         }
     }
     for ( int i = 0 ; i < n ; i ++ ) {
-        cvec(graph.get_deme_of_indiv(i)) += 1;
+        cvec(graph.get_deme_of_indiv(i)) += nchr;
     }
     
     cerr << "Observed IBD matrix:\n" << observedIBD <<  endl;

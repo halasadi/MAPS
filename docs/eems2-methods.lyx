@@ -732,46 +732,22 @@ p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\t
 Composite likelihoods have been widely used in population genetics and have
  been used in Bayesian population genetic methods (see Lawson et al 2012
  for an example).
- However, we found using the composite likelihood lead to poor mixing in
- the MCMC and discouraged sharing of parameters between demes.
- To remedy this, we used a weighted composite likelihood in which
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\theta)^{w}
-\]
-
-\end_inset
-
-The idea behind the weight is that it gaurantees that the composite likelihood
- has the right curvature and recovers the right asymptotic variance in the
- normal approximation to the composite likelihood, see (Vartin et al 2011)
- for an excellent review of composite likelihoods and (Coffman et al, 2015)
- for applications in population genetic methods.
- We applied a few strategies to compute 
-\begin_inset Formula $w$
-\end_inset
-
- such that used in (Coffman et al, 2015), however, we ultimately used a
- simple procedure that worked the best for MAPS.
- In particular, the composite likelihood assumes there are 
+ However, using the composite likelihood lead to very poor mixing which
+ occurs because the composite likelihood assumes there are 
 \begin_inset Formula ${n \choose 2}$
 \end_inset
 
- independent data points (because there are that many pairs of individuals
- from 
-\begin_inset Formula $n$
-\end_inset
-
- total individuals), so we downweighted the composite likelihood so that
- there are actually 
+ independent data points and as a result becomes overly concentrated around
+ the maximum likelihood estimate.
+ To improve mixing, we downweighted the composite likelihood so that there
+ are actually 
 \begin_inset Formula $O(n)$
 \end_inset
 
  independent data points.
- See the supplementary note for more information.
+ As a result, the likelihood became less peaky but the mle estimates remained
+ the same.
+ 
 \end_layout
 
 \begin_layout Subsection
