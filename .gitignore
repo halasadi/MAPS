@@ -13,4 +13,6 @@ docs/
 notes:reports/data/
 src/runeems2
 test/check_priors.R
-test/old/
+test/data
+*png
+*.txt

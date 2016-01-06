@@ -35,10 +35,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
-        ("sigmaShape", po::value<double>(&sigmaShape_2)->default_value(0.001), "sigmaShape")
-        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(0.001), "qrateScale")
-        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(0.001), "mrateScale")
-        ("sigmaScale", po::value<double>(&sigmaScale_2)->default_value(1.0), "sigmaScale")
+        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(1.0), "qrateScale")
+        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(1.0), "mrateScale")
         ("negBiProb", po::value<double>(&negBiProb)->default_value(0.67), "negBiProb")
         ("negBiSize", po::value<int>(&negBiSize)->default_value(10), "negBiSize") ;
         ifstream instrm(params_file.c_str());
@@ -52,13 +50,9 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     }
     mrateShape_2 /= 2.0;
     qrateShape_2 /= 2.0;
-    sigmaShape_2 /= 2.0;
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
-    sigmaScale_2 /= 2.0;
-    
-    dfmin = nIndiv;
-    dfmax = 1e6;
+
     testing = false;
     
     
@@ -95,10 +89,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
     << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
     << "             qrateShape = " << 2.0*params.qrateShape_2 << endl
-    << "             sigmaShape = " << 2.0*params.sigmaShape_2 << endl
     << "             qrateScale = " << 2.0*params.qrateScale_2 << endl
     << "             mrateScale = " << 2.0*params.mrateScale_2 << endl
-    << "             sigmaScale = " << 2.0*params.sigmaScale_2 << endl
     << "       mSeedsProposalS2 = " << params.mSeedsProposalS2 << endl
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
@@ -174,12 +166,11 @@ bool Params::check_input_params( ) const {
         << "  numMCMCIter = " << numMCMCIter << ", numBurnIter = " << numBurnIter << ", numThinIter " << numThinIter << endl;
         error = true;
     }
-    if (!(qrateShape_2>0) || !(mrateShape_2>0) || !(sigmaShape_2) ||
-        !(qrateScale_2>0) || !(mrateScale_2>0) || !(sigmaScale_2)) {
+    if (!(qrateShape_2>0) || !(mrateShape_2>0) ||
+        !(qrateScale_2>0) || !(mrateScale_2>0)) {
         cerr << "  Error with the Inverse Gamma hyperparameters:" << endl
         << "  qrateShape = " << 2.0*qrateShape_2 << ", qrateScale = " << 2.0*qrateScale_2 << endl
-        << "  mrateShape = " << 2.0*mrateShape_2 << ", mrateScale = " << 2.0*mrateScale_2 << endl
-        << "  sigmaShape = " << 2.0*sigmaShape_2 << ", sigmaScale = " << 2.0*sigmaScale_2 << endl;
+        << "  mrateShape = " << 2.0*mrateShape_2 << ", mrateScale = " << 2.0*mrateScale_2 << endl;
         error = true;
     }
     if (!(negBiSize>0) || !( (negBiProb>0) && (negBiProb<1) )) {

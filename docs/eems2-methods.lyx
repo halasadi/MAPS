@@ -121,8 +121,16 @@ MAPS assumes a population genetic model consisting of a
 .
  Its key components are the likelihood, which measures how well the parameters
  explain the observed data, and the prior, which captures the expectation
- that m and q have some spatial structure (in particular, the idea that
- nearby edges will tend to have similar migration and coalescent rates).
+ that 
+\begin_inset Formula $m$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+ have some spatial structure (in particular, the idea that nearby edges
+ will tend to have similar migration and coalescent rates).
 \end_layout
 
 \begin_layout Subsection
@@ -193,7 +201,8 @@ Let
 
  grid of demes.
  Like Petkova et al 2015, we only allow migration between adjacent demes
- to utilize the isolation by distance patterns widely observed in data.
+ to enfore the isolation by distanc assumption which is widely observed
+ in data.
 \end_layout
 
 \begin_layout Standard
@@ -486,7 +495,7 @@ Thus, the inner integral
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-p(T_{i,j}=t|\theta)=\sum_{k}q_{k}(e^{-Mt})_{(K(i),K(j))\rightarrow(k,k)}
+p(T_{i,j}=t|\theta)=\sum_{k}q_{k}(e^{-Rt})_{(I(i),I(j))\rightarrow(k,k)}
 \end{equation}
 
 \end_inset
@@ -514,26 +523,26 @@ which can be derived by considering all possible demes in which lineages
 \end_inset
 
 , 
-\begin_inset Formula $K(i)$
+\begin_inset Formula $I(i)$
 \end_inset
 
- denotes the deme which individual 
+ indicates the deme which individual 
 \begin_inset Formula $i$
 \end_inset
 
  belongs to, and 
-\begin_inset Formula $M$
+\begin_inset Formula $R$
 \end_inset
 
  is the instantaneous rate matrix of the structured coalescent process for
  a sample size of two, see (Wakeley, 2008) for a detailed explanation of
  
-\begin_inset Formula $M$
+\begin_inset Formula $R$
 \end_inset
 
 .
  
-\begin_inset Formula $M$
+\begin_inset Formula $R$
 \end_inset
 
  is a matrix of size 
@@ -550,13 +559,14 @@ which can be derived by considering all possible demes in which lineages
 \end_inset
 
 .
- Instead, we approximate the coalescent process as a random walk where,
+ Instead, we approximate the coalescent process as a random walk with absorption
+ where,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Rt})_{K(i)\rightarrow k}(e^{-Rt})_{K(j)\rightarrow k}
+p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Mt})_{I(i)\rightarrow k}(e^{-Mt})_{I(j)\rightarrow k}
 \]
 
 \end_inset
@@ -565,7 +575,7 @@ p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Rt})_{K(i)\rightarrow k}(e^{-Rt})_{K
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $R$
+\begin_inset Formula $M$
 \end_inset
 
  is a 
@@ -586,7 +596,7 @@ p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Rt})_{K(i)\rightarrow k}(e^{-Rt})_{K
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-R_{\alpha,\beta}=m_{\alpha,\beta}
+M_{\alpha,\beta}=m_{\alpha,\beta}
 \end{equation}
 
 \end_inset
@@ -619,7 +629,34 @@ R_{\alpha,\beta}=m_{\alpha,\beta}
 \end_inset
 
  are unconnected.
- We found this random walk approximation to work very well (see Supplementary
+ Or equivalently,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+P(t)\approx e^{-Mt}Qe^{-Mt}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $Q=diag(q_{1},...,q_{d})$
+\end_inset
+
+ and 
+\begin_inset Formula $P(t)_{I(i),I(j)}=p(T_{i,j}=t|\theta)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We found this random walk approximation to work very well (see Supplementary
  Fig 1).
  Effectively, we are assuming that coalescent events before time 
 \begin_inset Formula $t$
@@ -666,7 +703,7 @@ Now that we can efficiently compute
 \begin_inset Formula $E[N_{i,j}^{u}]$
 \end_inset
 
-, we can describe the distribution of 
+, we can compute the distribution 
 \family roman
 \series medium
 \shape up
@@ -732,21 +769,21 @@ p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\t
 Composite likelihoods have been widely used in population genetics and have
  been used in Bayesian population genetic methods (see Lawson et al 2012
  for an example).
- However, using the composite likelihood lead to very poor mixing which
- occurs because the composite likelihood assumes there are 
+ However, using the composite likelihood lead to very poor mixing because
+ the composite likelihood assumes there are 
 \begin_inset Formula ${n \choose 2}$
 \end_inset
 
  independent data points and as a result becomes overly concentrated around
- the maximum likelihood estimate.
+ the mle.
  To improve mixing, we downweighted the composite likelihood so that there
  are actually 
 \begin_inset Formula $O(n)$
 \end_inset
 
  independent data points.
- As a result, the likelihood became less peaky but the mle estimates remained
- the same.
+ As a result, the likelihood became less sharp around the mle with the mle
+ remaining identical.
  
 \end_layout
 
