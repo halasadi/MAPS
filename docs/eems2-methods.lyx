@@ -179,7 +179,7 @@ IBD
 \end_inset
 
  years) and accordingly focus on UnR segments with short coalescent times
- which we arbirtarily designate as UnR segments greater than 4cM.
+ which we arbirtarily designate as UnR segments greater than 2cM.
  Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
  have high power and low false positive rates (Browning & Browning, 2007;
  Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
@@ -385,7 +385,7 @@ n for
 \begin_inset Formula $t$
 \end_inset
 
- generations (see Hein et al, 2005).
+ generations (see Hein et al, 2005) for a pair of individuals.
  Namely, given a site 
 \begin_inset Formula $a$
 \end_inset
@@ -410,7 +410,11 @@ n for
 \begin_inset Formula $r$
 \end_inset
 
- is the recombination rate.
+ is the recombination rate for one of the pair and 
+\begin_inset Formula $e^{-2rtx}$
+\end_inset
+
+ for both individuals.
  Consider the length of no recombination to left of 
 \begin_inset Formula $a$
 \end_inset
@@ -778,12 +782,48 @@ Composite likelihoods have been widely used in population genetics and have
  the mle.
  To improve mixing, we downweighted the composite likelihood so that there
  are actually 
-\begin_inset Formula $O(n)$
+\begin_inset Formula $(n-1)$
 \end_inset
 
  independent data points.
  As a result, the likelihood became less sharp around the mle with the mle
  remaining identical.
+ More specifically, the full composite log-likelihood (which we assumed
+ to be Poisson) is,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+l(\lambda)={n \choose 2}(log(\lambda)\bar{{x}}-\lambda)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which we then altered to
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+(n-1)(log(\lambda)\bar{{x}}-\lambda)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+to reflect that we really just have 
+\begin_inset Formula $O(n)$
+\end_inset
+
+ data points.
  
 \end_layout
 

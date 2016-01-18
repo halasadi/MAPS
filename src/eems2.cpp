@@ -8,8 +8,6 @@ EEMS2::EEMS2(const Params &params) {
     graph.generate_grid(params.datapath,params.gridpath,
                         habitat,params.nDemes,params.nIndiv);
     graph.dlmwrite_grid(params.mcmcpath);
-    
-    
     o = graph.get_num_obsrv_demes();
     d = graph.get_num_total_demes();
     n = params.nIndiv;
@@ -74,7 +72,7 @@ void EEMS2::initialize_sims( ) {
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += nchr;
             cMatrix(demej, demei) = cMatrix(demei, demej);
-        
+            
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
         }
@@ -239,7 +237,7 @@ double EEMS2::eval_proposal_move_one_qtile(Proposal &proposal) const {
 double EEMS2::eval_birthdeath_qVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu));
 }
-double EEMS2::eval_proposal_rate_one_mtile(Proposal &proposal) const {
+double EEMS2::eval_proposal_rate_one_mtile(Proposal &proposal) const{
     return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu));
     
 }
@@ -579,7 +577,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     
     
     /*cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
-    cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
+     cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
      */
     
     JtDhatJ += expectedIBD;
@@ -730,7 +728,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(const MatrixXd &V, const VectorXd &eigenvalues, const VectorXd &W, MatrixXd &integral, double bnd) const {
+void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd weights(50);
@@ -738,26 +736,21 @@ void EEMS2::calculateIntegral(const MatrixXd &V, const VectorXd &eigenvalues, co
     VectorXd x(50);
     
     getWeights(weights, x);
-
+    
     weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
     x = x/(2*bnd/100);
     
-    MatrixXd Dt(d, d);
-    MatrixXd p = MatrixXd::Zero(o,o);
+    MatrixXd coalp = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
-    
     integral.setZero();
     
     for (int t = 0; t < x.size(); t++){
-        Dt = ((VectorXd)((eigenvalues.array() * x[t]).exp())).asDiagonal();
-        P = V*Dt*V.transpose();
-        p = P*W.asDiagonal()*P.transpose();
-        for (int i = 0; i < o; i++){
-            for (int j = i; j < o; j++){
-                integral(i,j) += p(i,j)*weights(t);
-                integral(j,i) = integral(i,j);
-            }
-        }
+        // exponentiate the matrix
+        P = eigenvecs*(((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal())*eigenvecs.transpose();
+        P = P.topLeftCorner(o, o);
+        // compute the probability by summing over all demes
+        coalp = P*q.head(o).asDiagonal()*P.transpose();
+        integral += coalp*weights(t);
     }
     
     
@@ -772,17 +765,19 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     // mSeeds, mEffcts and mrateMu define the migration Voronoi tessellation
     // qSeeds, qEffcts define the diversity Voronoi tessellation
     VectorXi mColors, qColors;
-    // For every deme in the graph -- which migration tile does the deme fall into?
-    graph.index_closest_to_deme(mSeeds,mColors);
     // For every deme in the graph -- which diversity tile does the deme fall into?
     graph.index_closest_to_deme(qSeeds,qColors);
-    VectorXd W = VectorXd::Zero(d);
+    // For every deme in the graph -- which migration tile does the deme fall into?
+    graph.index_closest_to_deme(mSeeds,mColors);
+    
+    VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
-        W(alpha) = pow(10.0,log10q_alpha);
+        q(alpha) = pow(10.0,log10q_alpha);
     }
     
+
     MatrixXd M = MatrixXd::Zero(d,d);
     int alpha, beta;
     // Transform the log10 migration parameters into migration rates on the original scale
@@ -793,23 +788,21 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
         M(beta,alpha) = M(alpha,beta);
     }
-
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
-    
     
     // eigen decompositon
     SelfAdjointEigenSolver<MatrixXd> es;
     es.compute(M);
-    VectorXd eigenvalues = es.eigenvalues();
-    MatrixXd V = es.eigenvectors();
+    MatrixXd eigenvals = es.eigenvalues();
+    MatrixXd eigenvecs = es.eigenvectors();
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
-    calculateIntegral(V, eigenvalues, W, lowerExpectedIBD, params.lowerBound);
+    calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
-        calculateIntegral(V, eigenvalues, W, upperExpectedIBD, params.upperBound);
+        calculateIntegral(eigenvals, eigenvecs, q, upperExpectedIBD, params.upperBound);
         expectedIBD = lowerExpectedIBD - upperExpectedIBD;
     }
     else{
@@ -817,7 +810,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     double logll = poisln(expectedIBD, observedIBD, cvec);
-
+    
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();

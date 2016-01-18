@@ -28,7 +28,6 @@ struct Proposal {
     MoveType move; // the type of proposal/update
     int newqtiles; // number of m and q tiles, respectively
     int newmtiles;
-    double newdf; // degrees of freedom
     double newpi; // log prior
     double newll; // log likelihood
     //double newsigma2; // variance scale
@@ -57,7 +56,7 @@ public:
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
                             VectorXd newqEffcts, double newmrateMu) const;
     
-    void calculateIntegral(const MatrixXd &V, const VectorXd &eigenvalues, const VectorXd &W, MatrixXd &integral, double bnd) const;
+    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -68,8 +67,8 @@ public:
     double eval_proposal_rate_one_mtile(Proposal &proposal) const;
     double eval_proposal_overall_mrate(Proposal &proposal) const;
     double eval_proposal_overall_qrate(Proposal &proposal) const;
-    double eval_proposal_move_one_mtile(Proposal &proposal) const;
-    double eval_birthdeath_mVoronoi(Proposal &proposal) const;
+    double eval_proposal_move_one_mtile(Proposal &proposal) const ;
+    double eval_birthdeath_mVoronoi(Proposal &proposal) const ;
     
     // Gibbs updates:
     // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0

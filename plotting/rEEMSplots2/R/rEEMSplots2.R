@@ -720,16 +720,18 @@ sim.scatterplot <- function(mcmcpath, longlat, plot.params, add.abline=TRUE){
     JtDobsJ <- JtDobsJ/nchains
     JtDhatJ <- JtDhatJ/nchains
     
-    print(JtDobsJ)
-    print(JtDhatJ)
-    
-    plot(x = c(JtDobsJ), y = c(JtDhatJ),
+    plot(x = c(JtDobsJ), y = c(JtDhatJ), log = "xy",
     xlab="Observed similarity between demes  ",
     ylab="Fitted similarity between demes  ")
     if (add.abline) {
         abline(a=0,b=1,col="red",lwd=2)
     }
-    points(diag(JtDobsJ), diag(JtDhatJ), col = "blue", lwd = 2)
+    plot(diag(JtDobsJ), diag(JtDhatJ), col = "blue", lwd = 2,
+    xlab="Observed similarity within demes  ",
+    ylab="Fitted similarity within demes  ")
+    if (add.abline) {
+        abline(a=0,b=1,col="blue",lwd=2)
+    }
     
 }
 
