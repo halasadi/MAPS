@@ -162,7 +162,7 @@ for (i in 1:length(mrates)){
   M[1,2] = mrates[i]
   M[2,1] = mrates[i]
   Q = makeQ(M,q)
-  approxs[i] <- (log(L/m)-1+(m/L)) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+  approxs[i] <- (log(L/m)-1+(m/L)) * (m/L) * CalculateMean(u = (1e-8*m*1e6y), Q, q)
   #approxs[i] <- log(L/m) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
   ints[i] <- CalculateDoubleIntegral(m, L, Q, q)
 }
