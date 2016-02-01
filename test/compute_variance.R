@@ -141,7 +141,7 @@ CalculateDoubleIntegral <- function(m, L, Q, q){
 }
 
 # diploid pop size
-N = c(1000, 1000)
+N = c(10000, 10000)
 mrates = c(0.01,0.01)
 M = matrix(nrow = 2, ncol =2, 0)
 M[1,2] = mrates[1]
@@ -162,10 +162,10 @@ for (i in 1:length(mrates)){
   M[1,2] = mrates[i]
   M[2,1] = mrates[i]
   Q = makeQ(M,q)
-  approxs[i] <- (log(L/m)-1+(m/L)) * (m/L) * CalculateMean(u = (1e-8*m*1e6y), Q, q)
-  #approxs[i] <- log(L/m) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+  #approxs[i] <- (log(L/m)-1+(m/L)) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
+  approxs[i] <- log(L/m) * (m/L) * CalculateMean(u = (1e-8*m*1e6), Q, q)
   ints[i] <- CalculateDoubleIntegral(m, L, Q, q)
 }
 
-plot(ints, approxs, log = "xy", main = "N=1000", xlab = "exact", ylab = "approx")
+plot(ints, approxs, main = "N=1000", xlab = "exact", ylab = "approx")
 abline(a = 0, b = 1, col = "red", lwd = 2)

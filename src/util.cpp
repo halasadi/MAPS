@@ -205,13 +205,23 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec){
+double normln(const double x, const double mu, const double sigma2){
+    double ln = -Inf;
+    if (sigma2 > 0){
+        boost::math::normal pnorm(mu,sqrt(sigma2));
+        ln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2;
+    }
+    return(ln);
+}
+
+double loglf(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec, const double frac){
     double ll = 0;
     double epsilon = 1e-8;
     int n = expectedIBD.rows();
     double lamda;
-    double weight = 1;
-    // if unweighted, keep weight = 1
+    double sigma2;
+    double xbar = 0;
+    // looping through demes
     for (int i = 0; i < n; i++){
         for (int j = i; j < n; j++){
             if (expectedIBD(i,j) < epsilon){
@@ -220,15 +230,15 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
                 lamda = expectedIBD(i,j);
             }
             if (i == j){
-                // comment out weight for unweighted
-                weight = (2*cvec(i)-3)/((cvec(i)*(cvec(i)-1))/2);
-                ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
+                double nchoose2 = (cvec(i)*cvec(i)-1)/2;
+                sigma2 = (lamda / nchoose2) + ((2 * (cvec(i)-2) * frac * lamda * lamda) / nchoose2) ;
+                xbar = observedIBD(i,j)/nchoose2;
+            } else{
+                sigma2 = (lamda / (cvec(i)*cvec(j))) + ( ((cvec(i)+cvec(j)-2) * frac * lamda * lamda) / (cvec(i)*cvec(j)) );
+                xbar = observedIBD(i,j)/(cvec(i)*cvec(j));
             }
-            else{
-                // comment out weight for unweighted
-                weight = (2*(cvec(i)+cvec(j))-3)/(cvec(i)*cvec(j));
-                ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
-            }
+        
+            ll += normln(xbar, lamda, sigma2);
 
         }
     }
@@ -400,6 +410,8 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
     }
     return (pln);
 }
+
+
 /*
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant

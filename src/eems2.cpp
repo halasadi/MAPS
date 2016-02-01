@@ -785,19 +785,9 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         graph.get_edge(edge,alpha,beta);
         double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
         double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
-        //M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
-	// TESTING
-	M(alpha, beta) = 0.01;
-	// END TESTING
+        M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
         M(beta,alpha) = M(alpha,beta);
     }
-    
-    // TESTING
-    q.setOnes(d);
-    q = q * 0.00005;
-    cout << "M:\n" << M << endl;
-    cout << "q:\n" << q << endl;
-    // END TESTING
 
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
@@ -819,16 +809,9 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     else{
         expectedIBD = lowerExpectedIBD;
     }
-    cout << "expectedIBD:\n" << endl;
-    
-    ofstream file("expectedIBD.txt");
-    if (file.is_open()){
-      file << expectedIBD << endl;
-    }
-    cout << expectedIBD << endl;
-    
-    double logll = poisln(expectedIBD, observedIBD, cvec);
-    
+
+    double frac = params.lowerBound/params.genomeSize;
+    double logll = loglf(expectedIBD, observedIBD, cvec, frac);
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();
