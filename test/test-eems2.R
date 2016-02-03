@@ -19,7 +19,7 @@ library(rEEMSplots2)
 #plotpath <- 'data/4x5/recent_barrier/6_Inf_plot'
 #mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
 plotpath <- 'data/4x5/uniform/plot'
-mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
+mcmcpath <- 'data/4x5/uniform/eems_14_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_12_Inf_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_12_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes/plot'
