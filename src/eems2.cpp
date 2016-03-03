@@ -44,7 +44,8 @@ void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, Vector
 
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
-    MatrixXd Sims = readMatrixXd(params.datapath + ".sims");
+    MatrixXd sims = readMatrixXd(params.datapath + ".sims");
+    MatrixXi Sims = sims.cast <int> ();
     if ((Sims.rows()!=n)||(Sims.cols()!=n)) {
         cerr << "  Error reading similarities matrix " << params.datapath + ".sims" << endl
         << "  Expect a " << n << "x" << n << " matrix of pairwise similarities" << endl; exit(1);
@@ -52,6 +53,7 @@ void EEMS2::initialize_sims( ) {
     cerr << "  Loaded similarities matrix from " << params.datapath + ".sims" << endl;
     
     // the number of comparisons for each deme.
+    
     
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
@@ -68,20 +70,46 @@ void EEMS2::initialize_sims( ) {
     if (params.diploid){
         nchr = 2;
     }
+    map<string, vector<int> >::iterator it;
+    
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
             cMatrix(demei, demej) += nchr;
             cMatrix(demej, demei) = cMatrix(demei, demej);
-        
+            
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
+            
+            string d1 = to_string(min(demei, demej));
+            string d2 = to_string(max(demei, demej));
+            string comma = ",";
+            string key = d1 + comma + d2;
+            
+            /*
+             it = data.find(key);
+             if (it == data.end()){
+             vector<int> entry;
+             entry.push_back(Sims(i,j));
+             }
+             else{
+             vector<int> &v = it->second;
+             v.push_back(Sims(i,j));
+             
+             }
+             */
+            data[key].push_back(Sims(i,j));
+            
         }
     }
+    
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += nchr;
     }
+    
+    int dmax = (int) Sims.maxCoeff();
+    lookupgamma = VectorXd::Zero(dmax);
     
     cerr << "Observed IBD matrix:\n" << observedIBD <<  endl;
     cerr << "[Sims::initialize] Done." << endl << endl;
@@ -94,7 +122,7 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
-    nowdf = n;
+    nowdf = 1;
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -223,10 +251,12 @@ MoveType EEMS2::choose_move_type( ) {
             move = M_VORONOI_RATE_UPDATE;
         }
     } else {
-        if (u2 < 0.5) {
+        if (u2 < 0.333) {
             move = M_MEAN_RATE_UPDATE;
-        } else{
+        } else if (u2 < 0.6666) {
             move = Q_MEAN_RATE_UPDATE;
+        } else{
+            move = DF_UPDATE;
         }
     }
     return(move);
@@ -259,25 +289,24 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
 }
 
-// THIS IS A REMNANT OF EEMS1 - NOT USED ANYMORE
 void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
-    // EEMS is initialized with df = nIndiv
     // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
     // This should make it easier to move in the parameter space
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-            proposal.newdf = newdf;
-            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                        newdf);
-            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf);
-        }
+    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+        proposal.newdf = newdf;
+        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    newdf);
+        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf);
     }
+    //}
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
@@ -576,11 +605,11 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
 void EEMS2::print_iteration(const MCMC &mcmc) const {
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and effective degrees of freedom = " << nowdf << endl
+    << " and effective degrees of freedom = " << pow(10, nowdf) << setprecision(4) << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
-    << "          Log prior = " << nowpi << endl
-    << "          Log llike = " << nowll << endl;
+    << "          Log prior = " << nowpi << setprecision(4) << endl
+    << "          Log llike = " << nowll << setprecision(4) << endl;
 }
 void EEMS2::save_iteration(const MCMC &mcmc) {
     int iter = mcmc.to_save_iteration( );
@@ -615,7 +644,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     
     
     /*cout << "OBSERVED:\n\n\n" << observedIBD.array() / cMatrix.array() << endl;
-    cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
+     cout << "EXPECTED:\n\n\n" << expectedIBD << endl;
      */
     
     JtDhatJ += expectedIBD;
@@ -752,7 +781,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
-    if ((df<params.dfmin) || (df>params.dfmax)) { inrange = false; }
+    if (df<params.dfmin || df>params.dfmax) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
     double logpi =
@@ -777,7 +806,7 @@ void EEMS2::calculateIntegral(const MatrixXd &V, const VectorXd &eigenvalues, co
     VectorXd x(50);
     
     getWeights(w, x);
-
+    
     w = w*(params.genomeSize/bnd)*(100/(2*bnd));
     x = x/(2*bnd/100);
     
@@ -854,11 +883,11 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
      M(1,2) = M(2,1) = 0.099962;
      M(1,3) = M(3,1) = 0.099962;
      M(2,3) = M(3,2) = 0.099962;
-    for (int i =0 ; i < d; i++) {
-        W(i) = 0.00005;
-    }
-    */
-
+     for (int i =0 ; i < d; i++) {
+     W(i) = 0.00005;
+     }
+     */
+    
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
     
@@ -881,8 +910,29 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         expectedIBD = lowerExpectedIBD;
     }
     
-    double logll = poisln(expectedIBD, observedIBD, cvec);
-    //double logll = -1;
+    double logll = 0;
+    //logll = poisln(expectedIBD, observedIBD, cvec);
+    
+    double phi = pow(10.0, df);
+    for (int i = 0; i < lookupgamma.size(); i++){
+        lookupgamma(i) = lgamma(i + (1/phi));
+    }
+    
+    map<string, vector<int> >::const_iterator it;
+    for ( int alpha = 0 ; alpha < o ; alpha++ ) {
+        for (int beta = alpha; beta < o; beta++){
+            string d1 = to_string(alpha);
+            string d2 = to_string(beta);
+            string comma = ",";
+            string key = d1+comma+d2;
+            
+            it = data.find(key);
+            const vector<int> *v = & it->second;
+            logll += negbiln(expectedIBD(alpha,beta), v, phi, lookupgamma);
+            
+        }
+    }
+    
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();

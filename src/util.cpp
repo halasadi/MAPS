@@ -32,6 +32,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.001), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
+        ("dfProposalS2", po::value<double>(&dfProposalS2)->default_value(0.01), "dfProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
@@ -57,8 +58,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateScale_2 /= 2.0;
     sigmaScale_2 /= 2.0;
     
-    dfmin = nIndiv;
-    dfmax = 1e6;
+    dfmin = -10; 
+    dfmax = 10;  
     testing = false;
     
     
@@ -216,6 +217,27 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
+
+double negbiln(double expectedIBD, const vector<int>* d, double phi, const VectorXd &lookupgamma){
+    
+    if (expectedIBD < 1e-8){
+        expectedIBD = 1e-8;
+    }
+
+    double ll = 0;
+    int n = (*d).size();
+    for (int i = 0; i < n; i++){
+        ll += lookupgamma((*d)[i]);
+    }
+    
+    double sum = accumulate((*d).begin(), (*d).end(), 0);
+    ll += -n*lookupgamma(0) + (n/phi) * log(1.0/ (1.0 + expectedIBD*phi)) +
+    sum * log( (phi * expectedIBD) / (1.0 + phi * expectedIBD));
+    
+    return(ll);
+}
+
+
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec){
     double ll = 0;
     double epsilon = 1e-8;
@@ -240,7 +262,7 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
                 weight = (5*(cvec(i)+cvec(j))-9)/(cvec(i)*cvec(j));
                 ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
-
+            
         }
     }
     return(ll);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <numeric>
 #include <vector>
 #include <limits>
 #include <iomanip>
@@ -76,6 +77,7 @@ MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec);
+double negbiln(double expectedIBD, const vector<int>* d, double phi, const VectorXd &lookupgamma);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);

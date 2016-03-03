@@ -109,7 +109,7 @@ private:
     Graph graph;
     Params params;
     Habitat habitat;
-        
+    
     // Diffs:
     int o; // number of observed demes
     int d; // total number of demes
@@ -117,6 +117,8 @@ private:
     MatrixXd observedIBD; // observed means (for number of IBD blocks)
     MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
+    map<string, vector<int> > data;
+    mutable VectorXd lookupgamma;
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;
