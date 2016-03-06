@@ -122,7 +122,7 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
-    nowdf = 1;
+    nowdf = 2;
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -914,9 +914,11 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     //logll = poisln(expectedIBD, observedIBD, cvec);
     
     double phi = pow(10.0, df);
+    /*
     for (int i = 0; i < lookupgamma.size(); i++){
         lookupgamma(i) = lgamma(i + (1/phi));
     }
+     */
     
     map<string, vector<int> >::const_iterator it;
     for ( int alpha = 0 ; alpha < o ; alpha++ ) {
@@ -932,7 +934,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
             
         }
     }
-    
+
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();

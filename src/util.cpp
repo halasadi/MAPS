@@ -227,11 +227,11 @@ double negbiln(double expectedIBD, const vector<int>* d, double phi, const Vecto
     double ll = 0;
     int n = (*d).size();
     for (int i = 0; i < n; i++){
-        ll += lookupgamma((*d)[i]);
+        ll += lgamma((*d)[i] + (1/phi));
     }
     
     double sum = accumulate((*d).begin(), (*d).end(), 0);
-    ll += -n*lookupgamma(0) + (n/phi) * log(1.0/ (1.0 + expectedIBD*phi)) +
+    ll += -n*lgamma(1/phi) + (n/phi) * log(1.0/ (1.0 + expectedIBD*phi)) +
     sum * log( (phi * expectedIBD) / (1.0 + phi * expectedIBD));
     
     return(ll);
@@ -254,12 +254,12 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
             }
             if (i == j){
                 // comment out weight for unweighted
-                weight = (5*cvec(i)-9)/((cvec(i)*(cvec(i)-1))/2);
+                //weight = (5*cvec(i)-9)/((cvec(i)*(cvec(i)-1))/2);
                 ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
             }
             else{
                 // comment out weight for unweighted
-                weight = (5*(cvec(i)+cvec(j))-9)/(cvec(i)*cvec(j));
+                //weight = (5*(cvec(i)+cvec(j))-9)/(cvec(i)*cvec(j));
                 ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
             
