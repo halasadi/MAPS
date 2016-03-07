@@ -88,6 +88,9 @@ int main(int argc, char** argv)
                 case Q_MEAN_RATE_UPDATE:
                     eems2.propose_overall_qrate(proposal);
                     break;
+                case DF_UPDATE:
+                    eems2.propose_df(proposal,mcmc);
+                    break;
                 default:
                     cerr << "[RunEEMS2] Unknown move type" << endl;
                     return(EXIT_FAILURE);

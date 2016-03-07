@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <numeric>
 #include <vector>
 #include <limits>
 #include <iomanip>
@@ -59,8 +60,8 @@ public:
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
     double mrateShape_2, mrateScale_2;
     double qrateShape_2, qrateScale_2;
-    double negBiProb;
-    double qVoronoiPr;
+    double dfProposalS2, negBiProb;
+    double dfmin, dfmax, qVoronoiPr;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, negBiSize;
@@ -75,6 +76,8 @@ MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec);
+double negbiln(double expectedIBD, const vector<int>* d, double phi);
+
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);

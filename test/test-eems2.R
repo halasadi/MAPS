@@ -12,20 +12,20 @@ library(rEEMSplots2)
 ## mcmcpath is a list of three output directories; the results will be averaged
 #plotpath <- 'data/popres/3.5_6/plots_lowerBnd_3.5_upperBnd_6'
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
-#plotpath <- 'data/popres/plots_lowerBnd_2_upperBnd_6'
-#mcmcpath <- 'data/popres/popres_lowerBnd_2_upperBnd_6-EEMS2-test-sim'
+plotpath <- 'data/popres/plots_lowerBnd_6_upperBnd_Inf'
+mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
 #mcmcpath <- '../data/ee_ibdsummarydata/eems_6e+06_Inf-EEMS2-test-sim'
 #plotpath <- '../data/ee_ibdsummarydata/plots_lowerBnd_6e+06_upperBnd_Inf'
 #plotpath <- 'data/4x5/recent_barrier/6_Inf_plot'
 #mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
-plotpath <- 'data/4x5/uniform/plot'
-mcmcpath <- 'data/4x5/uniform/eems_14_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/uniform/plot'
+#mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_12_Inf_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_12_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes/plot'
 #mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
 # FALSE FOR POPRES
-longlat <- TRUE
+longlat <- FALSE
 
 #Shat <- as.matrix(read.table(paste0(mcmcpath, "/rdistJtDhatJ.txt")))
 #Sobs <- as.matrix(read.table(paste0(mcmcpath, "/rdistJtDobsJ.txt")))
