@@ -76,7 +76,7 @@ MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec);
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi);
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi, bool isDiploid);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);

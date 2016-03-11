@@ -59,7 +59,9 @@ void EEMS2::initialize_sims( ) {
     cvec = VectorXd::Zero(o);
     observedIBD = MatrixXd::Zero(o, o);
     maxCnt = Sims.maxCoeff();
-    cClasses = VectorXd::Zero(maxCnt);
+    
+    // count the zero as well
+    cClasses = VectorXd::Zero(maxCnt+1);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
@@ -84,7 +86,6 @@ void EEMS2::initialize_sims( ) {
             observedIBD(demej, demei) = observedIBD(demei, demej);
             
             cClasses(Sims(i,j)) += 1;
-            
         }
     }
     
@@ -835,8 +836,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         M(beta,alpha) = M(alpha,beta);
     }
     
-
-    
     // Make M into a rate matrix
     M.diagonal() = -1* M.rowwise().sum();
     
@@ -862,13 +861,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
 
     double phi = pow(10.0, df);
 
-    double logll;
-    if (params.diploid){
-        logll = negbiln(2*expectedIBD, observedIBD, cvec, cClasses, phi);
-    }
-    else{
-        logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
-    }
+    double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi, params.diploid);
     
     //double logll = poisln(expectedIBD, observedIBD, cvec);
     
