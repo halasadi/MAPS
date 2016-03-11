@@ -58,6 +58,8 @@ void EEMS2::initialize_sims( ) {
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
     observedIBD = MatrixXd::Zero(o, o);
+    maxCnt = Sims.maxCoeff();
+    cClasses = VectorXd::Zero(maxCnt);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
@@ -70,8 +72,7 @@ void EEMS2::initialize_sims( ) {
     if (params.diploid){
         nchr = 2;
     }
-    map<string, vector<int> >::iterator it;
-    
+
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
@@ -82,11 +83,7 @@ void EEMS2::initialize_sims( ) {
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
             
-            string d1 = to_string(min(demei, demej));
-            string d2 = to_string(max(demei, demej));
-            string comma = ",";
-            string key = d1 + comma + d2;
-            data[key].push_back(Sims(i,j));
+            cClasses(Sims(i,j)) += 1;
             
         }
     }
@@ -849,10 +846,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     MatrixXd eigenvals = es.eigenvalues();
     MatrixXd eigenvecs = es.eigenvectors();
     
-    
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
     calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
-    
 
     
     if (isfinite(params.upperBound)){
@@ -866,27 +861,13 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
 
     double phi = pow(10.0, df);
-    
-    double logll = 0;
-    
-    
-    map<string, vector<int> >::const_iterator it;
-    for ( int alpha = 0 ; alpha < o ; alpha++ ) {
-        for (int beta = alpha; beta < o; beta++){
-            string d1 = to_string(alpha);
-            string d2 = to_string(beta);
-            string comma = ",";
-            string key = d1+comma+d2;
-            
-            it = data.find(key);
-            const vector<int> *v = & it->second;
-            if (params.diploid){
-                logll += negbiln(2*expectedIBD(alpha,beta), v, phi);
-            }
-            else{
-                logll += negbiln(expectedIBD(alpha,beta), v, phi);
-            }
-        }
+
+    double logll;
+    if (params.diploid){
+        logll = negbiln(2*expectedIBD, observedIBD, cvec, cClasses, phi);
+    }
+    else{
+        logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
     }
     
     //double logll = poisln(expectedIBD, observedIBD, cvec);

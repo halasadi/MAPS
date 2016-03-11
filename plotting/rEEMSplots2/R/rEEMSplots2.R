@@ -492,9 +492,13 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
         raster::projection(rr) <- CRS(plot.params$proj.in)
         rr <- raster::projectRaster(rr,crs=CRS(plot.params$proj.out))
     }
+    print(dim(Zmean))
     myfilledContour(rr,col = eems.colors,levels = eems.levels,asp=1,
                     add.key = plot.params$add.colbar,
                     key.axes = axis(4,tick=FALSE,hadj=1,line=3,cex.axis=1.5),
+                    #axis.ticks = axTicks(4),
+                    #axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i)))),
+                    #key.axes = axis(4, at=axis.ticks, labels=axis.labels, tick=FALSE, hadj=1, line=3, cex.axis=1.5),
                     key.title = mtext(key.title,side=3,cex=1.5,line=1.5,font=1),
                     add.title = plot.params$add.title,
                     plot.title = mtext(text=main.title,side=3,line=0,cex=1.5),

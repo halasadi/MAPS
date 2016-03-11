@@ -208,21 +208,36 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double negbiln(double expectedIBD, const vector<int>* d, double phi){
-    
-    if (expectedIBD < 1e-8){
-        expectedIBD = 1e-8;
-    }
-    
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi){
+  
+    double lamda;
+    int ndemes = expectedIBD.rows();
+    int n_i;
     double ll = 0;
-    int n = (*d).size();
-    for (int i = 0; i < n; i++){
-        ll += lgamma((*d)[i] + (1/phi));
-    }
     
-    double sum = accumulate((*d).begin(), (*d).end(), 0);
-    ll += -n*lgamma(1/phi) + (n/phi) * log(1.0/ (1.0 + expectedIBD*phi)) +
-    sum * log( (phi * expectedIBD) / (1.0 + phi * expectedIBD));
+    for (int i = 0; i < ndemes; i++){
+        for (int j = i; j < ndemes; j++){
+            
+            if (i == j){
+                n_i = (cvec(i)*(cvec(i)-1))/2;
+            } else{
+                n_i = cvec(i)*cvec(j);
+            }
+            
+            if (expectedIBD(i,j) < 1e-8){
+                lamda = 1e-8;
+            } else{
+                lamda = expectedIBD(i,j);
+            }
+            
+            ll += -n_i*lgamma(1/phi) + (n_i/phi) * log(1.0/ (1.0 + lamda*phi)) +
+            observedIBDCnt(i,j)*log( (phi * lamda) / (1.0 + phi * lamda));
+
+        }
+    }
+    for (int i = 0; i < cClasses.size(); i++){
+        ll += cClasses(i) * lgamma(i + (1/phi));
+    }
     
     return(ll);
 }

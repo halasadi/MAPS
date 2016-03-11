@@ -104,9 +104,9 @@ MAPS assumes a population genetic model consisting of a
 
  grid of demes with symmetric migration and per the stepping stone assumption,
  only neighboring demes are connected.
- Like EEMS, the density of the grid is prespecified by the user with the
- consideration that the computational complexity is 
-\begin_inset Formula $O(d^{3})$
+ The density of the grid is prespecified by the user with the consideration
+ that the computational complexity is 
+\begin_inset Formula $O(d^{2})$
 \end_inset
 
 .
@@ -173,13 +173,8 @@ IBD
  sensitive to recent population structure and in practice, become a function
  of only recent population structure.
  In this study, we focus on characterizing population structure in the recent
- past (e.g.
- 
-\begin_inset Formula $<1500$
-\end_inset
-
- years) and accordingly focus on UnR segments with short coalescent times
- which we arbirtarily designate as UnR segments greater than 2cM.
+ past and accordingly focus on UnR segments with short coalescent times
+ which we arbirtarily designate as UnR segments greater than 2.5cM.
  Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
  have high power and low false positive rates (Browning & Browning, 2007;
  Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
@@ -326,7 +321,11 @@ where
 \end_inset
 
 cM.
- Combining both equations together,
+ Combining both equations together 
+\emph on
+(see appendix)
+\emph default
+,
 \end_layout
 
 \begin_layout Standard
@@ -351,7 +350,7 @@ Expanding
 \begin_layout Standard
 \begin_inset Formula 
 \[
-L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
+E[N_{i,j}^{u}|\theta]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
 \]
 
 \end_inset
@@ -410,11 +409,11 @@ n for
 \begin_inset Formula $r$
 \end_inset
 
- is the recombination rate for one of the pair and 
+ is the recombination rate for one chromosome and 
 \begin_inset Formula $e^{-2rtx}$
 \end_inset
 
- for both individuals.
+ (assuming independence) for both chromosomes.
  Consider the length of no recombination to left of 
 \begin_inset Formula $a$
 \end_inset
@@ -517,7 +516,11 @@ which can be derived by considering all possible demes in which lineages
 \begin_inset Formula $j$
 \end_inset
 
- can coalesce.
+ can coalesce (
+\emph on
+see appendix
+\emph default
+).
  
 \begin_inset Formula $q_{k}$
 \end_inset
@@ -550,11 +553,11 @@ which can be derived by considering all possible demes in which lineages
 \end_inset
 
  is a matrix of size 
-\begin_inset Formula $O(d^{2})$
+\begin_inset Formula $d^{2}$
 \end_inset
 
  by 
-\begin_inset Formula $O(d^{2})$
+\begin_inset Formula $d^{2}$
 \end_inset
 
  and as a result becomes practically impossible to exponentiate for large
@@ -594,22 +597,8 @@ p(T_{i,j}=t|\theta)\approx\sum_{k}q_{k}(e^{-Mt})_{I(i)\rightarrow k}(e^{-Mt})_{I
 \begin_inset Formula $d$
 \end_inset
 
- vertices such that,
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-M_{\alpha,\beta}=m_{\alpha,\beta}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula $m_{\alpha,\beta}$
+ vertices such that, 
+\begin_inset Formula $M_{\alpha,\beta}$
 \end_inset
 
  is the migration rate between individual deme 
@@ -621,7 +610,7 @@ M_{\alpha,\beta}=m_{\alpha,\beta}
 \end_inset
 
  and 
-\begin_inset Formula $m_{\alpha,\beta}=0$
+\begin_inset Formula $M=0$
 \end_inset
 
  if demes 
@@ -633,7 +622,7 @@ M_{\alpha,\beta}=m_{\alpha,\beta}
 \end_inset
 
  are unconnected.
- Or equivalently,
+ Or equivalently in matrix form,
 \end_layout
 
 \begin_layout Standard
@@ -660,23 +649,12 @@ where
 \end_layout
 
 \begin_layout Standard
-We found this random walk approximation to work very well (see Supplementary
- Fig 1).
- Effectively, we are assuming that coalescent events before time 
-\begin_inset Formula $t$
-\end_inset
-
- do not occur which is approximately true for small 
-\begin_inset Formula $t$
-\end_inset
-
- and small 
-\begin_inset Formula $q$
-\end_inset
-
+Having all the components of equation (1), we are left to evaluate a single
+ integral which we do by gaussian quadrature 
+\emph on
+(see appendix)
+\emph default
 .
- Having all the components of equation (1), we are left to evaluate a single
- integral which we do by gaussian quadrature.
  The quadrature routine only evaluates 
 \family roman
 \series medium
@@ -700,6 +678,35 @@ We found this random walk approximation to work very well (see Supplementary
  because the probability of observing long UnR segments with deep coalescent
  times is effectively zero, and therefore do not contribute any mass to
  the integral.
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ We found the random walk approximation to work very well (see Supplementary
+ Fig 1).
+ In our case, since 
+\begin_inset Formula $t$
+\end_inset
+
+is very small (i.e.
+ 
+\begin_inset Formula $qt\approx0$
+\end_inset
+
+), we are assuming that coalescent events before time 
+\begin_inset Formula $t$
+\end_inset
+
+ do not occur which explains why the approximation works well.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -707,7 +714,7 @@ Now that we can efficiently compute
 \begin_inset Formula $E[N_{i,j}^{u}]$
 \end_inset
 
-, we can compute the distribution 
+, we compute the distribution 
 \family roman
 \series medium
 \shape up
@@ -755,13 +762,15 @@ which we found to be an excellent fit to the POPRES data, consistent with
 \end_layout
 
 \begin_layout Standard
-The composite likelihood of the data is, 
+However, we found allowing for some overdispersion better fits the complexity
+ of real data.
+ As a result,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\theta)
+N_{i,j}^{u}|\theta,\phi\sim NegBi()
 \]
 
 \end_inset
@@ -770,32 +779,13 @@ p(D=N_{1,2}^{u},N_{1,3}^{u}....N_{n-1,n}^{u}|\theta)=\prod_{i<j}p(N_{i,j}^{u}|\t
 \end_layout
 
 \begin_layout Standard
-Composite likelihoods have been widely used in population genetics and have
- been used in Bayesian population genetic methods (see Lawson et al 2012
- for an example).
- However, using the composite likelihood lead to very poor mixing because
- the composite likelihood assumes there are 
-\begin_inset Formula ${n \choose 2}$
-\end_inset
-
- independent data points and as a result becomes overly concentrated around
- the mle.
- To improve mixing, we downweighted the composite likelihood so that there
- are actually 
-\begin_inset Formula $(n-1)$
-\end_inset
-
- independent data points.
- As a result, the likelihood became less sharp around the mle with the mle
- remaining identical.
- More specifically, the full composite log-likelihood (which we assumed
- to be Poisson) is,
+which is parameterized such that,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-l(\lambda)={n \choose 2}(log(\lambda)\bar{{x}}-\lambda)
+E[N_{i,j}^{u}|\theta,\phi]=E[N_{i,j}^{u}|\theta]
 \]
 
 \end_inset
@@ -804,13 +794,9 @@ l(\lambda)={n \choose 2}(log(\lambda)\bar{{x}}-\lambda)
 \end_layout
 
 \begin_layout Standard
-which we then altered to
-\end_layout
-
-\begin_layout Standard
 \begin_inset Formula 
 \[
-(n-1)(log(\lambda)\bar{{x}}-\lambda)
+Var[N_{i,j}^{u}|\theta,\phi]=E[N_{i,j}^{u}|\theta]+\phi E[N_{i,j}^{u}|\theta]^{2}
 \]
 
 \end_inset
@@ -819,11 +805,10 @@ which we then altered to
 \end_layout
 
 \begin_layout Standard
-to reflect that we really just have 
-\begin_inset Formula $O(n)$
-\end_inset
-
- data points.
+And finally, we assume a composite likelihood.
+ Composite likelihoods have been widely used in population genetics and
+ have been used in Bayesian population genetic methods (see Lawson et al
+ 2012 for an example).
  
 \end_layout
 
@@ -868,6 +853,12 @@ E[N_{i,j}^{R}]=E[N_{i,j}^{u}]-E[N_{i,j}^{v}]
 
 \end_layout
 
+\begin_layout Standard
+
+\emph on
+See appendix.
+\end_layout
+
 \begin_layout Subsection
 The Prior
 \end_layout
@@ -876,7 +867,12 @@ The Prior
 We use the EEMS prior in Petkova et al 2015, except that we estimate an
  additional overall mean rate for the coalescent rates wheras Petkova et
  al fixed the analogous parameter to one.
- 
+ Analogous to the degrees of freedom parameter in EEMS, we place a log-uniform
+ prior on 
+\begin_inset Formula $\phi$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -890,13 +886,16 @@ Like EEMS, MAPS uses MCMC to estimate the migration and coalescent rates
 \end_layout
 
 \begin_layout Subsection
-Computational time
+Computational speedup
 \end_layout
 
 \begin_layout Standard
-The computational cost of MAPS is cubic in the size of the population grid,
- and the current implementation does not scale well beyond 400 demes.
+Here put David's tricks.
  
+\end_layout
+
+\begin_layout Section
+Appendix
 \end_layout
 
 \end_body
