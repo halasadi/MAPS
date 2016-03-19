@@ -91,7 +91,7 @@ L = 8e6;
 
 ndemes = 20
 int = calculateIntegral(M, q, r, L)
-nsamp_per_deme = 10
+nsamp_per_deme = 20
 
 fileName = paste0("data/sim_model/ndemes_20", L, "_M_", const, "_N_", N[1], "_nsamp_per_deme_", nsamp_per_deme)
 

@@ -225,12 +225,8 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
             
             if (expectedIBD(i,j) < 1e-8){
                 lamda = 1e-8;
-            } else{
-                if (isDiploid){
-                    lamda = 2*expectedIBD(i,j);
-                } else{
-                    lamda = expectedIBD(i,j);
-                }
+            } else {
+                lamda = expectedIBD(i,j);
             }
             
             ll +=  (n_i/phi) * log(1.0/ (1.0 + lamda*phi)) + observedIBDCnt(i,j)*log( (phi * lamda) / (1.0 + phi * lamda));
@@ -238,14 +234,9 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
         }
     }
     
-    //for (int i = 1; i < cClasses.size(); i++){
-    //    ll += cClasses(i) * lgamma(i + (1/phi));
-    //}
     for (int i = 1; i < cClasses.size(); i++){
-        ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
-    }
-    //ll -= (cClasses.sum()-cClasses(0)) * lgamma((1/phi));
-    
+      ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
+    }    
     return(ll);
 }
 

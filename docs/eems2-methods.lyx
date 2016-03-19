@@ -106,7 +106,7 @@ MAPS assumes a population genetic model consisting of a
  only neighboring demes are connected.
  The density of the grid is prespecified by the user with the consideration
  that the computational complexity is 
-\begin_inset Formula $O(d^{2})$
+\begin_inset Formula $O(d^{3})$
 \end_inset
 
 .
@@ -649,12 +649,14 @@ where
 \end_layout
 
 \begin_layout Standard
-Having all the components of equation (1), we are left to evaluate a single
- integral which we do by gaussian quadrature 
-\emph on
-(see appendix)
-\emph default
-.
+This random walk with absorption approximation effectively assumes that
+ coalescent events before time 
+\begin_inset Formula $t$
+\end_inset
+
+ are neglible.
+ Having all the components of equation (1), we are left to evaluate a single
+ integral which we do by gaussian quadrature.
  The quadrature routine only evaluates 
 \family roman
 \series medium
@@ -691,22 +693,19 @@ Having all the components of equation (1), we are left to evaluate a single
 \noun default
 \color inherit
  We found the random walk approximation to work very well (see Supplementary
- Fig 1).
- In our case, since 
+ Fig 1) which can be explained by because small 
 \begin_inset Formula $t$
 \end_inset
 
-is very small (i.e.
- 
+ implies 
 \begin_inset Formula $qt\approx0$
 \end_inset
 
-), we are assuming that coalescent events before time 
+ and as a result making coalescent events before time 
 \begin_inset Formula $t$
 \end_inset
 
- do not occur which explains why the approximation works well.
- 
+very rare.
 \end_layout
 
 \begin_layout Standard
@@ -757,14 +756,13 @@ N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}|\theta])
 \end_layout
 
 \begin_layout Standard
-which we found to be an excellent fit to the POPRES data, consistent with
- Ralph & Coop 2008 and Palamara et al 2012.
+which we found to be a good fit to the POPRES data, consistent with Ralph
+ & Coop 2008 and Palamara et al 2012.
 \end_layout
 
 \begin_layout Standard
 However, we found allowing for some overdispersion better fits the complexity
- of real data.
- As a result,
+ of real data and as a result assume a negative binomial distribution
 \end_layout
 
 \begin_layout Standard
@@ -882,15 +880,6 @@ Markov chain Monte Carlo estimation
 \begin_layout Standard
 Like EEMS, MAPS uses MCMC to estimate the migration and coalescent rates
  by sampling from their posterior distribution given the data.
- 
-\end_layout
-
-\begin_layout Subsection
-Computational speedup
-\end_layout
-
-\begin_layout Standard
-Here put David's tricks.
  
 \end_layout
 

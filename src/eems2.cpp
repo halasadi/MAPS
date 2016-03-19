@@ -60,7 +60,7 @@ void EEMS2::initialize_sims( ) {
     observedIBD = MatrixXd::Zero(o, o);
     maxCnt = Sims.maxCoeff();
     
-    // count the zero as well
+    // counts the number of IBD segments that are 0, 1, 2, etc.
     cClasses = VectorXd::Zero(maxCnt+1);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
@@ -68,18 +68,19 @@ void EEMS2::initialize_sims( ) {
     int demei;
     int demej;
     // all (n choose 2) comparisons at the individual level
-    // TO DO: I think there is a more simple way to fill in cMatrix (or get it from cvec)
+    // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
-    int nchr = 1;
+    /*int nchr = 1;
     if (params.diploid){
         nchr = 2;
     }
+     */
 
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
-            cMatrix(demei, demej) += nchr;
+            cMatrix(demei, demej) += 1;
             cMatrix(demej, demei) = cMatrix(demei, demej);
             
             observedIBD(demei, demej) += Sims(i,j);
@@ -90,7 +91,7 @@ void EEMS2::initialize_sims( ) {
     }
     
     for ( int i = 0 ; i < n ; i ++ ) {
-        cvec(graph.get_deme_of_indiv(i)) += nchr;
+        cvec(graph.get_deme_of_indiv(i)) += 1;
     }
     
     cerr << "Observed IBD matrix:\n" << observedIBD <<  endl;
@@ -862,8 +863,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double phi = pow(10.0, df);
 
     double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi, params.diploid);
-    
-    //double logll = poisln(expectedIBD, observedIBD, cvec);
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;

@@ -295,7 +295,9 @@ read.graph <- function(path,longlat) {
 read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", mean(rates), " median: ", median(rates)), n = 100)
+        foo <- hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", round(mean(rates),5),
+        " median: ", round(median(rates), 5)), n = 40, xaxt = "n")
+        axis(side=1,at=foo$mids)
         tiles <- scan(paste(mcmcpath,'/mcmcmtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcxcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -303,7 +305,9 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
         # to turn the coalescent rates into population sizes
         rates <- 1/(2*rates)
-        hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", mean(rates), " median: ", median(rates)), n = 100)
+        foo <- hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", round(mean(rates),5), " median: ",
+        round(median(rates),5)), n = 40, xaxt = "n")
+        axis(side=1,at=foo$mids)
         tiles <- scan(paste(mcmcpath,'/mcmcqtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcwcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmczcoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -724,7 +728,7 @@ sim.scatterplot <- function(mcmcpath, longlat, plot.params, add.abline=TRUE){
     JtDobsJ <- JtDobsJ/nchains
     JtDhatJ <- JtDhatJ/nchains
     
-    plot(x = c(JtDobsJ), y = c(JtDhatJ), log = "xy",
+    plot(x = c(JtDobsJ), y = c(JtDhatJ),
     xlab="Observed similarity between demes  ",
     ylab="Fitted similarity between demes  ")
     if (add.abline) {
