@@ -57,7 +57,7 @@ public:
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                       const double df) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf) const;
+                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
@@ -122,6 +122,8 @@ private:
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;
+    mutable MatrixXd eigenvals;
+    mutable MatrixXd eigenvecs;
     
     // The current set of parameter values:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
@@ -157,7 +159,7 @@ private:
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu) const;
+                            const double df, const double qrateMu, const bool ismUpdate) const;
 };
 
 #endif

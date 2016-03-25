@@ -28,15 +28,15 @@ Input parameter values:
       qrateMuProposalS2 = 0.01000000000000
 
 Acceptance proportions:
-	(12904/24968) = 51.68% for type "qTileRate"
-	(8601/25129) = 34.23% for type "qTileMove"
-	(4979/24947) = 19.96% for type "qBirthDeath"
-	(1120/16661) = 6.72% for type "qMeanRate"
-	(8022/25191) = 31.84% for type "mTileRate"
-	(3193/24986) = 12.78% for type "mTileMove"
-	(1579/24902) = 6.34% for type "mBirthDeath"
-	(1395/16503) = 8.45% for type "mMeanRate"
-	(1786/16713) = 10.69% for type "d.f."
+	(4831/24898) = 19.40% for type "qTileRate"
+	(3028/25092) = 12.07% for type "qTileMove"
+	(1775/24939) = 7.12% for type "qBirthDeath"
+	(462/16738) = 2.76% for type "qMeanRate"
+	(7252/25137) = 28.85% for type "mTileRate"
+	(2728/24931) = 10.94% for type "mTileMove"
+	(1683/24925) = 6.75% for type "mBirthDeath"
+	(1407/16546) = 8.50% for type "mMeanRate"
+	(1788/16794) = 10.65% for type "d.f."
 
-Final log prior: 48.39
-Final log llike: -46022.27
+Final log prior: 45.73
+Final log llike: -46008.51

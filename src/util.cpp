@@ -51,7 +51,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateShape_2 /= 2.0;
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
-
+    
     dfmin = -10;
     dfmax = 10;
     testing = false;
@@ -209,7 +209,7 @@ double pseudologdet(const MatrixXd &A, const int rank) {
 }
 
 double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi, bool isDiploid){
-  
+    
     double lamda;
     int odemes = observedIBDCnt.rows();
     int n_i;
@@ -230,13 +230,13 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
             }
             
             ll +=  (n_i/phi) * log(1.0/ (1.0 + lamda*phi)) + observedIBDCnt(i,j)*log( (phi * lamda) / (1.0 + phi * lamda));
-
+            
         }
     }
     
     for (int i = 1; i < cClasses.size(); i++){
-      ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
-    }    
+        ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
+    }
     return(ll);
 }
 
@@ -264,7 +264,7 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const Ve
                 //weight = (2*(cvec(i)+cvec(j))-3)/(cvec(i)*cvec(j));
                 ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
             }
-
+            
         }
     }
     return(ll);
@@ -481,7 +481,7 @@ double max(double a, double b){
 }
 
 void getWeights(VectorXd &w, VectorXd &x){
-    // REQUIRES: w and x vectors of length 30
+    // REQUIRES: w and x vectors of length 50
     // MODIFIES: w and x
     // EFFECTS: x will contain the x-values telling you where to evaluate P(T_mrca = x); w will contains the weights
     // This function allows user to compute an integral by computing \sum_i P(T_mrca = x_i) * w_i

@@ -71,11 +71,11 @@ void EEMS2::initialize_sims( ) {
     // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
     /*int nchr = 1;
-    if (params.diploid){
-        nchr = 2;
-    }
+     if (params.diploid){
+     nchr = 2;
+     }
      */
-
+    
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
@@ -196,7 +196,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
-    nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf);
+    nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
     cerr << "Input parameters: " << endl << params << endl
     << "Initial log prior: " << nowpi << endl
     << "Initial log llike: " << nowll << endl << endl;
@@ -246,30 +246,30 @@ MoveType EEMS2::choose_move_type( ) {
 }
 
 double EEMS2::eval_proposal_rate_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, proposal.newqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
 }
 double EEMS2::eval_proposal_move_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, nowqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, nowqEffcts, nowqrateMu, nowdf, false));
 }
 double EEMS2::eval_birthdeath_qVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
 }
 double EEMS2::eval_proposal_rate_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
     
 }
 double EEMS2::eval_proposal_overall_mrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, proposal.newmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, proposal.newmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 double EEMS2::eval_proposal_overall_qrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, proposal.newqrateMu, nowdf));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, proposal.newqrateMu, nowdf, false));
 }
 // Propose to move one tile in the migration Voronoi tessellation
 double EEMS2::eval_proposal_move_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(proposal.newmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf));
+    return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
 void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
@@ -287,7 +287,7 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     newdf);
-        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf);
+        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
     }
     //}
 }
@@ -730,7 +730,7 @@ void EEMS2::check_ll_computation( ) const {
     double pi0 = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                             nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                             nowdf);
-    double ll0 = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf);
+    double ll0 = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
     if ((abs(nowpi-pi0)/abs(pi0)>1e-12)||
         (abs(nowll-ll0)/abs(ll0)>1e-12)) {
         cerr << "[EEMS2::testing]   |ll0-ll|/|ll0| = " << abs(nowll - ll0)/abs(ll0) << endl;
@@ -791,7 +791,9 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     MatrixXd P(d,d);
     integral.setZero();
     
-    for (int t = 0; t < x.size(); t++){
+    // x.size() is 50 but we're going to 20 to speed up the algorithm as the
+    // magnnitude of the remaining 30 weights are neglible.
+    for (int t = 0; t < 20; t++){
         // exponentiate the matrix
         P = eigenvecs*(((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal())*eigenvecs.transpose();
         P = P.topLeftCorner(o, o);
@@ -805,7 +807,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                                const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu,
-                               const double df) const {
+                               const double df, const bool ismUpdate) const {
     
     // Important: Do not use any of the current parameter values in this function,
     // i.e., those that start with nowXXX
@@ -824,31 +826,34 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
         q(alpha) = pow(10.0,log10q_alpha);
     }
+
     
-    
-    MatrixXd M = MatrixXd::Zero(d,d);
-    int alpha, beta;
-    // Transform the log10 migration parameters into migration rates on the original scale
-    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
-        graph.get_edge(edge,alpha,beta);
-        double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
-        double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
-        M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
-        M(beta,alpha) = M(alpha,beta);
+    // perform costly eigen-decompositon only if updating migration rates
+    if (ismUpdate){
+        
+        MatrixXd M = MatrixXd::Zero(d,d);
+        int alpha, beta;
+        // Transform the log10 migration parameters into migration rates on the original scale
+        for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
+            graph.get_edge(edge,alpha,beta);
+            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
+            double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
+            M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
+            M(beta,alpha) = M(alpha,beta);
+        }
+        
+        // Make M into a rate matrix
+        M.diagonal() = -1* M.rowwise().sum();
+        
+        SelfAdjointEigenSolver<MatrixXd> es;
+        es.compute(M);
+        eigenvals = es.eigenvalues();
+        eigenvecs = es.eigenvectors();
     }
-    
-    // Make M into a rate matrix
-    M.diagonal() = -1* M.rowwise().sum();
-    
-    // eigen decompositon
-    SelfAdjointEigenSolver<MatrixXd> es;
-    es.compute(M);
-    MatrixXd eigenvals = es.eigenvalues();
-    MatrixXd eigenvecs = es.eigenvectors();
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
     calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
-
+    
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
@@ -859,16 +864,16 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         expectedIBD = lowerExpectedIBD;
     }
     
-
+    
     double phi = pow(10.0, df);
-
+    
     double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi, params.diploid);
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();
     }
-
+    
     return (logll);
 }
 double EEMS2::getMigrationRate(const int edge) const {
