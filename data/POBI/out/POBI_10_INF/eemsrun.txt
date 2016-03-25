@@ -1,0 +1,42 @@
+Input parameter values:
+               datapath = ../data/POBI/POBI_10_INF
+               mcmcpath = ../data/POBI/out/POBI_10_INF
+               prevpath = 
+               gridpath = 
+               distance = euclidean
+                 nIndiv = 4078
+             genomeSize = 3000.00000000000000
+             lowerBound = 10.00000000000000
+             upperBound = inf
+                 nDemes = 150
+                   seed = 123
+            numMCMCIter = 200000
+            numBurnIter = 50000
+            numThinIter = 100
+              negBiSize = 10
+              negBiProb = 0.67000000000000
+             qVoronoiPr = 0.50000000000000
+             mrateShape = 0.00100000000000
+             qrateShape = 0.00100000000000
+             qrateScale = 1.00000000000000
+             mrateScale = 1.00000000000000
+       mSeedsProposalS2 = 0.05000000000000
+       qSeedsProposalS2 = 0.10000000000000
+       mEffctProposalS2 = 0.00500000000000
+       qEffctProposalS2 = 0.10000000000000
+      mrateMuProposalS2 = 0.01000000000000
+      qrateMuProposalS2 = 0.01000000000000
+
+Acceptance proportions:
+	(12904/24968) = 51.68% for type "qTileRate"
+	(8601/25129) = 34.23% for type "qTileMove"
+	(4979/24947) = 19.96% for type "qBirthDeath"
+	(1120/16661) = 6.72% for type "qMeanRate"
+	(8022/25191) = 31.84% for type "mTileRate"
+	(3193/24986) = 12.78% for type "mTileMove"
+	(1579/24902) = 6.34% for type "mBirthDeath"
+	(1395/16503) = 8.45% for type "mMeanRate"
+	(1786/16713) = 10.69% for type "d.f."
+
+Final log prior: 48.39
+Final log llike: -46022.27
