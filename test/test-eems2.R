@@ -14,8 +14,12 @@ plotpath <- '../data/POBI/out/POBI_10_INF'
 #mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/4x5/past_barrier/eems_12_Inf_plot'
-#mcmcpath <- 'data/4x5/past_barrier/eems_12_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/past_barrier/eems_6_Inf_plot'
+#mcmcpath <- 'data/4x5/past_barrier/eems_6_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
+#mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/high_migration/plot'
+#mcmcpath <- 'data/4x5/high_migration/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes/plot'
 #mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
 # FALSE FOR POPRES
@@ -24,8 +28,8 @@ longlat <- TRUE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=TRUE, add.demes=TRUE,
-                                                     m.standardize = TRUE,
-                                                     q.standardize = TRUE,
+                                                     m.standardize = FALSE,
+                                                     q.standardize = FALSE,
                                                      m.log10transform = TRUE,
                                                      q.log10transform = TRUE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",

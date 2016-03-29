@@ -33,14 +33,14 @@ readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/4x5/heter_popsizes/"
+workingDir <- "/Users/halasadi/eems2/test/data/4x5/past_barrier/"
 nchr = 20
-lowerCutOff = 4e6
+lowerCutOff = 6e6
 upperCutoff = Inf
 nhaploids = ndiploids*2
-ibdM = readIBD(paste0(workingDir, "heter_popsizes_mt_400gen_nsamp_20_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+ibdM = readIBD(paste0(workingDir, "past_barrier_mt_600gen_nsamp_20_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 
 for (i in 2:nchr){
-  ibdM = ibdM + readIBD(paste0(workingDir, "heter_popsizes_mt_400gen_nsamp_20_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+  ibdM = ibdM + readIBD(paste0(workingDir, "past_barrier_mt_600gen_nsamp_20_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 }
-write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+write.table(ibdM, file = paste0(workingDir, "eems_6_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)

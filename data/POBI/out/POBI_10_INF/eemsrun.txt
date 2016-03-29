@@ -4,14 +4,14 @@ Input parameter values:
                prevpath = 
                gridpath = 
                distance = euclidean
-                 nIndiv = 4078
+                 nIndiv = 4036
              genomeSize = 3000.00000000000000
              lowerBound = 10.00000000000000
              upperBound = inf
                  nDemes = 150
                    seed = 123
             numMCMCIter = 200000
-            numBurnIter = 50000
+            numBurnIter = 100000
             numThinIter = 100
               negBiSize = 10
               negBiProb = 0.67000000000000
@@ -28,15 +28,15 @@ Input parameter values:
       qrateMuProposalS2 = 0.01000000000000
 
 Acceptance proportions:
-	(4831/24898) = 19.40% for type "qTileRate"
-	(3028/25092) = 12.07% for type "qTileMove"
-	(1775/24939) = 7.12% for type "qBirthDeath"
-	(462/16738) = 2.76% for type "qMeanRate"
-	(7252/25137) = 28.85% for type "mTileRate"
-	(2728/24931) = 10.94% for type "mTileMove"
-	(1683/24925) = 6.75% for type "mBirthDeath"
-	(1407/16546) = 8.50% for type "mMeanRate"
-	(1788/16794) = 10.65% for type "d.f."
+	(7138/24933) = 28.63% for type "qTileRate"
+	(2717/25083) = 10.83% for type "qTileMove"
+	(2077/25157) = 8.26% for type "qBirthDeath"
+	(556/16634) = 3.34% for type "qMeanRate"
+	(11834/25100) = 47.15% for type "mTileRate"
+	(6487/24854) = 26.10% for type "mTileMove"
+	(3833/24963) = 15.35% for type "mBirthDeath"
+	(1430/16591) = 8.62% for type "mMeanRate"
+	(1847/16685) = 11.07% for type "d.f."
 
-Final log prior: 45.73
-Final log llike: -46008.51
+Final log prior: 56.65
+Final log llike: -45880.23

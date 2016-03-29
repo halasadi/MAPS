@@ -791,15 +791,18 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     MatrixXd P(d,d);
     integral.setZero();
     
-    // x.size() is 50 but we're going to 20 to speed up the algorithm as the
-    // magnnitude of the remaining 30 weights are neglible.
-    for (int t = 0; t < 20; t++){
+    // x.size() is 50 but we're going to 25 to speed up the algorithm as the
+    // magnnitude of the remaining 25 weights are neglible.
+    for (int t = 0; t < 25; t++){
         // exponentiate the matrix
         P = eigenvecs*(((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal())*eigenvecs.transpose();
-        P = P.topLeftCorner(o, o);
-        // compute the probability by summing over all demes
-        coalp = P*q.head(o).asDiagonal()*P.transpose();
+        
+        coalp = (P.topRows(o) * q.asDiagonal()) * P.transpose().leftCols(o);
         integral += coalp*weights(t);
+
+        // compute the probability by summing over all demes
+        //coalp = P*q.asDiagonal()*P.transpose();
+        //integral += coalp.topLeftCorner(o,o)*weights(t);
     }
     
     
