@@ -61,6 +61,7 @@ void EEMS2::initialize_sims( ) {
     maxCnt = Sims.maxCoeff();
     
     // counts the number of IBD segments that are 0, 1, 2, etc.
+    // pre-computation
     cClasses = VectorXd::Zero(maxCnt+1);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
@@ -70,6 +71,9 @@ void EEMS2::initialize_sims( ) {
     // all (n choose 2) comparisons at the individual level
     // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
+    
+    
+    // DELETE COMMENT: Only haploid
     /*int nchr = 1;
      if (params.diploid){
      nchr = 2;
@@ -93,9 +97,6 @@ void EEMS2::initialize_sims( ) {
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
-    
-    cerr << "Observed IBD matrix:\n" << observedIBD <<  endl;
-    cerr << "[Sims::initialize] Done." << endl << endl;
     
     JtDhatJ = MatrixXd::Zero(o,o);
     expectedIBD = MatrixXd::Zero(o,o);
@@ -777,6 +778,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
 
 void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
     
+    // store 50 weights and 50 abissca
     // weights for the gaussian quadrature
     VectorXd weights(50);
     // abisca for the gaussian quadrature
@@ -796,13 +798,8 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     for (int t = 0; t < 25; t++){
         // exponentiate the matrix
         P = eigenvecs*(((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal())*eigenvecs.transpose();
-        
         coalp = (P.topRows(o) * q.asDiagonal()) * P.transpose().leftCols(o);
         integral += coalp*weights(t);
-
-        // compute the probability by summing over all demes
-        //coalp = P*q.asDiagonal()*P.transpose();
-        //integral += coalp.topLeftCorner(o,o)*weights(t);
     }
     
     

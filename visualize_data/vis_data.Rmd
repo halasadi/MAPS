@@ -75,4 +75,7 @@ net=graph.adjacency(sims,mode="undirected",weighted=TRUE,diag=FALSE)
 node.size <- 50*diag(sims)
 plot.igraph(net,vertex.label=V(net)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=5*E(net)$weight,
             vertex.size=node.size)
+
+library(networkD3)
+
 ```

@@ -28,8 +28,8 @@ longlat <- TRUE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=TRUE, add.demes=TRUE,
-                                                     m.standardize = FALSE,
-                                                     q.standardize = FALSE,
+                                                     m.standardize = TRUE,
+                                                     q.standardize = TRUE,
                                                      m.log10transform = TRUE,
                                                      q.log10transform = TRUE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
