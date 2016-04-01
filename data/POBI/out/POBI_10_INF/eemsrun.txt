@@ -8,10 +8,10 @@ Input parameter values:
              genomeSize = 3000.00000000000000
              lowerBound = 10.00000000000000
              upperBound = inf
-                 nDemes = 450
+                 nDemes = 150
                    seed = 123
-            numMCMCIter = 200000
-            numBurnIter = 100000
+            numMCMCIter = 10000
+            numBurnIter = 5000
             numThinIter = 100
               negBiSize = 10
               negBiProb = 0.67000000000000
@@ -28,15 +28,15 @@ Input parameter values:
       qrateMuProposalS2 = 0.01000000000000
 
 Acceptance proportions:
-	(8485/24602) = 34.49% for type "qTileRate"
-	(3270/25166) = 12.99% for type "qTileMove"
-	(2476/25054) = 9.88% for type "qBirthDeath"
-	(586/16589) = 3.53% for type "qMeanRate"
-	(11731/25263) = 46.44% for type "mTileRate"
-	(5597/24852) = 22.52% for type "mTileMove"
-	(4034/25167) = 16.03% for type "mBirthDeath"
-	(1255/16415) = 7.65% for type "mMeanRate"
-	(1865/16892) = 11.04% for type "d.f."
+	(625/1215) = 51.44% for type "qTileRate"
+	(354/1261) = 28.07% for type "qTileMove"
+	(233/1252) = 18.61% for type "qBirthDeath"
+	(79/859) = 9.20% for type "qMeanRate"
+	(837/1225) = 68.33% for type "mTileRate"
+	(637/1275) = 49.96% for type "mTileMove"
+	(428/1276) = 33.54% for type "mBirthDeath"
+	(110/797) = 13.80% for type "mMeanRate"
+	(103/840) = 12.26% for type "d.f."
 
-Final log prior: 18.22
-Final log llike: -47305.52
+Final log prior: 48.99
+Final log llike: -48048.83

@@ -797,11 +797,10 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
         // exponentiate the matrix
-        P = eigenvecs*(((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal())*eigenvecs.transpose();
-        coalp = (P.topRows(o) * q.asDiagonal()) * P.transpose().leftCols(o);
+        P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
+        coalp = P * q.asDiagonal() * P.transpose();
         integral += coalp*weights(t);
     }
-    
     
 }
 
