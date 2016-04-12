@@ -10,7 +10,7 @@ Input parameter values:
              upperBound = inf
                  nDemes = 150
                    seed = 123
-            numMCMCIter = 10000
+            numMCMCIter = 100000
             numBurnIter = 5000
             numThinIter = 100
               negBiSize = 10
@@ -28,15 +28,15 @@ Input parameter values:
       qrateMuProposalS2 = 0.01000000000000
 
 Acceptance proportions:
-	(625/1215) = 51.44% for type "qTileRate"
-	(354/1261) = 28.07% for type "qTileMove"
-	(233/1252) = 18.61% for type "qBirthDeath"
-	(79/859) = 9.20% for type "qMeanRate"
-	(837/1225) = 68.33% for type "mTileRate"
-	(637/1275) = 49.96% for type "mTileMove"
-	(428/1276) = 33.54% for type "mBirthDeath"
-	(110/797) = 13.80% for type "mMeanRate"
-	(103/840) = 12.26% for type "d.f."
+	(3735/12521) = 29.83% for type "qTileRate"
+	(1546/12447) = 12.42% for type "qTileMove"
+	(1137/12378) = 9.19% for type "qBirthDeath"
+	(268/8386) = 3.20% for type "qMeanRate"
+	(5949/12453) = 47.77% for type "mTileRate"
+	(3352/12559) = 26.69% for type "mTileMove"
+	(2135/12505) = 17.07% for type "mBirthDeath"
+	(697/8282) = 8.42% for type "mMeanRate"
+	(903/8469) = 10.66% for type "d.f."
 
-Final log prior: 48.99
-Final log llike: -48048.83
+Final log prior: 43.07
+Final log llike: -47842.58

@@ -295,9 +295,10 @@ read.graph <- function(path,longlat) {
 read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        foo <- hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", round(mean(rates),5),
-        " median: ", round(median(rates), 5)), n = 40, xaxt = "n")
-        axis(side=1,at=foo$mids)
+        foo <- hist(rates, n = 50, plot = FALSE)
+        plot(foo$mids, foo$counts, log = "x", xlab = "migration rates", ylab = "pdf",
+        pch = 20, cex = 3, cex.axis = 1.5, cex.lab = 2, main = paste0("mean: ", round(mean(rates),5), " median: ",
+        round(median(rates),5)), type = "l")
         tiles <- scan(paste(mcmcpath,'/mcmcmtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcxcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -305,9 +306,10 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
         # to turn the coalescent rates into population sizes
         rates <- 1/(2*rates)
-        foo <- hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", round(mean(rates),5), " median: ",
-        round(median(rates),5)), n = 40, xaxt = "n")
-        axis(side=1,at=foo$mids)
+        foo <- hist(rates, n = 50, plot = FALSE)
+        plot(foo$mids, foo$counts, log = "x", xlab = "population sizes", ylab = "pdf",
+        pch = 20, cex = 3, cex.axis = 1.5, cex.lab = 2, main = paste0("mean: ", round(mean(rates),5), " median: ",
+        round(median(rates),5)), type = "l")
         tiles <- scan(paste(mcmcpath,'/mcmcqtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcwcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmczcoord.txt',sep=''),what=numeric(),quiet=TRUE)

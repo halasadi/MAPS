@@ -140,9 +140,14 @@ void EEMS2::load_final_state( ) {
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
     nowmtiles = tempi(0,0);
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
-    tempi = readMatrixXd(params.prevpath + "/lastqhyper.txt");
+    
+    tempi = readMatrixXd(params.prevpath + "/lastthetas.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
-    nowqrateS2 = tempi(0,0);
+    nowdf = tempi(0,0);
+    tempi = readMatrixXd(params.prevpath + "/lastdfpars.txt");
+    if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
+    params.dfmin = tempi(0,0);
+    params.dfmax = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastmhyper.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
     nowmrateMu = tempi(0,0);
@@ -161,14 +166,14 @@ void EEMS2::load_final_state( ) {
     if ((nowqSeeds.rows()!=nowqtiles) || (nowqSeeds.cols()!=2)) { error = true; }
     nowmSeeds = readMatrixXd(params.prevpath + "/lastmseeds.txt");
     if ((nowmSeeds.rows()!=nowmtiles) || (nowmSeeds.cols()!=2)) { error = true; }
+    // Initialize the mapping of demes to qVoronoi tiles
+    graph.index_closest_to_deme(nowmSeeds,nowmColors);
+    // Initialize the mapping of demes to mVoronoi tiles
+    graph.index_closest_to_deme(nowqSeeds,nowqColors);
     if (error) {
         cerr << "  Error loading MCMC state from " << params.prevpath << endl; exit(1);
     }
-    // Initialize the mapping of demes to qVoronoi tiles
-    graph.index_closest_to_deme(nowqSeeds,nowqColors);
-    // Initialize the mapping of demes to mVoronoi tiles
-    graph.index_closest_to_deme(nowmSeeds,nowmColors);
-    cerr << "[EEMS2::load_final_state] Done." << endl << endl;
+    cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
@@ -637,33 +642,41 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << nowmtiles << endl;
     out.close( );
+    out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { error = true; return(error); }
+    out << fixed << setprecision(6) << nowdf << endl;
+    out.close( );
+    out.open((params.mcmcpath + "/lastdfpars.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { error = true; return(error); }
+    out << fixed << setprecision(6) << params.dfmin << " " << params.dfmax << endl;
+    out.close( );
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowmrateMu << " " << nowmrateS2 << endl;
+    out << fixed << setprecision(6) << nowmrateMu << " " << nowmrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowqrateMu << " " << nowqrateS2 << endl;
+    out << fixed << setprecision(6) << nowqrateMu << " " << nowqrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowpi << " " << nowll << endl;
+    out << fixed << setprecision(6) << nowpi << " " << nowll << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowmEffcts << endl;
+    out << fixed << setprecision(6) << nowmEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowmSeeds << endl;
+    out << fixed << setprecision(6) << nowmSeeds << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowqEffcts << endl;
+    out << fixed << setprecision(6) << nowqEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(14) << nowqSeeds << endl;
+    out << fixed << setprecision(6) << nowqSeeds << endl;
     out.close( );
     return(error);
 }
