@@ -439,7 +439,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        + log((nowqtiles+params.negBiSize)/(newqtiles/params.negBiProb));
+        + log((nowqtiles+params.qnegBiSize)/(newqtiles/params.qnegBiProb));
     } else {                      // Propose death
         if (nowqtiles==2) { pBirth = 1.0; }
         newqtiles--;
@@ -457,7 +457,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        + log((nowqtiles/params.negBiProb)/(newqtiles+params.negBiSize));
+        + log((nowqtiles/params.qnegBiProb)/(newqtiles+params.qnegBiSize));
     }
     proposal.move = Q_VORONOI_BIRTH_DEATH;
     proposal.newqtiles = newqtiles;
@@ -487,7 +487,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        + log((nowmtiles+params.negBiSize)/(newmtiles/params.negBiProb));
+        + log((nowmtiles+params.mnegBiSize)/(newmtiles/params.mnegBiProb));
     } else {                      // Propose death
         if (nowmtiles==2) { pBirth = 1.0; }
         newmtiles--;
@@ -505,7 +505,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
-        + log((nowmtiles/params.negBiProb)/(newmtiles+params.negBiSize));
+        + log((nowmtiles/params.mnegBiProb)/(newmtiles+params.mnegBiSize));
     }
     proposal.move = M_VORONOI_BIRTH_DEATH;
     proposal.newmtiles = newmtiles;
@@ -776,8 +776,8 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (!inrange) { return (-Inf); }
     
     double logpi =
-    + dnegbinln(mtiles,params.negBiSize,params.negBiProb)
-    + dnegbinln(qtiles,params.negBiSize,params.negBiProb)
+    + dnegbinln(mtiles,params.mnegBiSize,params.mnegBiProb)
+    + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb)
     + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
     + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {

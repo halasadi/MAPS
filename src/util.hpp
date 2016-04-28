@@ -60,11 +60,11 @@ public:
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
     double mrateShape_2, mrateScale_2;
     double qrateShape_2, qrateScale_2;
-    double dfProposalS2, negBiProb;
+    double dfProposalS2, mnegBiProb, qnegBiProb;
     double dfmin, dfmax, qVoronoiPr;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
-    int nDemes, nIndiv, negBiSize;
+    int nDemes, nIndiv, mnegBiSize, qnegBiSize;
     string distance;
 };
 

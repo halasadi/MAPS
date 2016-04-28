@@ -82,7 +82,7 @@
 \begin_body
 
 \begin_layout Title
-MAPS: recent Migration And Population Size surface estimation
+MAPS: estimating recent Migration And Population size Surfaces
 \end_layout
 
 \begin_layout Author
@@ -102,8 +102,7 @@ MAPS assumes a population genetic model consisting of a
 \begin_inset Formula $d$
 \end_inset
 
- grid of demes with symmetric migration and per the stepping stone assumption,
- only neighboring demes are connected.
+ triangular grid of demes with symmetric migration.
  The density of the grid is prespecified by the user with the consideration
  that the computational complexity is 
 \begin_inset Formula $O(d^{3})$
@@ -163,8 +162,8 @@ IBD
 \begin_inset Quotes erd
 \end_inset
 
- segments; however, we do not refer to them as IBD segments to avoid confusing
- them with the myriad other definitions of IBD.
+ segments; however, we do not refer to them as IBD segments because the
+ population genetic literature .
  As 
 \begin_inset Formula $u$
 \end_inset
@@ -174,7 +173,7 @@ IBD
  of only recent population structure.
  In this study, we focus on characterizing population structure in the recent
  past and accordingly focus on UnR segments with short coalescent times
- which we arbirtarily designate as UnR segments greater than 2.5cM.
+ which we arbirtarily designate as UnR segments greater than 4cM.
  Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
  have high power and low false positive rates (Browning & Browning, 2007;
  Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
@@ -195,18 +194,17 @@ Let
 \end_inset
 
  grid of demes.
- Like Petkova et al 2015, we only allow migration between adjacent demes
- to enfore the isolation by distanc assumption which is widely observed
- in data.
+ Like Petkova et al 2015, we only allow migration between nearby demes to
+ enfore the isolation by distance assumption.
 \end_layout
 
 \begin_layout Standard
-First we compute the expectation of 
+Computing the likelihood requires many steps.
+ First we compute the expectation of 
 \begin_inset Formula $N_{i,j}^{u}$
 \end_inset
 
-.
- Following Palamara et al.
+ following Palamara et al.
  2012, 
 \end_layout
 
@@ -321,11 +319,7 @@ where
 \end_inset
 
 cM.
- Combining both equations together 
-\emph on
-(see appendix)
-\emph default
-,
+ Combining both equations together,
 \end_layout
 
 \begin_layout Standard
@@ -516,11 +510,7 @@ which can be derived by considering all possible demes in which lineages
 \begin_inset Formula $j$
 \end_inset
 
- can coalesce (
-\emph on
-see appendix
-\emph default
-).
+ can coalesce (See Appendix).
  
 \begin_inset Formula $q_{k}$
 \end_inset
@@ -645,7 +635,28 @@ where
 \begin_inset Formula $P(t)_{I(i),I(j)}=p(T_{i,j}=t|\theta)$
 \end_inset
 
+.
+ In most data-sets, not all demes have samples so we can save sometime time
+ by only computing 
+\begin_inset Formula $P(t)$
+\end_inset
 
+ for sampled demes.
+ To take advantage of this fact, we order the demes so the first 
+\begin_inset Formula $o$
+\end_inset
+
+ demes are observed and perform the matrix multiplication featured above
+ so that it only takes 
+\begin_inset Formula $O(od)$
+\end_inset
+
+ time instead of 
+\begin_inset Formula $O(d^{2})$
+\end_inset
+
+ which results in a minor speedup.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -655,8 +666,8 @@ This random walk with absorption approximation effectively assumes that
 \end_inset
 
  are neglible.
- Having all the components of equation (1), we are left to evaluate a single
- integral which we do by gaussian quadrature.
+ Having all the components of equation (1), we are left to evaluate a one-dimens
+ional integral which we do by gaussian quadrature.
  The quadrature routine only evaluates 
 \family roman
 \series medium
@@ -678,8 +689,8 @@ This random walk with absorption approximation effectively assumes that
 \end_inset
 
  because the probability of observing long UnR segments with deep coalescent
- times is effectively zero, and therefore do not contribute any mass to
- the integral.
+ times is effectively zero, and therefore coalescent events in the deep
+ past do not contribute any mass to the integral.
 
 \family default
 \series default
@@ -692,8 +703,12 @@ This random walk with absorption approximation effectively assumes that
 \uwave default
 \noun default
 \color inherit
- We found the random walk approximation to work very well (see Supplementary
- Fig 1) which can be explained by because small 
+ Because the intergral is only evaluated at small 
+\begin_inset Formula $t$
+\end_inset
+
+, the random walk approximation works very well (see Supplementary Fig XX)
+ because small 
 \begin_inset Formula $t$
 \end_inset
 
@@ -701,11 +716,11 @@ This random walk with absorption approximation effectively assumes that
 \begin_inset Formula $qt\approx0$
 \end_inset
 
- and as a result making coalescent events before time 
+ and as a result makes coalescent events before time 
 \begin_inset Formula $t$
 \end_inset
 
-very rare.
+rare.
 \end_layout
 
 \begin_layout Standard
@@ -741,7 +756,7 @@ Now that we can efficiently compute
 \uwave default
 \noun default
 \color inherit
- 
+ as
 \end_layout
 
 \begin_layout Standard
@@ -752,17 +767,16 @@ N_{i,j}^{u}|\theta\sim Pois(E[N_{i,j}^{u}|\theta])
 
 \end_inset
 
+as done in Ralph & Coop 2008 and Palamara et al 2012.
+ However, we assume a negative binomial distribution with over- dispersion
+ parameter 
+\begin_inset Formula $\phi.$
+\end_inset
 
-\end_layout
-
-\begin_layout Standard
-which we found to be a good fit to the POPRES data, consistent with Ralph
- & Coop 2008 and Palamara et al 2012.
-\end_layout
-
-\begin_layout Standard
-However, we found allowing for some overdispersion better fits the complexity
- of real data and as a result assume a negative binomial distribution
+ By allowing overdispersion, we are fitting the extra-complexity often found
+ in real data, and in addition, over-dispersion acts to heat the MCMC chain
+ which allows for faster convergence.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -777,7 +791,7 @@ N_{i,j}^{u}|\theta,\phi\sim NegBi()
 \end_layout
 
 \begin_layout Standard
-which is parameterized such that,
+such that,
 \end_layout
 
 \begin_layout Standard
@@ -803,10 +817,12 @@ Var[N_{i,j}^{u}|\theta,\phi]=E[N_{i,j}^{u}|\theta]+\phi E[N_{i,j}^{u}|\theta]^{2
 \end_layout
 
 \begin_layout Standard
-And finally, we assume a composite likelihood.
- Composite likelihoods have been widely used in population genetics and
- have been used in Bayesian population genetic methods (see Lawson et al
- 2012 for an example).
+To find the probability of the entire data, we assume independence between
+ pairs of individuals.
+ Empirically, we found this to be a descent approximation.
+ In addition, composite likelihoods have been widely used in population
+ genetics and in particular have been used in Bayesian population genetic
+ methods with success (see Lawson et al 2012 for an example).
  
 \end_layout
 
@@ -854,7 +870,7 @@ E[N_{i,j}^{R}]=E[N_{i,j}^{u}]-E[N_{i,j}^{v}]
 \begin_layout Standard
 
 \emph on
-See appendix.
+See Appendix.
 \end_layout
 
 \begin_layout Subsection
@@ -884,7 +900,8 @@ Like EEMS, MAPS uses MCMC to estimate the migration and coalescent rates
 \end_layout
 
 \begin_layout Section
-Appendix
+Migration rates and Population sizes are identifiable in MAPs but not in
+ EEMS
 \end_layout
 
 \end_body

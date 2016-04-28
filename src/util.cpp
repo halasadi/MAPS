@@ -16,7 +16,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
-        ("lowerBound", po::value<double>(&lowerBound)->default_value(4), "lowerBound")
+        ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
         ("nDemes", po::value<int>(&nDemes)->default_value(1), "nDemes")
         ("diploid", po::value<bool>(&diploid)->default_value(true), "diploid")
@@ -36,8 +36,10 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
         ("qrateScale", po::value<double>(&qrateScale_2)->default_value(1.0), "qrateScale")
         ("mrateScale", po::value<double>(&mrateScale_2)->default_value(1.0), "mrateScale")
-        ("negBiProb", po::value<double>(&negBiProb)->default_value(0.67), "negBiProb")
-        ("negBiSize", po::value<int>(&negBiSize)->default_value(10), "negBiSize") ;
+        ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
+        ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
+        ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
+        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
         po::store(po::parse_config_file(instrm,eems_options,true),vm);
@@ -85,8 +87,10 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "            numMCMCIter = " << params.numMCMCIter << endl
     << "            numBurnIter = " << params.numBurnIter << endl
     << "            numThinIter = " << params.numThinIter << endl
-    << "              negBiSize = " << params.negBiSize << endl
-    << "              negBiProb = " << params.negBiProb << endl
+    << "              mnegBiSize = " << params.mnegBiSize << endl
+    << "              mnegBiProb = " << params.mnegBiProb << endl
+    << "              qnegBiSize = " << params.qnegBiSize << endl
+    << "              qnegBiProb = " << params.qnegBiProb << endl
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
     << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
     << "             qrateShape = " << 2.0*params.qrateShape_2 << endl
@@ -174,9 +178,14 @@ bool Params::check_input_params( ) const {
         << "  mrateShape = " << 2.0*mrateShape_2 << ", mrateScale = " << 2.0*mrateScale_2 << endl;
         error = true;
     }
-    if (!(negBiSize>0) || !( (negBiProb>0) && (negBiProb<1) )) {
-        cerr << "  Error with the Negative Binomial hyperparameters:" << endl
-        << "  negBiSize = " << negBiSize << ", negBiProb = " << negBiProb << endl;
+    if (!(mnegBiSize>0) || !( (mnegBiProb>0) && (mnegBiProb<1) )) {
+        cerr << "  Error with the m Negative Binomial hyperparameters:" << endl
+        << "  mnegBiSize = " << mnegBiSize << ", mnegBiProb = " << mnegBiProb << endl;
+        error = true;
+    }
+    if (!(qnegBiSize>0) || !( (qnegBiProb>0) && (qnegBiProb<1) )) {
+        cerr << "  Error with the q Negative Binomial hyperparameters:" << endl
+        << "  qnegBiSize = " << qnegBiSize << ", qnegBiProb = " << qnegBiProb << endl;
         error = true;
     }
     return(error);

@@ -8,18 +8,14 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
 #plotpath <- 'data/popres/plots_lowerBnd_6_upperBnd_Inf'
 #mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
-#mcmcpath <- '../data/POBI/out/POBI_10_INF'
-#plotpath <- '../data/POBI/out/POBI_10_INF'
-mcmcpath <- '../data/popres/popressard_10_INF'
-plotpath <- '../data/popres/plot'
-#plotpath <- 'data/4x5/recent_barrier/6_Inf_plot'
-#mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
-#plotpath <- 'data/4x5/uniform/plot'
-#mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/12x8/uniform/plot-2'
-#mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim-2' 
-#plotpath <- 'data/4x5/past_barrier/eems_6_Inf_plot'
-#mcmcpath <- 'data/4x5/past_barrier/eems_6_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/recent_barrier/8_Inf_plot'
+#mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
+plotpath <- 'data/4x5/uniform_nsamp_10/plot'
+mcmcpath <- 'data/4x5/uniform_nsamp_10/eems_4_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/12x8/uniform/plot'
+#mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/past_barrier/eems_12_Inf_plot'
+#mcmcpath <- 'data/4x5/past_barrier/eems_12_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/high_migration/plot'
@@ -29,20 +25,17 @@ plotpath <- '../data/popres/plot'
 # FALSE FOR POPRES
 longlat <- TRUE
 
+#mcmcpath <- paste('../data/POBI/POBI_14_Inf/output_',1:10,sep='')
+#plotpath <- '../data/POBI/POBI_14_Inf/plot'
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=FALSE, add.demes=TRUE,
-                                                     m.standardize = FALSE,
-                                                     q.standardize = FALSE,
-                                                     m.log10transform = FALSE,
-                                                     q.log10transform = FALSE,
                                                      add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
-                                                     #m.colscale = c(0.09, 0.11), 
-                                                     #m.colscale = c(0.000, 0.02),
+                                                     #m.standardize = TRUE,
+                                                     #q.standardize = TRUE,
+                                                     #m.log10transform = TRUE,
+                                                     #q.log10transform = TRUE,
                                                      add.abline=TRUE,
-                                                     #N.colscale = c(8000, 12000),
-                                                     plot.height=8, plot.width=10, 
+                                                     plot.height=8, plot.width=14, 
                                                      projection.in = "+proj=longlat +datum=WGS84"))
-
-#eems.voronoi(mcmcpath, plotpath, longlat, add.seeds=FALSE, plot.height=8, plot.width=10)

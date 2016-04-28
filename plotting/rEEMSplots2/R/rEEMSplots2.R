@@ -28,6 +28,8 @@ set.colscale <- function(colscale) {
         maxx <- max(colscale)
         if (minx<maxx) {
             colscale <- c(minx,maxx)
+        } else {
+            colscale <- NULL
         }
     }
     return(colscale)
@@ -116,14 +118,21 @@ check.plot.params <- function(params) {
     if (is.logical(params$add.colbar[1])) { params$add.colbar = params$add.colbar[1] }
     else { params$add.colbar = TRUE }
 
-    if (is.logical(params$m.standardize[1])) { params$m.standardize = params$m.standardize[1] }
-    else { params$m.standardize = TRUE }
-    if (is.logical(params$q.standardize[1])) { params$q.standardize = params$q.standardize[1] }
-    else { params$q.standardize = TRUE }
-    if (is.logical(params$m.log10transform[1])) { params$m.log10transform = params$m.log10transform[1] }
-    else { params$m.log10transform = TRUE }
-    if (is.logical(params$q.log10transform[1])) { params$q.log10transform = params$q.log10transform[1] }
-    else { params$q.log10transform = TRUE }
+
+    ##if (is.logical(params$m.standardize[1])) { params$m.standardize = params$m.standardize[1] }
+    ##else { params$m.standardize = TRUE }
+    ##if (is.logical(params$q.standardize[1])) { params$q.standardize = params$q.standardize[1] }
+    ##else { params$q.standardize = TRUE }
+    ##if (is.logical(params$m.log10transform[1])) { params$m.log10transform = params$m.log10transform[1] }
+    ##else { params$m.log10transform = TRUE }
+    ##if (is.logical(params$q.log10transform[1])) { params$q.log10transform = params$q.log10transform[1] }
+    ##else { params$q.log10transform = TRUE }
+
+    
+    params$m.standardize <- FALSE
+    params$q.standardize <- FALSE
+    params$m.log10transform <- FALSE
+    params$q.log10transform <- FALSE
     
     return(params)
 }
@@ -295,10 +304,9 @@ read.graph <- function(path,longlat) {
 read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        foo <- hist(rates, n = 50, plot = FALSE)
-        plot(foo$mids, foo$counts, log = "x", xlab = "migration rates", ylab = "pdf",
-        pch = 20, cex = 3, cex.axis = 1.5, cex.lab = 2, main = paste0("mean: ", round(mean(rates),5), " median: ",
-        round(median(rates),5)), type = "l")
+        foo <- hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", round(mean(rates),5),
+        " median: ", round(median(rates), 5)), n = 40, xaxt = "n")
+        axis(side=1,at=foo$mids)
         tiles <- scan(paste(mcmcpath,'/mcmcmtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcxcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -306,10 +314,9 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
         # to turn the coalescent rates into population sizes
         rates <- 1/(2*rates)
-        foo <- hist(rates, n = 50, plot = FALSE)
-        plot(foo$mids, foo$counts, log = "x", xlab = "population sizes", ylab = "pdf",
-        pch = 20, cex = 3, cex.axis = 1.5, cex.lab = 2, main = paste0("mean: ", round(mean(rates),5), " median: ",
-        round(median(rates),5)), type = "l")
+        foo <- hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", round(mean(rates),5), " median: ",
+        round(median(rates),5)), n = 40, xaxt = "n")
+        axis(side=1,at=foo$mids)
         tiles <- scan(paste(mcmcpath,'/mcmcqtiles.txt',sep=''),what=numeric(),quiet=TRUE)
         xseed <- scan(paste(mcmcpath,'/mcmcwcoord.txt',sep=''),what=numeric(),quiet=TRUE)
         yseed <- scan(paste(mcmcpath,'/mcmczcoord.txt',sep=''),what=numeric(),quiet=TRUE)
@@ -481,30 +488,59 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
                              plot.xy = NULL,highlight.samples = NULL) {
     eems.colors <- plot.params$eems.colors
     num.levels <- length(eems.colors)
-    if (is.mrates) {
-        eems.levels <- eems.colscale(Zmean,num.levels,plot.params$m.colscale)
-        main.title <- "Migration rates : posterior mean"
-        key.title <- expression(paste("(",italic(m),")",sep=""))
-    } else {
-        eems.levels <- eems.colscale(Zmean,num.levels,plot.params$N.colscale)
-        main.title <- "Population sizes : posterior mean"
-        key.title <- expression(paste("(",italic(N), ")",sep=""))
 
+
+    ## Assume no standardization and no log10 transformation has been performed so far.
+    ## Perform a *version* of the normalization, but it is not the exactly the same as before
+    ## (In rEEMSplots, mean-zero standardization is applied separately for each MCMC state
+    ## that was saved after burnin and thinning.)      
+
+
+    ## Transform the migration rates and find their mean
+    mean.log10.rates <- mean(log10(Zmean))
+    log10.rates <- log10(Zmean)
+
+    
+    ## Assume that all z values (i.e. all migration rates or population sizes)
+    ## are in the range -1 to +1 centered at the mean
+    rates.max <- mean.log10.rates + 1
+    rates.min <- mean.log10.rates - 1
+    ## However, if this assumption is violated, simply extend the range further
+    if (rates.max < max(log10.rates)) {
+        rates.max <- max(log10.rates)
     }
-    rr <- flip(raster::raster(t(Zmean),
+    if (rates.min > min(log10.rates)) {
+        rates.min <- min(log10.rates)
+    }
+
+    
+    if (is.mrates) {
+        eems.levels <- eems.colscale(c(rates.min, rates.max),
+                                     num.levels, plot.params$m.colscale)
+        main.title <- "Migration rates : posterior mean"
+        key.title <- expression(paste(italic(m), sep=""))
+    } else {
+        eems.levels <- eems.colscale(c(rates.min, rates.max),
+                                     num.levels, plot.params$N.colscale)
+        main.title <- "Population sizes : posterior mean"
+        key.title <- expression(paste(italic(N), sep=""))
+    }
+    rr <- flip(raster::raster(t(log10.rates),
                               xmn=dimns$xlim[1],xmx=dimns$xlim[2],
                               ymn=dimns$ylim[1],ymx=dimns$ylim[2]),direction='y')
     if (!is.null(plot.params$proj.in)) {
         raster::projection(rr) <- CRS(plot.params$proj.in)
         rr <- raster::projectRaster(rr,crs=CRS(plot.params$proj.out))
     }
-    print(dim(Zmean))
-    myfilledContour(rr,col = eems.colors,levels = eems.levels,asp=1,
+    myfilledContour(rr, col = eems.colors, levels = eems.levels, asp = 1,
                     add.key = plot.params$add.colbar,
-                    key.axes = axis(4,tick=FALSE,hadj=1,line=3,cex.axis=1.5),
-                    #axis.ticks = axTicks(4),
-                    #axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i)))),
-                    #key.axes = axis(4, at=axis.ticks, labels=axis.labels, tick=FALSE, hadj=1, line=3, cex.axis=1.5),
+
+                    ## Can't add this here (or at least not as it is...)
+                    ##axis.ticks = axTicks(4), ## Can't call axTicks *before* actually plotting data
+                    ##axis.labels = sapply(log10(axis.ticks), function(i) as.expression(bquote(10^ .(i)))),
+                    ##key.axes = axis(4, at = axis.ticks, labels = axis.labels,
+                    ##                tick = FALSE, hadj = 1, line = 3, cex.axis = 1.5),
+                    
                     key.title = mtext(key.title,side=3,cex=1.5,line=1.5,font=1),
                     add.title = plot.params$add.title,
                     plot.title = mtext(text=main.title,side=3,line=0,cex=1.5),
@@ -738,7 +774,8 @@ sim.scatterplot <- function(mcmcpath, longlat, plot.params, add.abline=TRUE){
     }
     plot(diag(JtDobsJ), diag(JtDhatJ), col = "blue", lwd = 2,
     xlab="Observed similarity within demes  ",
-    ylab="Fitted similarity within demes  ")
+    ylab="Fitted similarity within demes  ", type = "n")
+    text(diag(JtDobsJ), diag(JtDhatJ), oDemes[,3])
     if (add.abline) {
         abline(a=0,b=1,col="blue",lwd=2)
     }
@@ -770,8 +807,7 @@ myfilledContour <- function (x, y = 1, maxpixels = 1e+05, add.key = TRUE, ...) {
     X <- xFromCol(x, 1:ncol(x))
     Y <- yFromRow(x, nrow(x):1)
     Z <- t(matrix(getValues(x), ncol = x@ncols, byrow = TRUE)[nrow(x):1,])
-    myfilled.contour(x = X, y = Y, z = Z, add.key = add.key,
-                     axes = FALSE, frame.plot = FALSE, ...)
+    myfilled.contour(x = X, y = Y, z = Z, add.key = add.key, frame.plot = FALSE, ...)
 }
 ## I have only changed the legend/bar to remove the black border.
 myfilled.contour <- function (x = seq(0, 1, length.out = nrow(z)), y = seq(0, 1,length.out = ncol(z)), z,
@@ -779,9 +815,9 @@ myfilled.contour <- function (x = seq(0, 1, length.out = nrow(z)), y = seq(0, 1,
                               ylim = range(y, finite = TRUE),
                               zlim = range(z, finite = TRUE),
                               levels = pretty(zlim, nlevels), nlevels = 20, color.palette = cm.colors,
-                              col = color.palette(length(levels) - 1), plot.title, plot.axes,
-                              key.title, key.axes, asp = NA, xaxs = "i", yaxs = "i", las = 1,
-                              axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE,
+                              col = color.palette(length(levels) - 1), plot.title,
+                              plot.axes, key.title, asp = NA, xaxs = "i", yaxs = "i",
+                              axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, las = 1,
                               ...) {
 
     if (missing(z)) {
@@ -815,17 +851,26 @@ myfilled.contour <- function (x = seq(0, 1, length.out = nrow(z)), y = seq(0, 1,
     mar[4L] <- mar[2L]
     mar[2L] <- 1
     par(mar = mar)
+
     if (add.key) {
         plot.new()
         par(plt = c(0,0.3,0.1,0.9))
         ## Change: add 'border = NA' and remove 'box()'
         plot.window(xlim = c(0, 1), ylim = range(levels), xaxs = "i",yaxs = "i")
         rect(0, levels[-length(levels)], 1, levels[-1L], col = col, border = NA)
-        if (missing(key.axes)) {
-            if (axes)
-                axis(4)
+        if (axes) {
+            ## This is very specific to a log10-scale axis:
+            ## Assumes that the data is plotted on the log10 scale
+            ## But we want to label the legend ticks on the original scale:
+            ## That is: have labels c(10^-2, 10^0, 10^2) rather than c(0.001, 1, 100)
+            ## which emphasizes the logarithmic scale
+            axis.ticks = axTicks(4)
+            axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i))))
+            ## hadj and padj specify the horizontal and perpendicular adjustment, respectively
+            ## hadj = 0 means adjust to the left in the horizontal (reading) direction
+            ## padj = 0.5 means adjust centrally in the vertical direction
+            axis(4, at=axis.ticks, labels=axis.labels, tick=FALSE, hadj=0, padj=0.5, line=0, cex.axis=1.5)
         }
-        else key.axes
         ## box()
         if (!missing(key.title))
             key.title
@@ -859,25 +904,6 @@ myfilled.contour <- function (x = seq(0, 1, length.out = nrow(z)), y = seq(0, 1,
         else plot.title
     }
     invisible()
-}
-myfilled.legend <-
-    function (levels = pretty(zlim, nlevels), nlevels = 20, color.palette = cm.colors, 
-              col = color.palette(length(levels) - 1), plot.title, plot.axes, 
-              key.title, key.axes, asp = NA, xaxs = "i", yaxs = "i", las = 1, 
-              axes = TRUE, frame.plot = axes, ...) 
-{
-
-    plot.new( )
-    plot.window(xlim = c(0, 1), ylim = range(levels), xaxs = "i",yaxs = "i")
-    rect(0, levels[-length(levels)], 1, levels[-1L], col = col, border = NA)
-    if (!missing(key.axes)) {
-        key.axes
-    } else {
-        axis(4, col.axis = fg.col, tick = FALSE)
-    }
-    if (!missing(key.title)) {
-        key.title
-    }
 }
 load.required.package <- function(package,required.by) {
     if (!requireNamespace(package, quietly = TRUE)) {
@@ -1026,10 +1052,10 @@ eems.plots <- function(mcmcpath,
                        plotpath,
                        longlat,
 
-                       m.standardize = TRUE,
-                       q.standardize = TRUE,
-                       m.log10transform = TRUE,
-                       q.log10transform = TRUE,
+                       ##m.standardize = TRUE,
+                       ##q.standardize = TRUE,
+                       ##m.log10transform = TRUE,
+                       ##q.log10transform = TRUE,
                        
                        ## Properties of the figures to generate
                        plot.width = 7,
@@ -1082,6 +1108,7 @@ eems.plots <- function(mcmcpath,
                        add.title = TRUE,
                        m.plot.xy = NULL,
                        q.plot.xy = NULL) {
+
     
     plot.params <- list(eems.colors=eems.colors,m.colscale=m.colscale,N.colscale=N.colscale,
                         add.map=add.map,add.grid=add.grid,add.outline=add.outline,add.demes=add.demes,
@@ -1089,9 +1116,9 @@ eems.plots <- function(mcmcpath,
                         lwd.map=lwd.map,lwd.grid=lwd.grid,lwd.outline=lwd.outline,pch.demes=pch.demes,
                         min.cex.demes=min.cex.demes,max.cex.demes=max.cex.demes,
                         proj.in=projection.in,proj.out=projection.out,
-                        add.colbar=add.colbar,add.title=add.title,
-                        m.standardize=m.standardize,m.log10transform=m.log10transform,
-                        q.standardize=q.standardize,q.log10transform=q.log10transform)
+                        add.colbar=add.colbar,add.title=add.title)
+                        ##m.standardize=m.standardize,m.log10transform=m.log10transform,
+                        ##q.standardize=q.standardize,q.log10transform=q.log10transform)
     plot.params <- check.plot.params(plot.params)
 
     ## A vector of EEMS output directories, for the same dataset.
@@ -1122,38 +1149,6 @@ eems.plots <- function(mcmcpath,
     qrates.raster = average.eems.contours(mcmcpath,dimns,longlat,plot.params,
         is.mrates = FALSE,plot.xy = q.plot.xy)
     dev.off( )
-
-    if (!add.colbar) {
-
-        if (out.png) {
-            save.params$height = 6
-            save.params$width = 1.5
-        } else {
-            save.params$height = 12
-            save.params$width = 3
-        }
-        
-        save.graphics(paste(plotpath,'-mkey',sep=''),save.params)
-        par(las=1,font.main=1,xpd=xpd,mar=c(0,1,5,8))
-        myfilled.legend(col = mrates.raster$eems.colors,
-                        levels = mrates.raster$eems.levels,
-                        key.axes = axis(4,tick=FALSE,hadj=1,line=4,cex.axis=2),
-                        key.title = mtext(expression(paste(log,"(",italic(m),")",sep="")),
-                            side=3,cex=2.5,line=1.5,font=1))
-        dev.off( )
-        save.graphics(paste(plotpath,'-qkey',sep=''),save.params)
-        par(las=1,font.main=1,xpd=xpd,mar=c(0,1,5,8))
-        myfilled.legend(col = qrates.raster$eems.colors,
-                        levels = qrates.raster$eems.levels,
-                        key.axes = axis(4,tick=FALSE,hadj=1,line=6,cex.axis=2),
-                        key.title = mtext(expression(paste(log,"(",italic(q),")",sep="")),
-                            side=3,cex=2.5,line=1.5,font=1))
-        dev.off( )
-
-    }
-    
-    save.params$height = 6
-    save.params$width = 6.5
 
     ## Plot scatter plots of observed vs fitted genetic differences
     save.graphics(paste(plotpath,'-rsim',sep=''),save.params)

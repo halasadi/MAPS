@@ -91,9 +91,9 @@ L = 8e6;
 
 ndemes = 20
 int = calculateIntegral(M, q, r, L)
-nsamp_per_deme = 20
+nsamp_per_deme = 10
 
-fileName = paste0("data/sim_model/ndemes_20", L, "_M_", const, "_N_", N[1], "_nsamp_per_deme_", nsamp_per_deme)
+fileName = paste0("../data/sim_model/ndemes_20", L, "_M_", const, "_N_", N[1], "_nsamp_per_deme_", nsamp_per_deme)
 
 lambda_row = matrix(rep(int, each = nsamp_per_deme), byrow = TRUE, ncol = ncol(int)*nsamp_per_deme)
 lambda_m = matrix(rep(lambda_row, each = nsamp_per_deme), byrow = FALSE, nrow = nrow(int)*nsamp_per_deme)
