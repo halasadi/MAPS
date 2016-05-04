@@ -1,4 +1,4 @@
-ndiploids = 100
+ndiploids = 120
 
 toIndex = matrix(nrow=ndiploids, ncol = 2, 0)
 cnt = 1
@@ -33,14 +33,14 @@ readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/4x5/uniform_nsamp_10/"
+workingDir <- "/Users/halasadi/eems2/test/data/4x5/heter_popsizes_unevensampling2/"
 nchr = 20
 lowerCutOff = 4e6
 upperCutoff = Inf
 nhaploids = ndiploids*2
-ibdM = readIBD(paste0(workingDir, "uniform_mt_300gen_nsamp_10_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+ibdM = readIBD(paste0(workingDir, "heter_popsizes_uneven_sampling_mt_300gen_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 
 for (i in 2:nchr){
-  ibdM = ibdM + readIBD(paste0(workingDir, "uniform_mt_300gen_nsamp_10_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+  ibdM = ibdM + readIBD(paste0(workingDir, "heter_popsizes_uneven_sampling_mt_300gen_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 }
 write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)

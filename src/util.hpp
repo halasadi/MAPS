@@ -51,7 +51,7 @@ public:
     friend ostream& operator<<(ostream& out, const Params& params);
     
     long seed;
-    bool diploid, testing;
+    bool testing;
     string datapath, mcmcpath, prevpath, gridpath;
     double qEffctHalfInterval, mEffctHalfInterval;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
@@ -76,7 +76,7 @@ MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec);
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi, bool isDiploid);
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);

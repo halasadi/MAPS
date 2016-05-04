@@ -72,14 +72,6 @@ void EEMS2::initialize_sims( ) {
     // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
     
-    
-    // DELETE COMMENT: Only haploid
-    /*int nchr = 1;
-     if (params.diploid){
-     nchr = 2;
-     }
-     */
-    
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
@@ -594,7 +586,7 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
 void EEMS2::print_iteration(const MCMC &mcmc) const {
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and effective degrees of freedom = " << pow(10, nowdf) << setprecision(4) << endl
+    << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
     << "          Log prior = " << nowpi << setprecision(4) << endl
@@ -879,7 +871,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     double phi = pow(10.0, df);
     
-    double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi, params.diploid);
+    double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;

@@ -19,7 +19,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
         ("nDemes", po::value<int>(&nDemes)->default_value(1), "nDemes")
-        ("diploid", po::value<bool>(&diploid)->default_value(true), "diploid")
         ("distance", po::value<string>(&distance)->default_value("euclidean"), "distance")
         ("numMCMCIter", po::value<int>(&numMCMCIter)->default_value(1), "numMCMCIter")
         ("numBurnIter", po::value<int>(&numBurnIter)->default_value(0), "numBurnIter")
@@ -217,7 +216,7 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi, bool isDiploid){
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi){
     
     double lamda;
     int odemes = observedIBDCnt.rows();
