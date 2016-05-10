@@ -162,8 +162,7 @@ IBD
 \begin_inset Quotes erd
 \end_inset
 
- segments; however, we do not refer to them as IBD segments because the
- population genetic literature .
+ segments; however, we prefer not use this ambigious notation.
  As 
 \begin_inset Formula $u$
 \end_inset
@@ -173,7 +172,12 @@ IBD
  of only recent population structure.
  In this study, we focus on characterizing population structure in the recent
  past and accordingly focus on UnR segments with short coalescent times
- which we arbirtarily designate as UnR segments greater than 4cM.
+ which are very long (e.g.
+ 
+\begin_inset Formula $\geq$
+\end_inset
+
+ 4cM).
  Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
  have high power and low false positive rates (Browning & Browning, 2007;
  Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
@@ -200,18 +204,18 @@ Let
 
 \begin_layout Standard
 Computing the likelihood requires many steps.
- First we compute the expectation of 
+ following Palamara et al.
+ 2012, the expectation of 
 \begin_inset Formula $N_{i,j}^{u}$
 \end_inset
 
- following Palamara et al.
- 2012, 
+ can be computed as,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-E[N_{i,j}^{u}]\approx\frac{L\,E[f|\theta]}{E[s|\theta]}
+E[N_{i,j}^{u}]\approx\frac{L\,E[f|\theta]}{E[s|\theta]}\label{eq:exp_N}
 \end{equation}
 
 \end_inset
@@ -287,10 +291,13 @@ cM.
 \begin_layout Standard
 Furthermore, following Palamara et al.
  2012,
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula 
-\begin{equation}
+\[
 E[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\theta)/l\,dl}
-\end{equation}
+\]
 
 \end_inset
 
@@ -299,9 +306,9 @@ E[s|\theta]=\frac{\int_{u}^{\infty}p(l|\theta)dl}{\int_{u}^{\infty}p(l|\theta)/l
 
 \begin_layout Standard
 \begin_inset Formula 
-\begin{equation}
+\[
 E[f|\theta]=\int_{u}^{\infty}p(l|\theta)dl
-\end{equation}
+\]
 
 \end_inset
 
@@ -343,9 +350,9 @@ Expanding
 
 \begin_layout Standard
 \begin_inset Formula 
-\[
-E[N_{i,j}^{u}|\theta]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt
-\]
+\begin{equation}
+E[N_{i,j}^{u}|\theta]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl=L\,\int_{u}^{\infty}\int_{0}^{\infty}p(l,t|\theta)/l\,dt\,dl=L\,\int_{0}^{\infty}p(t|\theta)\int_{u}^{\infty}p(l|t)/l\,dl\,dt\label{eq:expand}
+\end{equation}
 
 \end_inset
 
@@ -399,11 +406,11 @@ n for
 \begin_inset Formula $e^{-rtx}$
 \end_inset
 
- where 
+ (where 
 \begin_inset Formula $r$
 \end_inset
 
- is the recombination rate for one chromosome and 
+ is the recombination rate for one chromosome) and 
 \begin_inset Formula $e^{-2rtx}$
 \end_inset
 
@@ -435,7 +442,7 @@ n for
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-p(l|t)=4r^{2}t^{2}le^{-2trl}
+p(l|t)=4r^{2}t^{2}le^{-2trl}\label{eq:no_rec}
 \end{equation}
 
 \end_inset
@@ -444,7 +451,21 @@ p(l|t)=4r^{2}t^{2}le^{-2trl}
 \end_layout
 
 \begin_layout Standard
-Thus, the inner integral 
+Combining equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:expand"
+
+\end_inset
+
+ with 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:no_rec"
+
+\end_inset
+
+, the inner integral 
 \family roman
 \series medium
 \shape up
@@ -460,8 +481,27 @@ Thus, the inner integral
 \begin_inset Formula $\int_{u}^{\infty}p(l|t)/l\,dl$
 \end_inset
 
- can be computed analytically as 
-\begin_inset Formula $2rtle^{-2tru}$
+ can be computed analytically, leading to
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+E[N_{i,j}^{u}|\theta]\approx L\,\int_{0}^{\infty}p(t|\theta)2rte^{-2tru}dt
+\]
+
 \end_inset
 
 
@@ -476,8 +516,7 @@ Thus, the inner integral
 \uwave default
 \noun default
 \color inherit
-.
- The next quantity to consider is 
+ The next quantity to consider to evaluate the integral is 
 \begin_inset Formula $p(t|\theta)$
 \end_inset
 
@@ -636,8 +675,8 @@ where
 \end_inset
 
 .
- In most data-sets, not all demes have samples so we can save sometime time
- by only computing 
+ In most data-sets, not all demes have samples so we can save time by only
+ computing 
 \begin_inset Formula $P(t)$
 \end_inset
 
@@ -655,7 +694,7 @@ where
 \begin_inset Formula $O(d^{2})$
 \end_inset
 
- which results in a minor speedup.
+ time.
  
 \end_layout
 
@@ -666,8 +705,15 @@ This random walk with absorption approximation effectively assumes that
 \end_inset
 
  are neglible.
- Having all the components of equation (1), we are left to evaluate a one-dimens
-ional integral which we do by gaussian quadrature.
+ Having all the components of equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:exp_N"
+
+\end_inset
+
+, we are left to evaluate a one-dimensional integral which we do by gaussian
+ quadrature.
  The quadrature routine only evaluates 
 \family roman
 \series medium
@@ -707,8 +753,7 @@ ional integral which we do by gaussian quadrature.
 \begin_inset Formula $t$
 \end_inset
 
-, the random walk approximation works very well (see Supplementary Fig XX)
- because small 
+, the random walk approximation works very well because small 
 \begin_inset Formula $t$
 \end_inset
 
@@ -720,7 +765,9 @@ ional integral which we do by gaussian quadrature.
 \begin_inset Formula $t$
 \end_inset
 
-rare.
+ rare.
+ We recently discovered that Baharian et al 2015 perform the same approximation.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -821,9 +868,9 @@ To find the probability of the entire data, we assume independence between
  pairs of individuals.
  Empirically, we found this to be a descent approximation.
  In addition, composite likelihoods have been widely used in population
- genetics and in particular have been used in Bayesian population genetic
- methods with success (see Lawson et al 2012 for an example).
- 
+ genetics; for example, FineStructure - a Bayesian method - computes a composite
+ likelihood over all pairs to infer recent population structure (Lawson
+ et al 2012).
 \end_layout
 
 \begin_layout Subsection
@@ -878,15 +925,21 @@ The Prior
 \end_layout
 
 \begin_layout Standard
-We use the EEMS prior in Petkova et al 2015, except that we estimate an
- additional overall mean rate for the coalescent rates wheras Petkova et
- al fixed the analogous parameter to one.
- Analogous to the degrees of freedom parameter in EEMS, we place a log-uniform
- prior on 
+Essentially, MAPs uses the same prior as in EEMS with a few exceptions.
+ Firstly, we estimate an additional overall mean rate for the coalescent
+ rates wheras Petkova et al fixed the analogous parameter to one.
+ Secondly, we estimate an overdispersion parameter in MAPs which is analogous
+ to the degrees of freedom parameter in EEMS in that it acts as a fudge
+ factor -- i.e.
+ it does not change the mean but only the level of uncertainity around the
+ mean.
+ Like the degrees of freedom parameter in EEMS, we place a log-uniform prior
+ on 
 \begin_inset Formula $\phi$
 \end_inset
 
 .
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -894,14 +947,18 @@ Markov chain Monte Carlo estimation
 \end_layout
 
 \begin_layout Standard
-Like EEMS, MAPS uses MCMC to estimate the migration and coalescent rates
- by sampling from their posterior distribution given the data.
- 
+MAPS uses the same MCMC routine outlined in Petkova et al to sample from
+ the posterior distribution given the data.
+ Please see Petkova et al 2015 for more details on the MCMC procedure.
 \end_layout
 
 \begin_layout Section
 Migration rates and Population sizes are identifiable in MAPs but not in
  EEMS
+\end_layout
+
+\begin_layout Section
+The affect of the grid on demography estimates
 \end_layout
 
 \end_body

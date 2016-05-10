@@ -103,6 +103,8 @@ public:
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
+    void writePopSizes() const;
+
     
 private:
     

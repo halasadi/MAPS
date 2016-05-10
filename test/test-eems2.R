@@ -10,14 +10,14 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/recent_barrier/8_Inf_plot'
 #mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
-#plotpath <- 'data/4x5/uniform_nsamp_10/plot'
-#mcmcpath <- 'data/4x5/uniform_nsamp_10/eems_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/uniform/plot'
+mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_12_Inf_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_12_Inf-EEMS2-test-sim' 
-plotpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf_plot'
-mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf_plot_qneg_0.67'
+#mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf2-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/high_migration/plot'
@@ -31,8 +31,8 @@ longlat <- TRUE
 #plotpath <- '../data/POBI/POBI_14_Inf/plot'
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
-                                                     add.map=FALSE, add.demes=TRUE,
-                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=0.3, col.grid="black",
+                                                     add.map=FALSE, add.demes = FALSE,
+                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=1, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
                                                      #m.standardize = TRUE,
                                                      #q.standardize = TRUE,

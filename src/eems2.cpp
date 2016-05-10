@@ -184,7 +184,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmcpilogl = MatrixXd::Zero(niters,2);
     mcmcmtiles = VectorXd::Zero(niters);
     mcmcqtiles = VectorXd::Zero(niters);
-    //mcmcthetas = VectorXd::Zero(niters);
+    mcmcthetas = VectorXd::Zero(niters);
     mcmcmRates.clear();
     mcmcqRates.clear();
     mcmcxCoord.clear();
@@ -602,7 +602,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcpilogl(iter,1) = nowll;
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
-    //mcmcthetas(iter) = nowdf;
+    mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
     }
@@ -670,9 +670,11 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << nowqSeeds << endl;
     out.close( );
+    
     return(error);
 }
 bool EEMS2::output_results(const MCMC &mcmc) const {
+    
     ofstream out; bool error = false;
     MatrixXd oDemes = MatrixXd::Zero(o,3);
     oDemes << graph.get_the_obsrv_demes(),cvec;
@@ -697,10 +699,10 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcmtiles << endl;
     out.close( );
-    //out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
-    //if (!out.is_open()) { return false; }
-    //out << fixed << setprecision(14) << mcmcthetas << endl;
-    //out.close( );
+    out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { return false; }
+    out << fixed << setprecision(14) << mcmcthetas << endl;
+    out.close( );
     out.open((params.mcmcpath + "/mcmcqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcqhyper << endl;
@@ -783,7 +785,6 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
 
 void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
     
-    // store 50 weights and 50 abissca
     // weights for the gaussian quadrature
     VectorXd weights(50);
     // abisca for the gaussian quadrature
@@ -791,6 +792,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     getWeights(weights, x);
     
+    // change of variable ("u substitution")
     weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
     x = x/(2*bnd/100);
     
@@ -801,7 +803,6 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
-        // exponentiate the matrix
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
         coalp = P * q.asDiagonal() * P.transpose();
         integral += coalp*weights(t);
@@ -909,6 +910,24 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      */
     double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
     return (q_alpha);
+}
+
+// this is a test function
+void EEMS2::writePopSizes() const{
+    ofstream out;
+    VectorXi mColors, qColors;
+    graph.index_closest_to_deme(nowqSeeds,qColors);
+    graph.index_closest_to_deme(nowmSeeds,mColors);
+    VectorXd q = VectorXd::Zero(o);
+    for ( int alpha = 0 ; alpha < o ; alpha++ ) {
+        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu;
+        q(alpha) = pow(10.0,log10q_alpha);
+    }
+    
+    out.open((params.mcmcpath + "/popsizes.txt").c_str(), ios::out | ios::app);
+    out << fixed << setprecision(6) << q.transpose() << endl;
+    out.close( );
+    
 }
 
 void EEMS2::printMigrationAndCoalescenceRates( ) const {
