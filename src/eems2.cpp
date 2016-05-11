@@ -924,8 +924,8 @@ void EEMS2::writePopSizes() const{
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
-    out.open((params.mcmcpath + "/popsizes.txt").c_str(), ios::out | ios::app);
-    out << fixed << setprecision(6) << q.transpose() << endl;
+    out.open((params.mcmcpath + "/coalescentrates.txt").c_str(), ios::out | ios::app);
+    out << fixed << setprecision(14) << q.transpose() << endl;
     out.close( );
     
 }
