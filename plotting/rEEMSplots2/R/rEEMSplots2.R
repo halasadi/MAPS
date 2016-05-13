@@ -2,6 +2,15 @@
 #' @import raster rgeos sp geosphere RcppEigen
 #' @importFrom Rcpp evalCpp
 
+
+default.eems.Ncolors <- function( ) {
+    
+    eems.colors <- c("#11C638", "#64CE6E", "#8DD593", "#ADDAB0", "#C6DEC7", "#D8E1D9", "#E2E2E2", "#E5DDD8",
+    "#EAD3C6", "#EEC7AD", "#F0B98D", "#F1A963", "#EF9708")
+    return(eems.colors)
+    
+}
+
 default.eems.colors <- function( ) {
     writeLines(paste("Using the default DarkOrange to Blue color scheme, with 'white' as the midpoint color.\n",
                      "It combines two color schemes from the 'dichromat' package, which itself is based on\n",
@@ -520,6 +529,7 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
         main.title <- "Migration rates : posterior mean"
         key.title <- expression(paste(italic(m), sep=""))
     } else {
+        #eems.colors <- default.eems.Ncolors()
         eems.levels <- eems.colscale(c(rates.min, rates.max),
                                      num.levels, plot.params$N.colscale)
         main.title <- "Population sizes : posterior mean"
