@@ -767,6 +767,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
+   
     if (!inrange) { return (-Inf); }
     
     double logpi =
@@ -871,13 +872,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     
     double phi = pow(10.0, df);
-    
     double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
-    
-    if (logll != logll){
-        cerr << "trouble with ll" << endl;
-        throw std::exception();
-    }
     
     return (logll);
 }
