@@ -53,7 +53,8 @@ public:
     long seed;
     bool testing;
     string datapath, mcmcpath, prevpath, gridpath;
-    double qEffctHalfInterval, mEffctHalfInterval;
+    //double qEffctHalfInterval, mEffctHalfInterval;
+    double qEffctLowerBound, qEffctUpperBound, mEffctLowerBound, mEffctUpperBound;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
     double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
@@ -75,7 +76,6 @@ MatrixXd pairwise_distance(const MatrixXd &X, const MatrixXd &Y);
 MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec);
 double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
@@ -87,7 +87,7 @@ void insertElem(VectorXd &vec, const double &elem);
 double dnegbinln(const int k, const int size, const double prob);
 double dinvgamln(const double x, const double shape, const double scale);
 double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma);
-double dtrnormln(const double x, const double mu, const double sigma2, const double bnd);
+double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd);
 
 VectorXd slice(const VectorXd &A, const VectorXi &I);
 MatrixXd slice(const MatrixXd &A, const VectorXi &R, const VectorXi &C);

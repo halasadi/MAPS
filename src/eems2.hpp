@@ -157,7 +157,7 @@ private:
     
     void initialize_sims();
     void randpoint_in_habitat(MatrixXd &Seeds);
-    void rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts);
+    void rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts);
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,

@@ -62,13 +62,16 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     // Remember, rates are paramterized on the log scale
     mrateMuUpperBound = -0.5;
     qrateMuUpperBound = -3;
-    
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
-    // Ensure that mrateMuUpperBound + mEffectHalfInterval <= log(upperBound) so rates are between 0 and upperBound
-    mEffctHalfInterval = 0.5;
-    qEffctHalfInterval = 1;
+    
+    // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
+    qEffctLowerBound = -2;
+    qEffctUpperBound = 1;
+    mEffctLowerBound = -2;
+    mEffctUpperBound = 0.2;
+    
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -247,35 +250,6 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
     return(ll);
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec){
-    double ll = 0;
-    double epsilon = 1e-8;
-    int n = expectedIBD.rows();
-    double lamda;
-    double weight = 1;
-    // if unweighted, keep weight = 1
-    for (int i = 0; i < n; i++){
-        for (int j = i; j < n; j++){
-            if (expectedIBD(i,j) < epsilon){
-                lamda = epsilon;
-            } else{
-                lamda = expectedIBD(i,j);
-            }
-            if (i == j){
-                // comment out weight for unweighted
-                //weight = (2*cvec(i)-3)/((cvec(i)*(cvec(i)-1))/2);
-                ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
-            }
-            else{
-                // comment out weight for unweighted
-                //weight = (2*(cvec(i)+cvec(j))-3)/(cvec(i)*cvec(j));
-                ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
-            }
-            
-        }
-    }
-    return(ll);
-}
 
 double mvgammaln(const double a, const int p) {
     double val = 0.25*log_pi*p*(p-1);
@@ -446,12 +420,12 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
  */
-double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {
+double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd) {
     double pln = -Inf;
-    if ( (sigma2>0) && (x>=-bnd) && (x<=bnd) ) {
+    if ( (sigma2>0) && (x>=lowerBnd) && (x<=upperBnd) ) {
         boost::math::normal pnorm(mu,sqrt(sigma2));
         pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
-        - log(cdf(pnorm,bnd) - cdf(pnorm,-bnd));
+        - log(cdf(pnorm,upperBnd) - cdf(pnorm,lowerBnd));
     }
     return (pln);
 }

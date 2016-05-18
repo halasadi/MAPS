@@ -36,9 +36,9 @@ void EEMS2::randpoint_in_habitat(MatrixXd &Seeds) {
     }
 }
 
-void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts) {
+void EEMS2::rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts) {
     for (int i = 0 ; i < Effcts.rows() ; i++ ) {
-        Effcts(i) = draw.rtrnorm(0.0,rateS2,HalfInterval);
+        Effcts(i) = draw.rtrnorm(0.0,rateS2,lowerBnd, upperBnd);
     }
 }
 
@@ -114,8 +114,8 @@ void EEMS2::initialize_state( ) {
     nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     // Assign rates to the Voronoi tiles
-    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
-    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,nowmrateS2,nowmEffcts);
+    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctLowerBound, params.qEffctUpperBound, nowqrateS2,nowqEffcts);
+    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctLowerBound, params.mEffctUpperBound, nowmrateS2,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -302,7 +302,7 @@ void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( abs(newqEffct) < params.qEffctHalfInterval ) {
+    if ( (newqEffct > params.qEffctLowerBound) && (newqEffct < params.qEffctUpperBound) ) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -324,7 +324,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( abs(newmEffct) < params.mEffctHalfInterval ) {
+    if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
         proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf);
@@ -421,12 +421,12 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         pairwise_distance(nowqSeeds,newqSeed).col(0).minCoeff(&r);
         // The new tile is assigned a rate by perturbing the current rate at the new seed
         double nowqEffct = nowqEffcts(r);
-        double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
+        double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         insertRow(proposal.newqSeeds,newqSeed.row(0));
         insertElem(proposal.newqEffcts,newqEffct);
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
+        - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
@@ -444,7 +444,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         double oldqEffct = nowqEffcts(qtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
+        + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
@@ -469,12 +469,12 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         randpoint_in_habitat(newmSeed);
         pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
         double nowmEffct = nowmEffcts(r);
-        double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         insertRow(proposal.newmSeeds,newmSeed.row(0));
         insertElem(proposal.newmEffcts,newmEffct);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
@@ -492,7 +492,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         double oldmEffct = nowmEffcts(mtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
@@ -762,8 +762,12 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
         if (!habitat.in_point(mSeeds(i,0),mSeeds(i,1))) { inrange = false; }
     }
     
-    if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
-    if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
+    //if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
+    //if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
+    
+    if (qEffcts.minCoeff() < params.qEffctLowerBound || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
+    if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
+
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
@@ -776,10 +780,10 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
     + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {
-        logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
+        logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctLowerBound, params.qEffctUpperBound);
     }
     for (int i = 0 ; i < mtiles ; i++) {
-        logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
+        logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctLowerBound, params.mEffctUpperBound);
     }
     return (logpi);
 }
