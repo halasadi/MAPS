@@ -60,7 +60,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     // Remember, rates are paramterized on the log scale
-    mrateMuUpperBound = -0.5;
+    mrateMuUpperBound = -1;
     qrateMuUpperBound = -3;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
@@ -70,7 +70,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qEffctLowerBound = -2;
     qEffctUpperBound = 1;
     mEffctLowerBound = -2;
-    mEffctUpperBound = 0.2;
+    mEffctUpperBound = 1;
     
 }
 ostream& operator<<(ostream& out, const Params& params) {

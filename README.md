@@ -3,17 +3,15 @@ recent Migration and Population Surface estimation (MAPs)
 
 Long streches of sequence similarity are indicative of recent ancestry. When long enough, these long streches of similarity (aka "IBD" segments) corresponds to segments with no intervening recombination. Using coalescent theory, we model the number of these segments between individuals across space and infer a population size surface and migration surface.
 
-** we define long to be > L for some sufficiently long user defined L, e.g. 6cM
-
-**Note: the software is located in the "src" folder.**
+The MAPs software is adapted from the eems software and the software usage is very similar. **Here, we only highlight the differences between the usage of MAPs and EEMS**. Please see https://github.com/dipetkov/eems for the usage in EEMS.
 
 ## data input
 
-The MAPs software is adapted from the eems software and as a result, the usage is similar. **Here, we only highlight the differences**. Please see https://github.com/dipetkov/eems for all the information not listed here. 
+* IBD sharing matrix (ends in .sims)
+* coordinate file (ends in .coord). See EEMS documentation for more information
+* outer file (ends in .outer). See EEMS documentation for more information.
 
-Instead of an disssimilarity matrix as in eems, an similarity matrix based on IBD sharing must be used as input for MAPs. To create a IBD similarity matrix, first apply IBD calling softwares such as refinedIBD to the data. We use refinedIBD with default settings. It is important to discard IBD segments in sparse regions (e.g. regions with less than a SNP every centimorgan).
-
-Afterwards, a matrix must be constructed such that the i,jth entry of the matrix is number of IBD segments greater than L between individuals i and j. Individuals must be haploid so the user must first phase the data (fortunately refinedIBD automatically phases the data.) The similarity matrix must end with with the prefix .sims, e.g. `eems_4_Inf.sims`. 
+Instead of an disssimilarity matrix as input (as in in eems), a IBD sharing matrix is required for MAPs. The IBD sharing matrix is such that $N_{i,j}$ is the number of segments greater than $L$ cM shared between haploid $i$ and haploid $j$. Fortunately, a popular IBD calling software refinedIBD automatically phases diplid data.The sharing matrix must end with with the prefix .sims, e.g. `eems_4_Inf.sims`. 
 
 The `L` (on **cM** scale) parameter is specified in the params file withe the parameter `lowerBound`
 
@@ -23,7 +21,7 @@ datapath = ../data/europe_4_Inf.sims
 lowerBound = 4
 ```
 
-We also allow the capability to visualize IBD segments between a threshold. For example betweem 4cM and 8cM, which can be specified like this:
+We also allow the capability to visualize IBD segments in a length region, for example betweem 4cM and 8cM.
 ```
 datapath = ../data/europe_4_8.sims
 lowerBound = 4
@@ -31,7 +29,7 @@ upperBound = 8
 ```
 ## parameter configuration
 
-Almost all the parameters are the same as in eems. The differences are
+As mentioned above, the parameters in MAPs are nearly identical. The differences are
 
 * `genomeSize` (optional defaults to 3000cM)
 
