@@ -154,7 +154,7 @@ Let
 \end_inset
 
  that have not experienced any intervening recombination.
- These UnRecombined segments (UnR) are commonly referred to as 
+ These unrecombined segments are commonly referred to as 
 \begin_inset Quotes eld
 \end_inset
 
@@ -162,25 +162,25 @@ IBD
 \begin_inset Quotes erd
 \end_inset
 
- segments; however, we prefer not use this ambigious notation.
+ segments.
  As 
 \begin_inset Formula $u$
 \end_inset
 
- increases, UnR segments have shorter coalescent times and become increasingly
+ increases, IBD segments have shorter coalescent times and become increasingly
  sensitive to recent population structure and in practice, become a function
  of only recent population structure.
  In this study, we focus on characterizing population structure in the recent
- past and accordingly focus on UnR segments with short coalescent times
+ past and accordingly focus on IBD segments with short coalescent times
  which are very long (e.g.
  
 \begin_inset Formula $\geq$
 \end_inset
 
  4cM).
- Fortuitously, methods for calling UnR segments at this range (aka IBD calling)
- have high power and low false positive rates (Browning & Browning, 2007;
- Lowe et al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
+ Fortuitously, methods for calling IBD segments at this range have high
+ power and low false positive rates (Browning & Browning, 2007; Lowe et
+ al, 2008; Raph & Coop, 2008 and Palamara et al., 2012).
 \end_layout
 
 \begin_layout Standard
@@ -228,7 +228,7 @@ where
 \begin_inset Formula $E[f|\theta]$
 \end_inset
 
- is the expected fraction of the genome that lies in UnR segments greater
+ is the expected fraction of the genome that lies in IBD segments greater
  than 
 \begin_inset Formula $u$
 \end_inset
@@ -241,13 +241,13 @@ cM,
 \begin_inset Formula $E[s|\theta$
 \end_inset
 
-] the expected size of a UnR segment conditional on it is at least 
+] the expected size of a IBD segment conditional on it is at least 
 \begin_inset Formula $u$
 \end_inset
 
 cM.
  To gain intuition, it is helpful to see that equation (1) equates to saying
- that the average size of each UnR segment (
+ that the average size of each IBD segment (
 \family roman
 \series medium
 \shape up
@@ -279,7 +279,7 @@ cM.
 \begin_inset Formula $E[N_{i,j}^{u}]$
 \end_inset
 
-) is approximately the total length of the genome that lies in UnR segments
+) is approximately the total length of the genome that lies in IBD segments
  (
 \begin_inset Formula $L\,E[f|\theta]$
 \end_inset
@@ -321,11 +321,11 @@ where
 \end_inset
 
  is the probability that a randomly chosen base pair in the genome is contained
- with an UnR segment of at least 
-\begin_inset Formula $u$
+ with an IBD segment of length 
+\begin_inset Formula $l$
 \end_inset
 
-cM.
+.
  Combining both equations together,
 \end_layout
 
@@ -338,6 +338,32 @@ E[N_{i,j}^{u}|\theta]\approx L\,\int_{u}^{\infty}p(l|\theta)/l\,dl
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+To give more intutition, 
+\begin_inset Formula $Lp(l|\theta)$
+\end_inset
+
+ is like the number of basepairs in the genome in IBD segments of exactly
+ length 
+\begin_inset Formula $l$
+\end_inset
+
+ and dividing by 
+\begin_inset Formula $l$
+\end_inset
+
+ normalizes this quantity and thus 
+\begin_inset Formula $\frac{Lp(l|\theta}{l}$
+\end_inset
+
+ is the number of segments in the genome of exactly length 
+\begin_inset Formula $l$
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -372,7 +398,7 @@ where
 \begin_inset Formula $p(l|t)$
 \end_inset
 
- is the probability of observing a UnR segment of exactly length 
+ is the probability of observing a IBD segment of exactly length 
 \begin_inset Formula $l$
 \end_inset
 
@@ -570,9 +596,9 @@ which can be derived by considering all possible demes in which lineages
 \begin_inset Formula $R$
 \end_inset
 
- is the instantaneous rate matrix of the structured coalescent process for
- a sample size of two, see (Wakeley, 2008) for a detailed explanation of
- 
+ is the standard instantaneous rate matrix of the structured coalescent
+ process for a sample size of two, see (Wakeley, 2008) for a detailed explanatio
+n of 
 \begin_inset Formula $R$
 \end_inset
 
@@ -734,7 +760,7 @@ reference "eq:exp_N"
 \begin_inset Formula $t$
 \end_inset
 
- because the probability of observing long UnR segments with deep coalescent
+ because the probability of observing long IBD segments with deep coalescent
  times is effectively zero, and therefore coalescent events in the deep
  past do not contribute any mass to the integral.
 
@@ -894,9 +920,9 @@ Computing
 \end_layout
 
 \begin_layout Standard
-Previously, we computed the expected number of UnR segments greater than
+Previously, we computed the expected number of IBD segments greater than
  u cM.
- It is also helpful to visualize UnR segments in a range 
+ It is also helpful to visualize IBD segments in a range 
 \begin_inset Formula $R=(u,v)$
 \end_inset
 

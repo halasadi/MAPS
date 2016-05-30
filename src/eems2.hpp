@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "mcmc.hpp"
 #include "draw.hpp"
+#include "<omp.h>"
 
 #include "graph.hpp"
 #include "habitat.hpp"

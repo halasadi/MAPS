@@ -65,7 +65,7 @@ public:
     double dfmin, dfmax, qVoronoiPr;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
-    int nDemes, nIndiv, mnegBiSize, qnegBiSize;
+    int nDemes, nIndiv, mnegBiSize, qnegBiSize, nthreads;
     string distance;
 };
 

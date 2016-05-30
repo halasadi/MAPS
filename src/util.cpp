@@ -39,6 +39,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
+        ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
         po::store(po::parse_config_file(instrm,eems_options,true),vm);
@@ -102,7 +103,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
-    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
+    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
+    << "               nthreads = " << params.nthreads << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
