@@ -58,6 +58,11 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
+        // start with a hot chain
+        double MAX_TEMP = 100;
+        double Temperature = MAX_TEMP;
+        double r = exp(-log(MAX_TEMP)/mcmc.numBurnIter);
+        
         while (!mcmc.finished) {
             
             switch ( eems2.choose_move_type( ) ) {
@@ -94,7 +99,7 @@ int main(int argc, char** argv)
             }
             
             mcmc.add_to_total_moves(proposal.move);
-            if (eems2.accept_proposal(proposal)) { mcmc.add_to_okay_moves(proposal.move); }
+            if (eems2.accept_proposal(proposal, Temperature)) { mcmc.add_to_okay_moves(proposal.move); }
             if (params.testing) { eems2.check_ll_computation( ); }
             
             eems2.update_hyperparams( );
@@ -108,6 +113,12 @@ int main(int argc, char** argv)
                 eems2.save_iteration(mcmc);
                 eems2.writePopSizes();
                 //eems2.printMigrationAndCoalescenceRates();
+            }
+            
+            if (mcmc.currIter < mcmc.numBurnIter){
+                Temperature*= r;
+            } else{
+                Temperature = 1;
             }
         }
         error = eems2.output_results(mcmc);

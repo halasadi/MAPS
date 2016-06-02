@@ -98,7 +98,7 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
-    nowdf = 10;
+    nowdf = 2;
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -277,16 +277,16 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
     // This should make it easier to move in the parameter space
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-            proposal.newdf = newdf;
-            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                        newdf);
-            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
-        }
+    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+      proposal.newdf = newdf;
+      proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+				  nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+				  newdf);
+      proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
     }
+	//}
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
@@ -512,7 +512,7 @@ void EEMS2::update_hyperparams( ) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
 }
-bool EEMS2::accept_proposal(Proposal &proposal) {
+bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
@@ -521,12 +521,13 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + proposal.newll - nowll;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/Temperature;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
         ratioln += proposal.newratioln;
     }
+
     if ( log(u) < min(0.0,ratioln) ) {
         switch (proposal.move) {
             case Q_VORONOI_RATE_UPDATE:

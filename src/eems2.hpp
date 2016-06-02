@@ -89,7 +89,7 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal);
+    bool accept_proposal(Proposal &proposal, double Temperature);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);
