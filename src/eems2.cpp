@@ -323,15 +323,19 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
-        proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
-        proposal.newll = eval_proposal_rate_one_mtile(proposal);
-    } else {
-        proposal.newpi = -Inf;
+    //if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
+    proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
+                                nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                nowdf);
+    if (proposal.newpi == -Inf){
         proposal.newll = -Inf;
+    } else{
+        proposal.newll = eval_proposal_rate_one_mtile(proposal);
     }
+    //} else {
+    //    proposal.newpi = -Inf;
+    //    proposal.newll = -Inf;
+    //}
 }
 void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
@@ -341,13 +345,19 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on mrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= params.mrateMuLowerBound) {
-        proposal.newpi = nowpi;
+    //if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= params.mrateMuLowerBound) {
+    proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,proposal.newmrateMu,nowmrateS2,
+                                nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                nowdf);
+    if (proposal.newpi == -Inf){
+        proposal.newll = -Inf;
+    } else{
         proposal.newll = eval_proposal_overall_mrate(proposal);
-    } else {
+    }
+    /*} else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
-    }
+    }*/
 }
 
 void EEMS2::propose_overall_qrate(Proposal &proposal) {
