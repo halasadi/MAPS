@@ -6,6 +6,43 @@
 // Choose 'euclidean' (the default) or 'greatcirc' (great circle distance)
 string dist_metric;
 
+
+void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
+    switch ( eems2.choose_move_type( ) ) {
+        case Q_VORONOI_BIRTH_DEATH:
+            eems2.propose_birthdeath_qVoronoi(proposal);
+            break;
+        case M_VORONOI_BIRTH_DEATH:
+            eems2.propose_birthdeath_mVoronoi(proposal);
+            break;
+        case Q_VORONOI_POINT_MOVE:
+            eems2.propose_move_one_qtile(proposal);
+            break;
+        case M_VORONOI_POINT_MOVE:
+            eems2.propose_move_one_mtile(proposal);
+            break;
+        case Q_VORONOI_RATE_UPDATE:
+            eems2.propose_rate_one_qtile(proposal);
+            break;
+        case M_VORONOI_RATE_UPDATE:
+            eems2.propose_rate_one_mtile(proposal);
+            break;
+        case M_MEAN_RATE_UPDATE:
+            eems2.propose_overall_mrate(proposal);
+            break;
+        case Q_MEAN_RATE_UPDATE:
+            eems2.propose_overall_qrate(proposal);
+            break;
+        case DF_UPDATE:
+            eems2.propose_df(proposal,mcmc);
+            break;
+        default:
+            cerr << "[RunEEMS2] Unknown move type" << endl;
+            exit(EXIT_FAILURE);
+    }
+    
+}
+
 int main(int argc, char** argv)
 {
     try {
@@ -58,49 +95,13 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
-        // start with a hot chain
-        double MAX_TEMP = 100;
-        double Temperature = MAX_TEMP;
-        double r = exp(-log(MAX_TEMP)/mcmc.numBurnIter);
+        double Temperature = 1;
         
         while (!mcmc.finished) {
             
-            switch ( eems2.choose_move_type( ) ) {
-                case Q_VORONOI_BIRTH_DEATH:
-                    eems2.propose_birthdeath_qVoronoi(proposal);
-                    break;
-                case M_VORONOI_BIRTH_DEATH:
-                    eems2.propose_birthdeath_mVoronoi(proposal);
-                    break;
-                case Q_VORONOI_POINT_MOVE:
-                    eems2.propose_move_one_qtile(proposal);
-                    break;
-                case M_VORONOI_POINT_MOVE:
-                    eems2.propose_move_one_mtile(proposal);
-                    break;
-                case Q_VORONOI_RATE_UPDATE:
-                    eems2.propose_rate_one_qtile(proposal);
-                    break;
-                case M_VORONOI_RATE_UPDATE:
-                    eems2.propose_rate_one_mtile(proposal);
-                    break;
-                case M_MEAN_RATE_UPDATE:
-                    eems2.propose_overall_mrate(proposal);
-                    break;
-                case Q_MEAN_RATE_UPDATE:
-                    eems2.propose_overall_qrate(proposal);
-                    break;
-                case DF_UPDATE:
-                    eems2.propose_df(proposal,mcmc);
-                    break;
-                default:
-                    cerr << "[RunEEMS2] Unknown move type" << endl;
-                    return(EXIT_FAILURE);
-            }
-            
+            proposeMove(eems2, proposal, mcmc);
             mcmc.add_to_total_moves(proposal.move);
             if (eems2.accept_proposal(proposal, Temperature)) { mcmc.add_to_okay_moves(proposal.move); }
-            if (params.testing) { eems2.check_ll_computation( ); }
             
             eems2.update_hyperparams( );
             mcmc.end_iteration( );
@@ -115,11 +116,6 @@ int main(int argc, char** argv)
                 //eems2.printMigrationAndCoalescenceRates();
             }
             
-            if (mcmc.currIter < mcmc.numBurnIter){
-                Temperature*= r;
-            } else{
-                Temperature = 1;
-            }
         }
         error = eems2.output_results(mcmc);
         if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }

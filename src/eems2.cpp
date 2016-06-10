@@ -763,10 +763,26 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     }
     
     if (qEffcts.minCoeff() < params.qEffctLowerBound || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
-    if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
+    //if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
 
-    if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
+    //if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
+    
+    VectorXi mColors;
+    graph.index_closest_to_deme(mSeeds,mColors);
+    int alpha, beta;
+    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
+        graph.get_edge(edge,alpha,beta);
+        double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
+        double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
+        double M = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
+        if (M > 0.5){
+            inrange=false;
+        }
+    }
+    
+    
+    
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
    
     if (!inrange) { return (-Inf); }

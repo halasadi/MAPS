@@ -20,12 +20,12 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
-#plotpath <- 'data/4x5/high_migration/plot'
-#mcmcpath <- 'data/4x5/high_migration/eems_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/high_migration/plot'
+mcmcpath <- 'data/4x5/high_migration/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes/plot-2'
 #mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim-2' 
-mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf-EEMS2-test-sim/'
-plotpath <- 'data/4x5/heter_popsizes_unevensampling2/plot'
+#mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf-EEMS2-test-sim/'
+#plotpath <- 'data/4x5/heter_popsizes_unevensampling2/plot'
 # FALSE FOR POPRES
 longlat <- TRUE
 
