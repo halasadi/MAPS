@@ -97,10 +97,22 @@ public:
     string prevpath() const;
     string gridpath() const;
     
+    double getLogPosterior() const;
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
+    
+    // they should really be private data-members
+    // The current set of parameter values:
+    int nowmtiles, nowqtiles; // number of m and q tiles, respectively
+    MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
+    MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
+    double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
+    double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
+    
+    VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
+    VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
 
     
 private:
@@ -124,16 +136,6 @@ private:
     mutable MatrixXd eigenvals;
     mutable MatrixXd eigenvecs;
     
-    // The current set of parameter values:
-    int nowmtiles, nowqtiles; // number of m and q tiles, respectively
-    MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
-    MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
-    double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
-    //double nowsigma2, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
-    double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
-    
-    VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
-    VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
     
     // Variables to store the results in:
     // Fixed size:

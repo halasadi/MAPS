@@ -42,6 +42,12 @@ void EEMS2::rnorm_effects(const double lowerBnd, const double upperBnd, const do
     }
 }
 
+// posterior up to a normalizing constant
+double EEMS2::getLogPosterior() const {
+    return(nowpi + nowll);
+}
+
+
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
     MatrixXd sims = readMatrixXd(params.datapath + ".sims");
@@ -323,19 +329,16 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
-    //if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
-    proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                nowdf);
-    if (proposal.newpi == -Inf){
-        proposal.newll = -Inf;
-    } else{
+    if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
+        proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    nowdf);
         proposal.newll = eval_proposal_rate_one_mtile(proposal);
+        
+    } else {
+        proposal.newpi = -Inf;
+        proposal.newll = -Inf;
     }
-    //} else {
-    //    proposal.newpi = -Inf;
-    //    proposal.newll = -Inf;
-    //}
 }
 void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
@@ -345,20 +348,16 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on mrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
-    //if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= params.mrateMuLowerBound) {
-    proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,proposal.newmrateMu,nowmrateS2,
-                                nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                nowdf);
-    if (proposal.newpi == -Inf){
-        proposal.newll = -Inf;
-    } else{
+    if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= params.mrateMuLowerBound) {
+        proposal.newpi = nowpi;
         proposal.newll = eval_proposal_overall_mrate(proposal);
-    }
-    /*} else {
+
+    } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
-    }*/
+    }
 }
+
 
 void EEMS2::propose_overall_qrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
@@ -531,7 +530,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/Temperature;
+    double ratioln = (proposal.newpi - nowpi + proposal.newll - nowll)/Temperature;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -773,25 +772,10 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     }
     
     if (qEffcts.minCoeff() < params.qEffctLowerBound || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
-    //if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
+    if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
 
-    //if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
+    if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
-    
-    VectorXi mColors;
-    graph.index_closest_to_deme(mSeeds,mColors);
-    int alpha, beta;
-    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
-        graph.get_edge(edge,alpha,beta);
-        double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
-        double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
-        double M = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
-        if (M > 0.5){
-            inrange=false;
-        }
-    }
-    
-    
     
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
    
