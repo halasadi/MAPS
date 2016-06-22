@@ -143,9 +143,11 @@ int main(int argc, char** argv)
                 
                 // hot-chain parameters transfers to cold-chain
                 
-                double loga = Temperature*(eems2_hotchain.getLogPosterior()) + (eems2_coldchain.getLogPosterior())/Temperature - eems2_coldchain.getLogPosterior() - eems2_hotchain.getLogPosterior();
+                double loga = eems2_hotchain.getLogPosterior() + (eems2_coldchain.getLogPosterior())/Temperature - eems2_coldchain.getLogPosterior() - (1/Temperature)*eems2_hotchain.getLogPosterior();
+                cout << exp(loga) << endl;
                 double u = draw.runif();
                 if (log(u) < min(0.0,loga)){
+                    cout << "Making a switch" << endl;
                     eems2_coldchain.nowmtiles = eems2_hotchain.nowmtiles;
                     eems2_coldchain.nowqtiles = eems2_hotchain.nowqtiles;
                     eems2_coldchain.nowmSeeds = eems2_hotchain.nowmSeeds;
