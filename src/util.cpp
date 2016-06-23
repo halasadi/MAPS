@@ -60,7 +60,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     
-    /*// Remember, rates are paramterized on the log scale
+    // Remember, rates are paramterized on the log scale
     mrateMuUpperBound = -1;
     qrateMuUpperBound = -3;
     mrateMuLowerBound = -10.0;
@@ -69,24 +69,10 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
     qEffctLowerBound = -2;
-    qEffctUpperBound = 1;
+    qEffctUpperBound = 2;
     mEffctLowerBound = -2;
     mEffctUpperBound = 1;
-    */
-    
-    
-    // Remember, rates are paramterized on the log scale
-    mrateMuUpperBound = 0;
-    qrateMuUpperBound = -3;
-    mrateMuLowerBound = -10.0;
-    qrateMuLowerBound = -10.0;
-    
-    
-    // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
-    qEffctLowerBound = -2;
-    qEffctUpperBound = 2;
-    mEffctLowerBound = -10;
-    mEffctUpperBound = 0;
+
     
 }
 ostream& operator<<(ostream& out, const Params& params) {
