@@ -42,12 +42,6 @@ void EEMS2::rnorm_effects(const double lowerBnd, const double upperBnd, const do
     }
 }
 
-// posterior up to a normalizing constant
-double EEMS2::getLogPosterior() const {
-    return(nowpi + nowll);
-}
-
-
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
     MatrixXd sims = readMatrixXd(params.datapath + ".sims");

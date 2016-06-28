@@ -103,10 +103,11 @@ int main(int argc, char** argv)
         Proposal proposal_hotchain;
         
         
-        double Temperature = 2;
+        double Temperature = 10;
         double s = 0.5;
         Draw draw; // Random number generator
-
+        int cnt = 0;
+	
         
         while (!mcmc_coldchain.finished) {
             
@@ -143,11 +144,10 @@ int main(int argc, char** argv)
                 
                 // hot-chain parameters transfers to cold-chain
                 
-                double loga = eems2_hotchain.getLogPosterior() + (eems2_coldchain.getLogPosterior())/Temperature - eems2_coldchain.getLogPosterior() - (1/Temperature)*eems2_hotchain.getLogPosterior();
-                cout << exp(loga) << endl;
+                double loga = eems2_hotchain.nowll - eems2_coldchain.nowll + (eems2_coldchain.nowll - eems2_hotchain.nowll) * (1/Temperature);
                 double u = draw.runif();
                 if (log(u) < min(0.0,loga)){
-                    cout << "Making a switch" << endl;
+                    cnt += 1;
                     eems2_coldchain.nowmtiles = eems2_hotchain.nowmtiles;
                     eems2_coldchain.nowqtiles = eems2_hotchain.nowqtiles;
                     eems2_coldchain.nowmSeeds = eems2_hotchain.nowmSeeds;
@@ -171,6 +171,7 @@ int main(int argc, char** argv)
       
             
         }
+        cout << "number of switches: " << cnt << endl;
         error = eems2_coldchain.output_results(mcmc_coldchain);
         
     } catch(exception& e) {

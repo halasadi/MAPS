@@ -97,7 +97,6 @@ public:
     string prevpath() const;
     string gridpath() const;
     
-    double getLogPosterior() const;
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
