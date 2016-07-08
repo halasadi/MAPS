@@ -44,6 +44,25 @@ struct Proposal {
     
 };
 
+
+struct chain {
+    
+    double Temperature; // temperature of the chain
+    int qtiles; // number of m and q tiles, respectively
+    int mtiles;
+    double df; // degrees of freedom
+    double pi; // log prior
+    double ll; // log likelihood
+    double mrateMu; // overall (mean) migration rate,
+    double qrateMu;
+    
+    VectorXd qEffcts; // the diversity rate of each q tile
+    VectorXd mEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
+    MatrixXd qSeeds;  // the location of each q tile within the habitat
+    MatrixXd mSeeds;  // the location of each m tile within the habitat
+    
+};
+
 class EEMS2 {
 public:
     

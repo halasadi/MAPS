@@ -75,51 +75,43 @@ int main(int argc, char** argv)
         // Specify the distance metric in the params.ini file
         dist_metric = params.distance;
         
-        EEMS2 eems2_coldchain(params);
-        MCMC mcmc_coldchain(params);
+        EEMS2 eems2(params);
         
-        EEMS2 eems2_hotchain(params);
-        MCMC mcmc_hotchain(params);
+        MCMC mcmc(params);
         
-        boost::filesystem::path dir(eems2_coldchain.prevpath().c_str());
+        boost::filesystem::path dir(eems2.prevpath().c_str());
         if (exists(dir)) {
-            cerr << "Load final EEMS2 state from " << eems2_coldchain.prevpath() << endl << endl;
-            eems2_coldchain.load_final_state();
-            eems2_hotchain.load_final_state();
+            cerr << "Load final EEMS2 state from " << eems2.prevpath() << endl << endl;
+            eems2.load_final_state();
         } else {
             cerr << "Initialize EEMS2 random state" << endl << endl;
-            eems2_coldchain.initialize_state();
-            eems2_hotchain.initialize_state();
+            eems2.initialize_state();
         }
         
-        error = eems2_coldchain.start_eems(mcmc_coldchain);
-        eems2_hotchain.start_eems(mcmc_hotchain);
+        error = eems2.start_eems(mcmc);
         if (error) {
             cerr << "[RunEEMS2] Error starting EEMS2." << endl;
             return(EXIT_FAILURE);
         }
         
-        Proposal proposal_coldchain;
-        Proposal proposal_hotchain;
+        
+        Proposal proposal;
         
         
         double Temperature = 10;
         double s = 0.5;
         Draw draw; // Random number generator
-        int cnt = 0;
 	
         
-        while (!mcmc_coldchain.finished) {
+        while (!mcmc.finished) {
             
             if (draw.runif() < s) {
                 
-                // update both hot and cold chain
+                proposeMove(eems2, proposal, mcmc);
+                mcmc.add_to_total_moves(proposal);
+                if (eems2.accept_proposal(proposal, 1)) { mcmc.add_to_okay_moves(proposal.move); }
                 
-                proposeMove(eems2_coldchain, proposal_coldchain, mcmc_coldchain);
-                mcmc_coldchain.add_to_total_moves(proposal_coldchain.move);
-                if (eems2_coldchain.accept_proposal(proposal_coldchain, 1)) { mcmc_coldchain.add_to_okay_moves(proposal_coldchain.move); }
-                
-                eems2_coldchain.update_hyperparams( );
+                eems2.update_hyperparams( );
                 mcmc_coldchain.end_iteration( );
                 
                 // Check whether to save the current parameter state,
@@ -147,23 +139,7 @@ int main(int argc, char** argv)
                 double loga = eems2_hotchain.nowll - eems2_coldchain.nowll + (eems2_coldchain.nowll - eems2_hotchain.nowll) * (1/Temperature);
                 double u = draw.runif();
                 if (log(u) < min(0.0,loga)){
-                    cnt += 1;
-                    eems2_coldchain.nowmtiles = eems2_hotchain.nowmtiles;
-                    eems2_coldchain.nowqtiles = eems2_hotchain.nowqtiles;
-                    eems2_coldchain.nowmSeeds = eems2_hotchain.nowmSeeds;
-                    eems2_coldchain.nowmEffcts = eems2_hotchain.nowmEffcts;
-                    eems2_coldchain.nowmrateMu = eems2_hotchain.nowmrateMu;
-                    eems2_coldchain.nowqSeeds = eems2_hotchain.nowqSeeds;
-                    eems2_coldchain.nowqEffcts = eems2_hotchain.nowqEffcts;
-                    eems2_coldchain.nowqrateS2 = eems2_hotchain.nowqrateS2;
-                    eems2_coldchain.nowmrateS2 = eems2_hotchain.nowmrateS2;
-                    eems2_coldchain.nowqrateMu = eems2_hotchain.nowqrateMu;
-                    eems2_coldchain.nowpi = eems2_hotchain.nowpi;
-                    eems2_coldchain.nowll = eems2_hotchain.nowll;
-                    eems2_coldchain.nowdf = eems2_hotchain.nowdf;
-                    eems2_coldchain.nowqColors = eems2_hotchain.nowqColors;
-                    eems2_coldchain.nowmColors = eems2_hotchain.nowmColors;
-                    
+                    // transfer parameters
                 }
                 
                 
@@ -171,8 +147,7 @@ int main(int argc, char** argv)
       
             
         }
-        cout << "number of switches: " << cnt << endl;
-        error = eems2_coldchain.output_results(mcmc_coldchain);
+        error = eems2.output_results(mcmc_coldchain);
         
     } catch(exception& e) {
         cerr << e.what() << endl;

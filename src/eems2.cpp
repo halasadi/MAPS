@@ -515,7 +515,7 @@ void EEMS2::update_hyperparams( ) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
 }
-bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
+bool EEMS2::accept_proposal(Proposal &proposal, double Temperature, Chain &chain) {
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
@@ -524,7 +524,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = (proposal.newpi - nowpi + proposal.newll - nowll)/Temperature;
+    double ratioln = (proposal.newpi - chain.pi + proposal.newll - chain.ll)/Temperature;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
