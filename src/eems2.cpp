@@ -98,74 +98,91 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
-    nowdf = 2;
-    // Initialize the two Voronoi tessellations
-    nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
-    nowmtiles = draw.rnegbin(2*o,0.5);
-    cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
-    // Draw the Voronoi centers Coord uniformly within the habitat
-    nowqSeeds = MatrixXd::Zero(nowqtiles,2); randpoint_in_habitat(nowqSeeds);
-    nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
-    nowmrateS2 = draw.rinvgam(0.5,0.5);
-    nowqrateS2 = draw.rinvgam(0.5,0.5);
     
-    // Assign migration rates to the Voronoi tiles
-    nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
-    nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
-    
-    // Assign rates to the Voronoi tiles
-    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctLowerBound, params.qEffctUpperBound, nowqrateS2,nowqEffcts);
-    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctLowerBound, params.mEffctUpperBound, nowmrateS2,nowmEffcts);
-    // Initialize the mapping of demes to qVoronoi tiles
-    graph.index_closest_to_deme(nowqSeeds,nowqColors);
-    // Initialize the mapping of demes to mVoronoi tiles
-    graph.index_closest_to_deme(nowmSeeds,nowmColors);
+    for (int i = 0; i < nChains; i++){
+        
+        Chain chain = chains[i];
+        
+        chain.df = params.dfmin + draw.runif() * (params.dfmax - params.dfmin);
+        // Initialize the two Voronoi tessellations
+        chain.qtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
+        chain.mtiles = draw.rnegbin(2*o,0.5);
+
+        // Draw the Voronoi centers Coord uniformly within the habitat
+        chain.qSeeds = MatrixXd::Zero(nowqtiles,2); randpoint_in_habitat(nowqSeeds);
+        chain.mSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
+        chain.mrateS2 = draw.rinvgam(0.5,0.5);
+        chain.qrateS2 = draw.rinvgam(0.5,0.5);
+        
+        // Assign migration rates to the Voronoi tiles
+        chain.mrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
+        chain.qrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
+        
+        // Assign rates to the Voronoi tiles
+        chain.qEffcts = VectorXd::Zero(chain.qtiles); rnorm_effects(params.qEffctLowerBound, params.qEffctUpperBound, chain.qrateS2, chain.qEffcts);
+        chain.mEffcts = VectorXd::Zero(chain.mtiles); rnorm_effects(params.mEffctLowerBound, params.mEffctUpperBound, chain.mrateS2, chain.mEffcts);
+        // Initialize the mapping of demes to qVoronoi tiles
+        graph.index_closest_to_deme(chain.qSeeds,chain.qColors);
+        // Initialize the mapping of demes to mVoronoi tiles
+        graph.index_closest_to_deme(chain.mSeeds,chain.mColors);
+        
+    }
+
     cerr << "[EEMS2::initialize_state] Done." << endl << endl;
 }
 void EEMS2::load_final_state( ) {
+    
+    // first chain is always the cold chain
+    Chain coldchain = chains[0]
+    
     cerr << "[EEMS2::load_final_state]" << endl;
     MatrixXd tempi; bool error = false;
     tempi = readMatrixXd(params.prevpath + "/lastqtiles.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
-    nowqtiles = tempi(0,0);
+    chain.qtiles = tempi(0,0);
     tempi = readMatrixXd(params.prevpath + "/lastmtiles.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
-    nowmtiles = tempi(0,0);
-    cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
-    
+    chain.mtiles = tempi(0,0);
+    cerr << "  EEMS starts with " << chain.qtiles << " qtiles and " << chain.mtiles << " mtiles" << endl;
     tempi = readMatrixXd(params.prevpath + "/lastthetas.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
-    nowdf = tempi(0,0);
+    chain.df = tempi(0,0);
     tempi = readMatrixXd(params.prevpath + "/lastdfpars.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
-    params.dfmin = tempi(0,0);
-    params.dfmax = tempi(0,1);
+    chain.dfmin = tempi(0,0);
+    chain.dfmax = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastmhyper.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
-    nowmrateMu = tempi(0,0);
-    nowmrateS2 = tempi(0,1);
+    chain.mrateMu = tempi(0,0);
+    chain.mrateS2 = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastqhyper.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=2)) { error = true; }
-    nowqrateMu = tempi(0,0);
-    nowqrateS2 = tempi(0,1);
+    chain.qrateMu = tempi(0,0);
+    chain.qrateS2 = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastqeffct.txt");
     if ((tempi.rows()!=nowqtiles) || (tempi.cols()!=1)) { error = true; }
-    nowqEffcts = tempi.col(0);
+    chain.qEffcts = tempi.col(0);
     tempi = readMatrixXd(params.prevpath + "/lastmeffct.txt");
     if ((tempi.rows()!=nowmtiles) || (tempi.cols()!=1)) { error = true; }
-    nowmEffcts = tempi.col(0);
-    nowqSeeds = readMatrixXd(params.prevpath + "/lastqseeds.txt");
-    if ((nowqSeeds.rows()!=nowqtiles) || (nowqSeeds.cols()!=2)) { error = true; }
-    nowmSeeds = readMatrixXd(params.prevpath + "/lastmseeds.txt");
+    chain.mEffcts = tempi.col(0);
+    chain.qSeeds = readMatrixXd(params.prevpath + "/lastqseeds.txt");
+    if ((chain.qSeeds.rows()!=chain.qtiles) || (nowqSeeds.cols()!=2)) { error = true; }
+    chain.mSeeds = readMatrixXd(params.prevpath + "/lastmseeds.txt");
     if ((nowmSeeds.rows()!=nowmtiles) || (nowmSeeds.cols()!=2)) { error = true; }
     // Initialize the mapping of demes to qVoronoi tiles
-    graph.index_closest_to_deme(nowmSeeds,nowmColors);
+    graph.index_closest_to_deme(chain.mSeeds,chain.mColors);
     // Initialize the mapping of demes to mVoronoi tiles
-    graph.index_closest_to_deme(nowqSeeds,nowqColors);
+    graph.index_closest_to_deme(chain.qSeeds,chain.qColors);
     if (error) {
         cerr << "  Error loading MCMC state from " << params.prevpath << endl; exit(1);
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
+    
+    for (int i = 1; i < nChains; i++){
+        Chain chain = chains[i];
+        chain = cold_chain;
+    }
+    
 }
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
@@ -191,14 +208,21 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmcyCoord.clear();
     mcmcwCoord.clear();
     mcmczCoord.clear();
-    nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                       nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                       nowdf);
-    nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
+    
+    for (int i = 0; i < nChains; i++){
+        Chain chain = chains[i];
+        chain.pi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                           chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.qrateS2,
+                           chain.df);
+        chain.ll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
+        
+    }
+    
+    Chain cold_chain = chains[0];
     cerr << "Input parameters: " << endl << params << endl
-    << "Initial log prior: " << nowpi << endl
-    << "Initial log llike: " << nowll << endl << endl;
-    if ((nowpi==-Inf) || (nowpi==Inf) || (nowll==-Inf) || (nowll==Inf)) { error = true; }
+    << "Initial log prior of cold chain: " << cold_chain.pi << endl
+    << "Initial log llike of cold chain: " << cold_chain.ll << endl << endl;
+    if ((cold_chain.pi==-Inf) || (cold_chain.pi==Inf) || (cold_chain.ll==-Inf) || (cold_chain.ll==Inf)) { error = true; }
     return(error);
 }
 MoveType EEMS2::choose_move_type( ) {

@@ -45,7 +45,7 @@ struct Proposal {
 };
 
 
-struct chain {
+struct Chain {
     
     double Temperature; // temperature of the chain
     int qtiles; // number of m and q tiles, respectively
@@ -60,6 +60,10 @@ struct chain {
     VectorXd mEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
     MatrixXd qSeeds;  // the location of each q tile within the habitat
     MatrixXd mSeeds;  // the location of each m tile within the habitat
+    
+    // update using Gibbs Sampling
+    double nowmrateS2;
+    double nowqrateS2;
     
 };
 
@@ -121,17 +125,6 @@ public:
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
     
-    // they should really be private data-members
-    // The current set of parameter values:
-    int nowmtiles, nowqtiles; // number of m and q tiles, respectively
-    MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
-    MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
-    double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
-    double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
-    
-    VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
-    VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
-
     
 private:
     
@@ -139,6 +132,9 @@ private:
     Graph graph;
     Params params;
     Habitat habitat;
+    
+    const int nChains = 5;
+    Chain chains[nChains];
     
     int o; // number of observed demes
     int d; // total number of demes
@@ -179,6 +175,7 @@ private:
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
                             const double df, const double qrateMu, const bool ismUpdate) const;
+    
 };
 
 #endif

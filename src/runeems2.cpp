@@ -102,7 +102,7 @@ int main(int argc, char** argv)
         double s = 0.5;
         Draw draw; // Random number generator
 	
-        
+        // now adjust to multiple chains 6/12/2016
         while (!mcmc.finished) {
             
             if (draw.runif() < s) {
