@@ -103,14 +103,17 @@ void EEMS2::initialize_state( ) {
         
         Chain chain = chains[i];
         
+        // first chain is the cold chain
+        chain.Temperature = i * 10;
+        
         chain.df = params.dfmin + draw.runif() * (params.dfmax - params.dfmin);
         // Initialize the two Voronoi tessellations
         chain.qtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
         chain.mtiles = draw.rnegbin(2*o,0.5);
 
         // Draw the Voronoi centers Coord uniformly within the habitat
-        chain.qSeeds = MatrixXd::Zero(nowqtiles,2); randpoint_in_habitat(nowqSeeds);
-        chain.mSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
+        chain.qSeeds = MatrixXd::Zero(chain.qtiles,2); randpoint_in_habitat(chain.qSeeds);
+        chain.mSeeds = MatrixXd::Zero(chain.mtiles,2); randpoint_in_habitat(chain.mSeeds);
         chain.mrateS2 = draw.rinvgam(0.5,0.5);
         chain.qrateS2 = draw.rinvgam(0.5,0.5);
         
@@ -133,7 +136,8 @@ void EEMS2::initialize_state( ) {
 void EEMS2::load_final_state( ) {
     
     // first chain is always the cold chain
-    Chain coldchain = chains[0]
+    // load parameters into the cold chain
+    Chain chain = chains[0]
     
     cerr << "[EEMS2::load_final_state]" << endl;
     MatrixXd tempi; bool error = false;
@@ -160,15 +164,15 @@ void EEMS2::load_final_state( ) {
     chain.qrateMu = tempi(0,0);
     chain.qrateS2 = tempi(0,1);
     tempi = readMatrixXd(params.prevpath + "/lastqeffct.txt");
-    if ((tempi.rows()!=nowqtiles) || (tempi.cols()!=1)) { error = true; }
+    if ((tempi.rows()!=chain.qtiles) || (tempi.cols()!=1)) { error = true; }
     chain.qEffcts = tempi.col(0);
     tempi = readMatrixXd(params.prevpath + "/lastmeffct.txt");
-    if ((tempi.rows()!=nowmtiles) || (tempi.cols()!=1)) { error = true; }
+    if ((tempi.rows()!=chain.mtiles) || (tempi.cols()!=1)) { error = true; }
     chain.mEffcts = tempi.col(0);
     chain.qSeeds = readMatrixXd(params.prevpath + "/lastqseeds.txt");
-    if ((chain.qSeeds.rows()!=chain.qtiles) || (nowqSeeds.cols()!=2)) { error = true; }
+    if ((chain.qSeeds.rows()!=chain.qtiles) || (chain.qSeeds.cols()!=2)) { error = true; }
     chain.mSeeds = readMatrixXd(params.prevpath + "/lastmseeds.txt");
-    if ((nowmSeeds.rows()!=nowmtiles) || (nowmSeeds.cols()!=2)) { error = true; }
+    if ((chain.mSeeds.rows()!=chain.mtiles) || (chain.mSeeds.cols()!=2)) { error = true; }
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(chain.mSeeds,chain.mColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -178,10 +182,6 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
     
-    for (int i = 1; i < nChains; i++){
-        Chain chain = chains[i];
-        chain = cold_chain;
-    }
     
 }
 bool EEMS2::start_eems(const MCMC &mcmc) {
@@ -267,108 +267,79 @@ MoveType EEMS2::choose_move_type( ) {
     return(move);
 }
 
-double EEMS2::eval_proposal_rate_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
-}
-double EEMS2::eval_proposal_move_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, nowqEffcts, nowqrateMu, nowdf, false));
-}
-double EEMS2::eval_birthdeath_qVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
-}
-double EEMS2::eval_proposal_rate_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
+void EEMS2::propose_df(Proposal &proposal, int chainIndex) {
     
-}
-double EEMS2::eval_proposal_overall_mrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, proposal.newmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
-}
-double EEMS2::eval_proposal_overall_qrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, proposal.newqrateMu, nowdf, false));
-}
-// Propose to move one tile in the migration Voronoi tessellation
-double EEMS2::eval_proposal_move_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
-}
-double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
-}
-
-void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
+    Chain chain = chains[chainIndex];
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
-    // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
-    // This should make it easier to move in the parameter space
-    // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+    double newdf = draw.rnorm(chain.df,params.dfProposalS2);
     if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
       proposal.newdf = newdf;
-      proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-				  nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+      proposal.newpi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+				  chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
 				  newdf);
-      proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+      proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, newdf, true);
     }
-	//}
 }
 
-void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
+void EEMS2::propose_rate_one_qtile(Proposal &proposal, int chainIndex) {
+    Chain chain = chains[chainIndex];
     // Choose a tile at random to update
-    int qtile = draw.runif_int(0,nowqtiles-1);
+    int qtile = draw.runif_int(0,chain.qtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
-    double curqEffct = nowqEffcts(qtile);
+    double curqEffct = chain.qEffcts(qtile);
     double newqEffct = draw.rnorm(curqEffct,params.qEffctProposalS2);
     proposal.move = Q_VORONOI_RATE_UPDATE;
-    proposal.newqEffcts = nowqEffcts;
+    proposal.newqEffcts = chain.qEffcts;
     proposal.newqEffcts(qtile) = newqEffct;
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
     if ( (newqEffct > params.qEffctLowerBound) && (newqEffct < params.qEffctUpperBound) ) {
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
-        proposal.newll = eval_proposal_rate_one_qtile(proposal);
+        proposal.newpi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                                    chain.qSeeds,proposal.newqEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df);
+        proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, proposal.newqEffcts, chain.qrateMu, chain.df, false);
     } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
 }
-void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
+void EEMS2::propose_rate_one_mtile(Proposal &proposal, int chainIndex) {
     // Choose a tile at random to update
-    int mtile = draw.runif_int(0,nowmtiles-1);
+    int mtile = draw.runif_int(0,chain.mtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
-    double curmEffct = nowmEffcts(mtile);
+    double curmEffct = chain.mEffcts(mtile);
     double newmEffct = draw.rnorm(curmEffct,params.mEffctProposalS2);
     proposal.move = M_VORONOI_RATE_UPDATE;
-    proposal.newmEffcts = nowmEffcts;
+    proposal.newmEffcts = chain.mEffcts;
     proposal.newmEffcts(mtile) = newmEffct;
     // The prior distribution on the tile effects is truncated normal
     // So first check whether the proposed value is in range
     // Then update the prior and evaluate the new likelihood
     if ( (newmEffct > params.mEffctLowerBound) && (newmEffct < params.mEffctUpperBound)  ) {
-        proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf);
-        proposal.newll = eval_proposal_rate_one_mtile(proposal);
+        proposal.newpi = eval_prior(chain.mSeeds,proposal.newmEffcts,chain.mrateMu,chain.mrateS2,
+                                    chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df);
+        proposal.newll = eems2_likelihood(chain.mSeeds, proposal.newmEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
         
     } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
 }
-void EEMS2::propose_overall_mrate(Proposal &proposal) {
+void EEMS2::propose_overall_mrate(Proposal &proposal, int &chainIndex) {
     // Make a random-walk Metropolis-Hastings proposal
-    double newmrateMu = draw.rnorm(nowmrateMu,params.mrateMuProposalS2);
+    double newmrateMu = draw.rnorm(chain.mrateMu,params.mrateMuProposalS2);
     proposal.move = M_MEAN_RATE_UPDATE;
     proposal.newmrateMu = newmrateMu;
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on mrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
     if (newmrateMu <= params.mrateMuUpperBound && newmrateMu >= params.mrateMuLowerBound) {
-        proposal.newpi = nowpi;
-        proposal.newll = eval_proposal_overall_mrate(proposal);
+        proposal.newpi = chain.pi;
+        proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, proposal.newmrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
 
     } else {
         proposal.newpi = -Inf;
@@ -377,178 +348,188 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
 }
 
 
-void EEMS2::propose_overall_qrate(Proposal &proposal) {
+void EEMS2::propose_overall_qrate(Proposal &proposal, int chainIndex) {
+    
+    Chain chain = chains[chainIndex];
     // Make a random-walk Metropolis-Hastings proposal
-    double newqrateMu = draw.rnorm(nowqrateMu,params.qrateMuProposalS2);
+    double newqrateMu = draw.rnorm(chain.qrateMu,params.qrateMuProposalS2);
     proposal.move = Q_MEAN_RATE_UPDATE;
     proposal.newqrateMu = newqrateMu;
     // If the proposed value is in range, the prior probability does not change
     // as the prior distribution on qrateMu is uniform
     // Otherwise, setting the prior and the likelihood to -Inf forces a rejection
     if (newqrateMu <= params.qrateMuUpperBound && newqrateMu >= params.qrateMuLowerBound) {
-        proposal.newpi = nowpi;
-        proposal.newll = eval_proposal_overall_qrate(proposal);
+        proposal.newpi = chain.pi;
+        proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, proposal.newqrateMu, chain.df, false);
     } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
 }
-void EEMS2::propose_move_one_qtile(Proposal &proposal) {
+void EEMS2::propose_move_one_qtile(Proposal &proposal, int chainIndex) {
     // Choose a tile at random to move
-    int qtile = draw.runif_int(0,nowqtiles-1);
+    Chain chain = chains[chainIndex];
+    int qtile = draw.runif_int(0,chain.qtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
     // In this case, there are actually two values -- longitude and latitude
-    double newqSeedx = draw.rnorm(nowqSeeds(qtile,0),params.qSeedsProposalS2x);
-    double newqSeedy = draw.rnorm(nowqSeeds(qtile,1),params.qSeedsProposalS2y);
+    double newqSeedx = draw.rnorm(chain.qSeeds(qtile,0),params.qSeedsProposalS2x);
+    double newqSeedy = draw.rnorm(chain.qSeeds(qtile,1),params.qSeedsProposalS2y);
     proposal.move = Q_VORONOI_POINT_MOVE;
-    proposal.newqSeeds = nowqSeeds;
+    proposal.newqSeeds = chain.qSeeds;
     proposal.newqSeeds(qtile,0) = newqSeedx;
     proposal.newqSeeds(qtile,1) = newqSeedy;
     if (habitat.in_point(newqSeedx,newqSeedy)) {
-        proposal.newpi = nowpi;
-        proposal.newll = eval_proposal_move_one_qtile(proposal);
+        proposal.newpi = chain.pi;
+        proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, proposal.newqSeeds, chain.qEffcts, chain.qrateMu, chain.df, false);
     } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
 }
-void EEMS2::propose_move_one_mtile(Proposal &proposal) {
+void EEMS2::propose_move_one_mtile(Proposal &proposal, int chainIndex) {
+    Chain chain = chains[chainIndex];
     // Choose a tile at random to move
-    int mtile = draw.runif_int(0,nowmtiles-1);
+    int mtile = draw.runif_int(0,chain.mtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
     // In this case, there are actually two values -- longitude and latitude
-    double newmSeedx = draw.rnorm(nowmSeeds(mtile,0),params.mSeedsProposalS2x);
-    double newmSeedy = draw.rnorm(nowmSeeds(mtile,1),params.mSeedsProposalS2y);
+    double newmSeedx = draw.rnorm(chain.mSeeds(mtile,0),params.mSeedsProposalS2x);
+    double newmSeedy = draw.rnorm(chain.mSeeds(mtile,1),params.mSeedsProposalS2y);
     proposal.move = M_VORONOI_POINT_MOVE;
-    proposal.newmSeeds = nowmSeeds;
+    proposal.newmSeeds = chain.mSeeds;
     proposal.newmSeeds(mtile,0) = newmSeedx;
     proposal.newmSeeds(mtile,1) = newmSeedy;
     if (habitat.in_point(newmSeedx,newmSeedy)) {
-        proposal.newpi = nowpi;
-        proposal.newll = eval_proposal_move_one_mtile(proposal);
+        proposal.newpi = chain.pi;
+        proposal.newll = eems2_likelihood(proposal.newmSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
     } else {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
 }
-void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
-    int newqtiles = nowqtiles,r;
+void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal, int chainIndex) {
+    Chain chain = chains[chainIndex];
+    int newqtiles = chain.qtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
     double pDeath = 0.5;
-    proposal.newqEffcts = nowqEffcts;
-    proposal.newqSeeds = nowqSeeds;
+    proposal.newqEffcts = chain.qEffcts;
+    proposal.newqSeeds = chain.qSeeds;
     // If there is exactly one tile, rule out a death proposal
-    if ((nowqtiles==1) || (u<0.5)) { // Propose birth
-        if (nowqtiles==1) { pBirth = 1.0; }
+    if ((chain.qtiles==1) || (u<0.5)) { // Propose birth
+        if (chain.qtiles==1) { pBirth = 1.0; }
         newqtiles++;
         MatrixXd newqSeed = MatrixXd::Zero(1,2);
         randpoint_in_habitat(newqSeed);
-        pairwise_distance(nowqSeeds,newqSeed).col(0).minCoeff(&r);
+        pairwise_distance(chain.qSeeds,newqSeed).col(0).minCoeff(&r);
         // The new tile is assigned a rate by perturbing the current rate at the new seed
-        double nowqEffct = nowqEffcts(r);
-        double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
+        double chain.qEffct = chain.qEffcts(r);
+        double newqEffct = draw.rtrnorm(chain.qEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         insertRow(proposal.newqSeeds,newqSeed.row(0));
         insertElem(proposal.newqEffcts,newqEffct);
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
+        - dtrnormln(newqEffct,chain.qEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf)
-        + log((nowqtiles+params.qnegBiSize)/(newqtiles/params.qnegBiProb));
+        proposal.newpi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                                    proposal.newqSeeds,proposal.newqEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df)
+        + log((chain.qtiles+params.qnegBiSize)/(newqtiles/params.qnegBiProb));
     } else {                      // Propose death
-        if (nowqtiles==2) { pBirth = 1.0; }
+        if (chain.qtiles==2) { pBirth = 1.0; }
         newqtiles--;
         int qtileToRemove = draw.runif_int(0,newqtiles);
-        MatrixXd oldqSeed = nowqSeeds.row(qtileToRemove);
+        MatrixXd oldqSeed = chain.qSeeds.row(qtileToRemove);
         removeRow(proposal.newqSeeds,qtileToRemove);
         removeElem(proposal.newqEffcts,qtileToRemove);
         pairwise_distance(proposal.newqSeeds,oldqSeed).col(0).minCoeff(&r);
-        double nowqEffct = proposal.newqEffcts(r);
-        double oldqEffct = nowqEffcts(qtileToRemove);
+        double chain.qEffct = proposal.newqEffcts(r);
+        double oldqEffct = chain.qEffcts(qtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
+        + dtrnormln(oldqEffct,chain.qEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf)
-        + log((nowqtiles/params.qnegBiProb)/(newqtiles+params.qnegBiSize));
+        proposal.newpi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                                    proposal.newqSeeds,proposal.newqEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df)
+        + log((chain.qtiles/params.qnegBiProb)/(newqtiles+params.qnegBiSize));
     }
     proposal.move = Q_VORONOI_BIRTH_DEATH;
     proposal.newqtiles = newqtiles;
-    proposal.newll = eval_birthdeath_qVoronoi(proposal);
+    proposal.newll = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, proposal.newqSeeds, proposal.newqEffcts, chain.qrateMu, chain.df, false);
 }
-void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
-    int newmtiles = nowmtiles,r;
+void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal, int chainIndex) {
+    int newmtiles = chain.mtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
     double pDeath = 0.5;
-    proposal.newmEffcts = nowmEffcts;
-    proposal.newmSeeds = nowmSeeds;
-    if ((nowmtiles==1) || (u<0.5)) { // Propose birth
-        if (nowmtiles==1) { pBirth = 1.0; }
+    proposal.newmEffcts = chain.mEffcts;
+    proposal.newmSeeds = chain.mSeeds;
+    if ((chain.mtiles==1) || (u<0.5)) { // Propose birth
+        if (chain.mtiles==1) { pBirth = 1.0; }
         newmtiles++;
         MatrixXd newmSeed = MatrixXd::Zero(1,2);
         randpoint_in_habitat(newmSeed);
-        pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
-        double nowmEffct = nowmEffcts(r);
-        double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
+        pairwise_distance(chain.mSeeds,newmSeed).col(0).minCoeff(&r);
+        double chain.mEffct = chain.mEffcts(r);
+        double newmEffct = draw.rtrnorm(chain.mEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         insertRow(proposal.newmSeeds,newmSeed.row(0));
         insertElem(proposal.newmEffcts,newmEffct);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
+        - dtrnormln(newmEffct,chain.mEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         
-        proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf)
-        + log((nowmtiles+params.mnegBiSize)/(newmtiles/params.mnegBiProb));
+        proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,chain.mrateMu,chain.mrateS2,
+                                    chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df)
+        + log((chain.mtiles+params.mnegBiSize)/(newmtiles/params.mnegBiProb));
     } else {                      // Propose death
-        if (nowmtiles==2) { pBirth = 1.0; }
+        if (chain.mtiles==2) { pBirth = 1.0; }
         newmtiles--;
         int mtileToRemove = draw.runif_int(0,newmtiles);
-        MatrixXd oldmSeed = nowmSeeds.row(mtileToRemove);
+        MatrixXd oldmSeed = chain.mSeeds.row(mtileToRemove);
         removeRow(proposal.newmSeeds,mtileToRemove);
         removeElem(proposal.newmEffcts,mtileToRemove);
         pairwise_distance(proposal.newmSeeds,oldmSeed).col(0).minCoeff(&r);
-        double nowmEffct = proposal.newmEffcts(r);
-        double oldmEffct = nowmEffcts(mtileToRemove);
+        double chain.mEffct = proposal.newmEffcts(r);
+        double oldmEffct = chain.mEffcts(mtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
+        + dtrnormln(oldmEffct,chain.mEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         
-        proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    nowdf)
-        + log((nowmtiles/params.mnegBiProb)/(newmtiles+params.mnegBiSize));
+        proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,chain.mrateMu,chain.mrateS2,
+                                    chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
+                                    chain.df)
+        + log((chain.mtiles/params.mnegBiProb)/(newmtiles+params.mnegBiSize));
     }
     proposal.move = M_VORONOI_BIRTH_DEATH;
     proposal.newmtiles = newmtiles;
-    proposal.newll = eval_birthdeath_mVoronoi(proposal);
+    proposal.newll = eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
 }
-void EEMS2::update_hyperparams( ) {
-    double SSq = nowqEffcts.squaredNorm();
-    double SSm = nowmEffcts.squaredNorm();
+void EEMS2::update_hyperparams(int chainIndex) {
     
-    nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
-    nowmrateS2 = draw.rinvgam(params.mrateShape_2 + 0.5 * nowmtiles, params.mrateScale_2 + 0.5 * SSm);
-    nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                       nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                       nowdf);
+    Chain chain = chains[chainIndex];
+    
+    double SSq = chain.qEffcts.squaredNorm();
+    double SSm = chain.mEffcts.squaredNorm();
+    
+    chain.qrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * chain.qtiles, params.qrateScale_2 + 0.5 * SSq);
+    chain.mrateS2 = draw.rinvgam(params.mrateShape_2 + 0.5 * chain.mtiles, params.mrateScale_2 + 0.5 * SSm);
+    chain.pi = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                       chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
+                       chain.df);
 }
-bool EEMS2::accept_proposal(Proposal &proposal, double Temperature, Chain &chain) {
+bool EEMS2::accept_proposal(Proposal &proposal, int chainIndex) {
+    
+    Chain chain = chains[chainIndex]
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
     if ( proposal.newpi == -Inf ) {
-        proposal.newpi = nowpi;
-        proposal.newll = nowll;
+        proposal.newpi = chain.pi;
+        proposal.newll = chain.ll;
         return false;
     }
-    double ratioln = (proposal.newpi - chain.pi + proposal.newll - chain.ll)/Temperature;
+    double ratioln = (proposal.newpi - chain.pi + proposal.newll - chain.ll)/chain.Temperature;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -558,112 +539,115 @@ bool EEMS2::accept_proposal(Proposal &proposal, double Temperature, Chain &chain
     if ( log(u) < min(0.0,ratioln) ) {
         switch (proposal.move) {
             case Q_VORONOI_RATE_UPDATE:
-                nowqEffcts = proposal.newqEffcts;
+                chain.qEffcts = proposal.newqEffcts;
                 break;
             case Q_VORONOI_POINT_MOVE:
-                nowqSeeds = proposal.newqSeeds;
+                chainqSeeds = proposal.newqSeeds;
                 // Update the mapping of demes to qVoronoi tiles
-                graph.index_closest_to_deme(nowqSeeds,nowqColors);
+                graph.index_closest_to_deme(chain.qSeeds,chain.qColors);
                 break;
             case Q_VORONOI_BIRTH_DEATH:
-                nowqSeeds = proposal.newqSeeds;
-                nowqEffcts = proposal.newqEffcts;
-                nowqtiles = proposal.newqtiles;
+                chain.qSeeds = proposal.newqSeeds;
+                chain.qEffcts = proposal.newqEffcts;
+                chain.qtiles = proposal.newqtiles;
                 // Update the mapping of demes to qVoronoi tiles
-                graph.index_closest_to_deme(nowqSeeds,nowqColors);
+                graph.index_closest_to_deme(chain.qSeeds,chain.qColors);
                 break;
             case M_VORONOI_RATE_UPDATE:
-                nowmEffcts = proposal.newmEffcts;
+                chain.mEffcts = proposal.newmEffcts;
                 break;
             case M_MEAN_RATE_UPDATE:
-                nowmrateMu = proposal.newmrateMu;
+                chain.mrateMu = proposal.newmrateMu;
                 break;
             case M_VORONOI_POINT_MOVE:
-                nowmSeeds = proposal.newmSeeds;
+                chain.mSeeds = proposal.newmSeeds;
                 // Update the mapping of demes to mVoronoi tiles
-                graph.index_closest_to_deme(nowmSeeds,nowmColors);
+                graph.index_closest_to_deme(chain.mSeeds,chain.mColors);
                 break;
             case M_VORONOI_BIRTH_DEATH:
-                nowmSeeds = proposal.newmSeeds;
-                nowmEffcts = proposal.newmEffcts;
-                nowmtiles = proposal.newmtiles;
+                chain.mSeeds = proposal.newmSeeds;
+                chain.mEffcts = proposal.newmEffcts;
+                chain.mtiles = proposal.newmtiles;
                 // Update the mapping of demes to mVoronoi tiles
-                graph.index_closest_to_deme(nowmSeeds,nowmColors);
+                graph.index_closest_to_deme(chain.mSeeds,chain.mColors);
                 break;
             case Q_MEAN_RATE_UPDATE:
-                nowqrateMu = proposal.newqrateMu;
+                chain.qrateMu = proposal.newqrateMu;
                 break;
             case DF_UPDATE:
-                nowdf = proposal.newdf;
+                chain.df = proposal.newdf;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;
                 exit(1);
         }
-        nowpi = proposal.newpi;
-        nowll = proposal.newll;
+        chain.pi = proposal.newpi;
+        chain.ll = proposal.newll;
         return true;
     } else {
-        proposal.newpi = nowpi;
-        proposal.newll = nowll;
+        proposal.newpi = chain.pi;
+        proposal.newll = chain.ll;
         return false;
     }
 }
 ///////////////////////////////////////////
-void EEMS2::print_iteration(const MCMC &mcmc) const {
+void EEMS2::print_iteration(const MCMC &mcmc, int chainIndex) const {
+    Chain chain = chains[chainIndex]
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
-    << "         number of qVoronoi tiles = " << nowqtiles << endl
-    << "         number of mVoronoi tiles = " << nowmtiles << endl
-    << "          Log prior = " << nowpi << setprecision(4) << endl
-    << "          Log llike = " << nowll << setprecision(4) << endl;
+    << " and over-dispersion parameter = " << pow(10, chain.df) << setprecision(4) << endl
+    << "         number of qVoronoi tiles = " << chain.qtiles << endl
+    << "         number of mVoronoi tiles = " << chain.mtiles << endl
+    << "          Log prior = " << chain.pi << setprecision(4) << endl
+    << "          Log llike = " << chain.ll << setprecision(4) << endl;
 }
-void EEMS2::save_iteration(const MCMC &mcmc) {
+void EEMS2::save_iteration(const MCMC &mcmc, int chainIndex) {
+    Chain chain = chains[chainIndex];
     int iter = mcmc.to_save_iteration( );
-    mcmcqhyper(iter,0) = nowqrateMu;
-    mcmcqhyper(iter,1) = nowqrateS2;
-    mcmcmhyper(iter,0) = nowmrateMu;
-    mcmcmhyper(iter,1) = nowmrateS2;
-    mcmcpilogl(iter,0) = nowpi;
-    mcmcpilogl(iter,1) = nowll;
-    mcmcqtiles(iter) = nowqtiles;
-    mcmcmtiles(iter) = nowmtiles;
-    mcmcthetas(iter) = nowdf;
-    for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
+    mcmcqhyper(iter,0) = chain.qrateMu;
+    mcmcqhyper(iter,1) = chain.qrateS2;
+    mcmcmhyper(iter,0) = chain.mrateMu;
+    mcmcmhyper(iter,1) = chain.mrateS2;
+    mcmcpilogl(iter,0) = chain.pi;
+    mcmcpilogl(iter,1) = chain.ll;
+    mcmcqtiles(iter) = chain.qtiles;
+    mcmcmtiles(iter) = chain.mtiles;
+    mcmcthetas(iter) = chain.df;
+    for ( int t = 0 ; t < chain.qtiles ; t++ ) {
+        mcmcqRates.push_back(pow(10.0,chain.qEffcts(t) + chain.qrateMu));
     }
-    for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcwCoord.push_back(nowqSeeds(t,0));
+    for ( int t = 0 ; t < chain.qtiles ; t++ ) {
+        mcmcwCoord.push_back(chain.qSeeds(t,0));
     }
-    for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmczCoord.push_back(nowqSeeds(t,1));
+    for ( int t = 0 ; t < chain.qtiles ; t++ ) {
+        mcmczCoord.push_back(chain.qSeeds(t,1));
     }
-    for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0,nowmEffcts(t) + nowmrateMu));
+    for ( int t = 0 ; t < chain.mtiles ; t++ ) {
+        mcmcmRates.push_back(pow(10.0,chain.mEffcts(t) + chain.mrateMu));
     }
-    for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcxCoord.push_back(nowmSeeds(t,0));
+    for ( int t = 0 ; t < chain.mtiles ; t++ ) {
+        mcmcxCoord.push_back(chain.mSeeds(t,0));
     }
-    for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcyCoord.push_back(nowmSeeds(t,1));
+    for ( int t = 0 ; t < chain.mtiles ; t++ ) {
+        mcmcyCoord.push_back(chain.mSeeds(t,1));
     }
     
     JtDhatJ += expectedIBD;
 }
-bool EEMS2::output_current_state( ) const {
+bool EEMS2::output_current_state(int chainIndex ) const {
+    Chain chain = chains[chainIndex];
     ofstream out; bool error = false;
     out.open((params.mcmcpath + "/lastqtiles.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << nowqtiles << endl;
+    out << chain.qtiles << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmtiles.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << nowmtiles << endl;
+    out << chain.mtiles << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowdf << endl;
+    out << fixed << setprecision(6) << chain.df << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastdfpars.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
@@ -671,37 +655,37 @@ bool EEMS2::output_current_state( ) const {
     out.close( );
     out.open((params.mcmcpath + "/lastmhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmrateMu << " " << nowmrateS2 << endl;
+    out << fixed << setprecision(6) << chain.mrateMu << " " << chain.mrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqrateMu << " " << nowqrateS2 << endl;
+    out << fixed << setprecision(6) << chain.qrateMu << " " << chain.qrateS2 << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastpilogl.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowpi << " " << nowll << endl;
+    out << fixed << setprecision(6) << chain.pi << " " << chain.ll << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmEffcts << endl;
+    out << fixed << setprecision(6) << chain.mEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastmseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowmSeeds << endl;
+    out << fixed << setprecision(6) << chain.mSeeds << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqeffct.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqEffcts << endl;
+    out << fixed << setprecision(6) << chain.qEffcts << endl;
     out.close( );
     out.open((params.mcmcpath + "/lastqseeds.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
-    out << fixed << setprecision(6) << nowqSeeds << endl;
+    out << fixed << setprecision(6) << chain.qSeeds << endl;
     out.close( );
     
     return(error);
 }
-bool EEMS2::output_results(const MCMC &mcmc) const {
-    
+bool EEMS2::output_results(const MCMC &mcmc, int chainIndex) const {
+    Chain chain = chains[chainIndex];
     ofstream out; bool error = false;
     MatrixXd oDemes = MatrixXd::Zero(o,3);
     oDemes << graph.get_the_obsrv_demes(),cvec;
@@ -748,28 +732,29 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     error = dlmcell(params.mcmcpath + "/mcmcqrates.txt",mcmcqtiles,mcmcqRates); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcwcoord.txt",mcmcqtiles,mcmcwCoord); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmczcoord.txt",mcmcqtiles,mcmczCoord); if (error) { return(error); }
-    error = output_current_state( ); if (error) { return(error); }
+    error = output_current_state(chainIndex); if (error) { return(error); }
     out.open((params.mcmcpath + "/eemsrun.txt").c_str(),ofstream::out);
     if (!out.is_open( )) { return false; }
     out << "Input parameter values:" << endl << params << endl
     << "Acceptance proportions:" << endl << mcmc << endl
-    << "Final log prior: " << nowpi << endl
-    << "Final log llike: " << nowll << endl;
+    << "Final log prior: " << chain.pi << endl
+    << "Final log llike: " << chain.ll << endl;
     out.close( );
-    cerr << "Final log prior: " << nowpi << endl
-    << "Final log llike: " << nowll << endl;
+    cerr << "Final log prior: " << chain.pi << endl
+    << "Final log llike: " << chain.ll << endl;
     return(error);
 }
 
-void EEMS2::check_ll_computation( ) const {
-    double pi0 = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                            nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                            nowdf);
-    double ll0 = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
-    if ((abs(nowpi-pi0)/abs(pi0)>1e-12)||
-        (abs(nowll-ll0)/abs(ll0)>1e-12)) {
-        cerr << "[EEMS2::testing]   |ll0-ll|/|ll0| = " << abs(nowll - ll0)/abs(ll0) << endl;
-        cerr << "[EEMS2::testing]   |pi0-pi|/|pi0| = " << abs(nowpi - pi0)/abs(pi0) << endl;
+void EEMS2::check_ll_computation(int chainIndex ) const {
+    Chain chain = chains[chainIndex];
+    double pi0 = eval_prior(chain.mSeeds,chain.mEffcts,chain.mrateMu,chain.mrateS2,
+                            chain.qSeeds,chain.qEffcts,chain.qrateMu,chain.qrateS2,
+                            chain.df);
+    double ll0 = eems2_likelihood(chain.mSeeds, chain.mEffcts, chain.mrateMu, chain.qSeeds, chain.qEffcts, chain.qrateMu, chain.df, true);
+    if ((abs(chain.pi-pi0)/abs(pi0)>1e-12)||
+        (abs(chain.ll-ll0)/abs(ll0)>1e-12)) {
+        cerr << "[EEMS2::testing]   |ll0-ll|/|ll0| = " << abs(chain.ll - ll0)/abs(ll0) << endl;
+        cerr << "[EEMS2::testing]   |pi0-pi|/|pi0| = " << abs(chain.pi - pi0)/abs(pi0) << endl;
         exit(1);
     }
 }
@@ -905,7 +890,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     return (logll);
 }
-double EEMS2::getMigrationRate(const int edge) const {
+double EEMS2::getMigrationRate(const int edge, int chainIndex) const {
+    Chain chain = chains[chainIndex];
     int nEdges = graph.get_num_edges();
     assert((edge>=0) && (edge<nEdges));
     int alpha, beta;
@@ -917,12 +903,13 @@ double EEMS2::getMigrationRate(const int edge) const {
      VectorXi mColors;
      graph.index_closest_to_deme(nowmSeeds,mColors);
      */
-    double m_alpha = pow(10, nowmEffcts(nowmColors(alpha)) + nowmrateMu);
-    double m_beta = pow(10, nowmEffcts(nowmColors(beta)) + nowmrateMu);
+    double m_alpha = pow(10, chain.mEffcts(chain.mColors(alpha)) + chain.mrateMu);
+    double m_beta = pow(10, chain.mEffcts(chain.mColors(beta)) + chain.mrateMu);
     return (0.5 * m_alpha + 0.5 * m_beta);
     
 }
-double EEMS2::getCoalescenceRate(const int alpha) const {
+double EEMS2::getCoalescenceRate(const int alpha, int chainIndex) const {
+    Chain chain = chains[chainIndex];
     int nDemes = graph.get_num_total_demes();
     assert((alpha>=0) && (alpha<nDemes));
     /*
@@ -932,19 +919,20 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      VectorXi qColors;
      graph.index_closest_to_deme(nowqSeeds,qColors);
      */
-    double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
+    double q_alpha = pow(10, chain.qEffcts(chain.qColors(alpha)) + chain.qrateMu);
     return (q_alpha);
 }
 
 // this is a test function
-void EEMS2::writePopSizes() const{
+void EEMS2::writePopSizes(int chainIndex) const{
+    Chain chain = chains[chainIndex];
     ofstream out;
     VectorXi mColors, qColors;
-    graph.index_closest_to_deme(nowqSeeds,qColors);
-    graph.index_closest_to_deme(nowmSeeds,mColors);
+    graph.index_closest_to_deme(chain.qSeeds,qColors);
+    graph.index_closest_to_deme(chain.mSeeds,mColors);
     VectorXd q = VectorXd::Zero(d);
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu;
+        double log10q_alpha = chain.qEffcts(qColors(alpha)) + chain.qrateMu;
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
@@ -954,23 +942,57 @@ void EEMS2::writePopSizes() const{
     
 }
 
-void EEMS2::printMigrationAndCoalescenceRates( ) const {
+void EEMS2::printMigrationAndCoalescenceRates(int chainIndex ) const {
     
     int nDemes = graph.get_num_total_demes();
     cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
     for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
-        cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
+        cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha, chainIndex) << endl;
     }
     int nEdges = graph.get_num_edges();
     cout << "Here is the migration rate of each edge" << endl;
     for ( int edge = 0 ; edge<nEdges ; edge++ ) {
-        cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
+        cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge, chainIndex) << endl;
     }
     int alpha, beta;
     cout << "Here is the migration rate of each edge, this time edges as pairs of demes" << endl;
     for ( int edge = 0 ; edge<nEdges ; edge++ ) {
         graph.get_edge(edge,alpha,beta);
-        cout << "  edge = (" << alpha << "," << beta << "), m rate = " << getMigrationRate(edge) << endl;
+        cout << "  edge = (" << alpha << "," << beta << "), m rate = " << getMigrationRate(edge, chainIndex) << endl;
     }
+    
+}
+
+int EEMS2:getnChains() const {
+    return(nChains);
+}
+
+int EEMS2:getll(int chainIndex) const {
+    Chain chain = chains[chainIndex];
+    return(chain.ll);
+}
+
+double EEMS2:getTemperature(int chainIndex) const {
+    Chain chain = chains[chainIndex];
+    return(chain.Temperature);
+}
+
+void EEMS2:transferChain(int donorIndex, int receiptIndex){
+    
+    Chain donorChain = chains[donorIndex];
+    Chain receiptChain = chains[receiptIndex];
+    
+    receiptChain.qtiles = donorChain.qtiles;
+    receiptChain.mtiles = donorChain.mtiles;
+    receiptChain.df = donorChain.df;
+    receiptChain.pi = donorChain.pi;
+    receiptChain.ll = donorChain.ll;
+    receiptChain.mrateMu = donorChain.mrateMu;
+    receiptChain.qrateMu = donorChain.qrateMu;
+    receiptChain.qEffcts = donorChain.qEffcts;
+    receiptChain.qSeeds = donorChain.qSeeds;
+    receiptChain.mSeeds = donorChain.mSeeds;
+    receiptChain.mrateS2 = donorChain.mrateS2;
+    receiptChain.qrateS2 = donorChain.qrateS2;
     
 }

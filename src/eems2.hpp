@@ -62,8 +62,8 @@ struct Chain {
     MatrixXd mSeeds;  // the location of each m tile within the habitat
     
     // update using Gibbs Sampling
-    double nowmrateS2;
-    double nowqrateS2;
+    double mrateS2;
+    double qrateS2;
     
 };
 
@@ -85,45 +85,39 @@ public:
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
     MoveType choose_move_type( );
-    // These functions change the within demes component:
-    double eval_proposal_rate_one_qtile(Proposal &proposal) const;
-    double eval_proposal_move_one_qtile(Proposal &proposal) const;
-    double eval_birthdeath_qVoronoi(Proposal &proposal) const;
-    // These functions change the between demes component:
-    double eval_proposal_rate_one_mtile(Proposal &proposal) const;
-    double eval_proposal_overall_mrate(Proposal &proposal) const;
-    double eval_proposal_overall_qrate(Proposal &proposal) const;
-    double eval_proposal_move_one_mtile(Proposal &proposal) const;
-    double eval_birthdeath_mVoronoi(Proposal &proposal) const;
     
     // Gibbs updates:
-    void update_hyperparams( );
+    void update_hyperparams(int chainIndex );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal,const MCMC &mcmc);
-    void propose_rate_one_qtile(Proposal &proposal);
-    void propose_rate_one_mtile(Proposal &proposal);
-    void propose_overall_mrate(Proposal &proposal);
-    void propose_overall_qrate(Proposal &proposal);
-    void propose_move_one_qtile(Proposal &proposal);
-    void propose_move_one_mtile(Proposal &proposal);
-    void propose_birthdeath_qVoronoi(Proposal &proposal);
-    void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal, double Temperature);
+    void propose_df(Proposal &proposal, int chainIndex);
+    void propose_rate_one_qtile(Proposal &proposal, int chainIndex);
+    void propose_rate_one_mtile(Proposal &proposal, int chainIndex);
+    void propose_overall_mrate(Proposal &proposal, int chainIndex);
+    void propose_overall_qrate(Proposal &proposal, int chainIndex);
+    void propose_move_one_qtile(Proposal &proposal, int chainIndex);
+    void propose_move_one_mtile(Proposal &proposal, int chainIndex);
+    void propose_birthdeath_qVoronoi(Proposal &proposal, int chainIndex);
+    void propose_birthdeath_mVoronoi(Proposal &proposal, int chainIndex);
+    bool accept_proposal(Proposal &proposal, int chainIndex);
     
-    void print_iteration(const MCMC &mcmc) const;
-    void save_iteration(const MCMC &mcmc);
-    bool output_results(const MCMC &mcmc) const;
-    bool output_current_state() const;
-    void check_ll_computation() const;
+    void print_iteration(const MCMC &mcmc, int chainIndex) const;
+    void save_iteration(const MCMC &mcmc, int chainIndex);
+    bool output_results(const MCMC &mcmc, int chainIndex) const;
+    bool output_current_state(int chainIndex) const;
+    void check_ll_computation(int chainIndex) const;
     string datapath() const;
     string mcmcpath() const;
     string prevpath() const;
     string gridpath() const;
     
-    double getMigrationRate(const int edge) const;
-    double getCoalescenceRate(const int deme) const;
-    void printMigrationAndCoalescenceRates( ) const;
-    void writePopSizes() const;
+    double getMigrationRate(const int edge, int chainIndex) const;
+    double getCoalescenceRate(const int deme, int chainIndex) const;
+    int getnChains() const;
+    int getll(int chainIndex) const ;
+    double getTemperature(int chainIndex) const ;
+    void printMigrationAndCoalescenceRates(int chainIndex) const;
+    void writePopSizes(int chainIndex) const;
+    void EEMS2:transferChain(int donorIndex, int receiptIndex);
     
     
 private:

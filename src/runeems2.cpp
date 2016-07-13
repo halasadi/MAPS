@@ -8,34 +8,34 @@
 string dist_metric;
 
 
-void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
+void proposeMove(EEMS2 &eems2, Proposal &proposal, int chainIndex){
     switch ( eems2.choose_move_type( ) ) {
         case Q_VORONOI_BIRTH_DEATH:
-            eems2.propose_birthdeath_qVoronoi(proposal);
+            eems2.propose_birthdeath_qVoronoi(proposal, chainIndex);
             break;
         case M_VORONOI_BIRTH_DEATH:
-            eems2.propose_birthdeath_mVoronoi(proposal);
+            eems2.propose_birthdeath_mVoronoi(proposal, chainIndex);
             break;
         case Q_VORONOI_POINT_MOVE:
-            eems2.propose_move_one_qtile(proposal);
+            eems2.propose_move_one_qtile(proposal, chainIndex);
             break;
         case M_VORONOI_POINT_MOVE:
-            eems2.propose_move_one_mtile(proposal);
+            eems2.propose_move_one_mtile(proposal, chainIndex);
             break;
         case Q_VORONOI_RATE_UPDATE:
-            eems2.propose_rate_one_qtile(proposal);
+            eems2.propose_rate_one_qtile(proposal, chainIndex);
             break;
         case M_VORONOI_RATE_UPDATE:
-            eems2.propose_rate_one_mtile(proposal);
+            eems2.propose_rate_one_mtile(proposal, chainIndex);
             break;
         case M_MEAN_RATE_UPDATE:
-            eems2.propose_overall_mrate(proposal);
+            eems2.propose_overall_mrate(proposal, chainIndex);
             break;
         case Q_MEAN_RATE_UPDATE:
-            eems2.propose_overall_qrate(proposal);
+            eems2.propose_overall_qrate(proposal, chainIndex);
             break;
         case DF_UPDATE:
-            eems2.propose_df(proposal,mcmc);
+            eems2.propose_df(proposal, chainIndex);
             break;
         default:
             cerr << "[RunEEMS2] Unknown move type" << endl;
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
         
         EEMS2 eems2(params);
         
-        MCMC mcmc(params);
+        MCMC mcmc_coldchain(params);
         
         boost::filesystem::path dir(eems2.prevpath().c_str());
         if (exists(dir)) {
@@ -96,55 +96,52 @@ int main(int argc, char** argv)
         
         
         Proposal proposal;
-        
-        
-        double Temperature = 10;
         double s = 0.5;
+        const int nChains = eems2.getnChains();
         Draw draw; // Random number generator
-	
-        // now adjust to multiple chains 6/12/2016
-        while (!mcmc.finished) {
-            
-            if (draw.runif() < s) {
+        
+        while (!mcmc_coldchain.finished) {
+            // update the cold chains
+            for (int chain = 0; chain < nChains; chain++){
                 
-                proposeMove(eems2, proposal, mcmc);
-                mcmc.add_to_total_moves(proposal);
-                if (eems2.accept_proposal(proposal, 1)) { mcmc.add_to_okay_moves(proposal.move); }
-                
-                eems2.update_hyperparams( );
-                mcmc_coldchain.end_iteration( );
-                
-                // Check whether to save the current parameter state,
-                // as the thinned out iterations are not saved
-                // only save iterations from cold chain
-                int iter = mcmc_coldchain.to_save_iteration( );
-                if (iter>=0) {
-                    eems2_coldchain.print_iteration(mcmc_coldchain);
-                    eems2_coldchain.save_iteration(mcmc_coldchain);
-                    eems2_coldchain.writePopSizes();
-                }
-                if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2_coldchain.mcmcpath() << endl; }
-            
-                proposeMove(eems2_hotchain, proposal_hotchain, mcmc_hotchain);
-                mcmc_hotchain.add_to_total_moves(proposal_hotchain.move);
-                if (eems2_hotchain.accept_proposal(proposal_hotchain, Temperature)) { mcmc_hotchain.add_to_okay_moves(proposal_hotchain.move); }
-                
-                eems2_hotchain.update_hyperparams( );
-                mcmc_hotchain.end_iteration( );
-                
-            } else{
-                
-                // hot-chain parameters transfers to cold-chain
-                
-                double loga = eems2_hotchain.nowll - eems2_coldchain.nowll + (eems2_coldchain.nowll - eems2_hotchain.nowll) * (1/Temperature);
+                // re-write code.. a little confusing
                 double u = draw.runif();
-                if (log(u) < min(0.0,loga)){
-                    // transfer parameters
+                if (chain == (nChains-1)){
+                    u = 1.1;
                 }
                 
+                // update parameters
+                if (u < s){
+                    proposeMove(eems2, proposal, chain);
+                    if (eems2.accept_proposal(chain)) {
+                        // if it's the cold chain, save and print
+                        if (chain == 0){
+                            mcmc_coldchain.add_to_okay_moves(proposal.move);
+                            if (iter>=0) {
+                                eems2.print_iteration(chain);
+                                eems2.save_iteration(chain);
+                                eems2.writePopSizes(chain);
+                            }
+                        }
+                        
+                    }
+                    eems2.update_hyperparams(chain);
+                
+                    if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
+                    
+                 // transfer parameters from the hot(ter) chain to the cold(er) chain
+                } else{
+                    double temperature = eems2.getTemperature(chain);
+                    double loga = ((temperature-1)/temperature) * (eems2.getll(chain+1) - eems2.getll(chain));
+                    double u = draw.runif();
+                    if (log(u) < min(0.0,loga)){
+                        // transfer parameters
+                        eems2.transferChain(chain+1, chain);
+                    }
+                    
+                }
                 
             }
-      
             
         }
         error = eems2.output_results(mcmc_coldchain);
