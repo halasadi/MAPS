@@ -61,17 +61,17 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     // Remember, rates are paramterized on the log scale
-    mrateMuUpperBound = -1;
-    qrateMuUpperBound = -3;
+    mrateMuUpperBound = 10;
+    qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
     
     // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
-    qEffctLowerBound = -2;
-    qEffctUpperBound = 2;
+    qEffctLowerBound = -1;
+    qEffctUpperBound = 1;
     mEffctLowerBound = -2;
-    mEffctUpperBound = 1;
+    mEffctUpperBound = 2;
 
     
 }
