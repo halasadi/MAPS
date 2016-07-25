@@ -167,7 +167,7 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
-bool EEMS2::start_eems(const MCMC &mcmc) {
+bool EEMS2::start_eems(int num_iters_to_save) {
     bool error = false;
     
     // The deviation of move proposals is scaled by the habitat range
@@ -178,7 +178,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     // MCMC draws are stored in memory, rather than saved to disk,
     // so it is important to thin
     
-    int niters = mcmc.num_iters_to_save();
+    int niters = num_iters_to_save;
     mcmcmhyper = MatrixXd::Zero(niters,2);
     mcmcqhyper = MatrixXd::Zero(niters,2);
     mcmcpilogl = MatrixXd::Zero(niters,2);
@@ -199,6 +199,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     << "Initial log prior: " << nowpi << endl
     << "Initial log llike: " << nowll << endl << endl;
     if ((nowpi==-Inf) || (nowpi==Inf) || (nowll==-Inf) || (nowll==Inf)) { error = true; }
+    
     return(error);
 }
 MoveType EEMS2::choose_move_type( ) {
@@ -595,6 +596,24 @@ void EEMS2::print_iteration(const MCMC &mcmc) const {
     << "          Log prior = " << nowpi << setprecision(4) << endl
     << "          Log llike = " << nowll << setprecision(4) << endl;
 }
+
+void EEMS2::store_iteration(){
+    mcmc_state state;
+    state.qtiles = nowqtiles;
+    state.mtiles = nowmtiles;
+    state.df = nowdf;
+    state.pi = pi;
+    state.ll = nowll;
+    state.ratioln = nowratioln;
+    state.mrateMu = nowmrateMu;
+    state.qrateMu = nowqrateMu;
+    state.qEffcts = nowqEffcts;
+    state.mEffcts = nowmEffcts;
+    state.qSeeds = nowqSeeds;
+    state.mSeeds = nowmSeeds;
+    now_stored_mcmc_states.push_back(state);
+}
+
 void EEMS2::save_iteration(const MCMC &mcmc) {
     int iter = mcmc.to_save_iteration( );
     mcmcqhyper(iter,0) = nowqrateMu;
@@ -607,7 +626,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
+        mcmcqRates.push_back(pow(10.0, nowqEffcts(t) + nowqrateMu));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -616,7 +635,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0,nowmEffcts(t) + nowmrateMu));
+        mcmcmRates.push_back(pow(10.0, nowmEffcts(t) + nowmrateMu));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));

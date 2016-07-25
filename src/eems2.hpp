@@ -44,6 +44,25 @@ struct Proposal {
     
 };
 
+struct mcmc_state {
+    
+    int qtiles; // number of m and q tiles, respectively
+    int mtiles;
+    double df; // degrees of freedom
+    double pi; // log prior
+    double ll; // log likelihood
+    double ratioln; // RJ-MCMC proposal ratio, on the log scale
+    double mrateMu; // overall (mean) migration rate,
+    double qrateMu;
+    
+    VectorXd qEffcts; // the diversity rate of each q tile
+    VectorXd mEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
+    MatrixXd qSeeds;  // the location of each q tile within the habitat
+    MatrixXd mSeeds;  // the location of each m tile within the habitat
+    
+    
+};
+
 class EEMS2 {
 public:
     
@@ -52,7 +71,7 @@ public:
     
     void initialize_state( );
     void load_final_state( );
-    bool start_eems(const MCMC &mcmc);
+    bool start_eems(int num_iters_to_save);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                       const double df) const;
@@ -101,8 +120,20 @@ public:
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
+    void store_iteration();
     
-    // they should really be private data-members
+    vector<mcmc_state> prev_stored_mcmc_states;
+    vector<mcmc_state> now_stored_mcmc_states;
+    
+
+    
+private:
+    
+    Draw draw; // Random number generator
+    Graph graph;
+    Params params;
+    Habitat habitat;
+    
     // The current set of parameter values:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
     MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
@@ -112,14 +143,6 @@ public:
     
     VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
     VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
-
-    
-private:
-    
-    Draw draw; // Random number generator
-    Graph graph;
-    Params params;
-    Habitat habitat;
     
     int o; // number of observed demes
     int d; // total number of demes
