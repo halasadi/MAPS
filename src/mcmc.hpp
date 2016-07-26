@@ -22,7 +22,7 @@ enum MoveType {
 class MCMC {
 public:
     
-    MCMC(const Params &params, double Temp);
+    MCMC(const Params &params);
     ~MCMC();
     
     int currIter;
@@ -36,6 +36,7 @@ public:
     void add_to_total_moves(const int type);
     int num_iters_to_save( ) const;
     int to_save_iteration( ) const;
+    void restart(const Params &params, double Temp);
     
     friend ostream& operator<<(ostream& out, const MCMC& mcmc);
     

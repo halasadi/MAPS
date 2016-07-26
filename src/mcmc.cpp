@@ -1,21 +1,32 @@
 
 #include "mcmc.hpp"
 
-MCMC::MCMC(const Params &params, double Temp) {
-    
+MCMC::MCMC(const Params &params) {
+    numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
-    if (Temp != 1){
+    numThinIter = params.numThinIter;
+    finished = false;
+    currIter = 0;
+    numTypes = 10;
+    okayMoves = vector<double>(numTypes,0);
+    totalMoves = vector<double>(numTypes,0);
+    Temperature = 1;
+}
+
+void MCMC::restart(const Params &params, double Temp) {
+    okayMoves.clear();
+    okayMoves = vector<double>(numTypes,0);
+    totalMoves.clear();
+    totalMoves = vector<double>(numTypes,0);
+    finished = false;
+    currIter = 0;
+    if (Temperature != 1){
         numMCMCIter = numBurnIter;
     } else{
         numMCMCIter = params.numMCMCIter;
     }
     Temperature = Temp;
-    numThinIter = params.numThinIter;
-    currIter = 0;
-    numTypes = 10;
-    finished = false;
-    okayMoves = vector<double>(numTypes,0);
-    totalMoves = vector<double>(numTypes,0);
+    
 }
 MCMC::~MCMC( ) { }
 int MCMC::num_iters_to_save( ) const {

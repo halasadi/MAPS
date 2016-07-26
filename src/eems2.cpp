@@ -167,7 +167,12 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
-bool EEMS2::start_eems(int num_iters_to_save, double Temperature) {
+
+void EEMS2::setTemperature(double Temperature){
+    temp = Temperature;
+}
+
+bool EEMS2::start_eems(int num_iters_to_save) {
     bool error = false;
     
     // The deviation of move proposals is scaled by the habitat range
@@ -177,8 +182,6 @@ bool EEMS2::start_eems(int num_iters_to_save, double Temperature) {
     params.qSeedsProposalS2y = params.qSeedsProposalS2 * habitat.get_yspan();
     // MCMC draws are stored in memory, rather than saved to disk,
     // so it is important to thin
-    
-    temp = Temperature;
     
     int niters = num_iters_to_save;
     mcmcmhyper = MatrixXd::Zero(niters,2);

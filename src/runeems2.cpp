@@ -95,27 +95,37 @@ int main(int argc, char** argv)
         
         int nChains = 5;
         double Temperatures [5] = { 50, 25, 12, 5, 1};
+        MCMC mcmc(params);
+        error = eems2.start_eems(mcmc.num_iters_to_save( ) );
+        
+
         for (int chain_no = 0; chain_no < nChains; chain_no++){
             
             double Temperature = Temperatures[chain_no];
+            eems2.setTemperature(Temperature);
+            mcmc.restart(params, Temperature);
             
-            MCMC mcmc(params, Temperature);
-            error = eems2.start_eems(mcmc.num_iters_to_save(), Temperature);
             
             if (chain_no > 0){
                 eems2.prev_stored_mcmc_states = eems2.now_stored_mcmc_states;
+                eems2.now_stored_mcmc_states.clear();
             }
+            
+            cout << "chain no :" << chain_no << endl;
             
             while (!mcmc.finished) {
                 
                 proposeMove(eems2, proposal, mcmc, chain_no);
+
                 mcmc.add_to_total_moves(proposal.move);
                 
                 if (proposal.move == TRANSFER_FROM_HOT_CHAIN){
+
                     if (eems2.accept_transfer(proposal, Temperatures[chain_no], Temperatures[chain_no-1])){
                         mcmc.add_to_okay_moves(proposal.move);
                     }
                 } else{
+                    
                     if (eems2.accept_proposal(proposal)) { mcmc.add_to_okay_moves(proposal.move); }
                 }
                 mcmc.end_iteration( );
@@ -146,6 +156,7 @@ int main(int argc, char** argv)
                 if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
                 
             }
+            
         }
         
         

@@ -70,7 +70,7 @@ public:
     
     void initialize_state( );
     void load_final_state( );
-    bool start_eems(int num_iters_to_save, double Temperature);
+    bool start_eems(int num_iters_to_save);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                       const double df) const;
@@ -104,6 +104,7 @@ public:
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
     void propose_transfer_hot_to_cold(Proposal &proposal, const MCMC &mcmc);
+    void setTemperature(double Temperature);
     bool accept_transfer(Proposal &proposal, double cold_temp, double hot_temp);
     bool accept_proposal(Proposal &proposal);
     

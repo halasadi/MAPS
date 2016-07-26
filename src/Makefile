@@ -11,7 +11,7 @@ BOOST_INC = /usr/local/include
 EXE = runeems2
 OBJ = runeems2.o eems2.o util.o mcmc.o draw.o habitat.o graph.o
 
-CXXFLAGS = -I${BOOST_INC} -I${EIGEN_INC} -O3 -DNDEBUG -O3
+CXXFLAGS = -I${BOOST_INC} -I${EIGEN_INC} -O3 -DNDEBUG -O3 -g
 LDFLAGS = -L${BOOST_LIB} \
 	-lboost_system \
 	-lboost_program_options \
