@@ -36,7 +36,8 @@ public:
     void add_to_okay_moves(const int type);
     void add_to_total_moves(const int type);
     int num_iters_to_save( ) const;
-    int to_save_iteration( ) const;
+    int to_store_iteration() const;
+    int to_write_iteration( ) const;
     void restart(const Params &params, double temp);
     
     friend ostream& operator<<(ostream& out, const MCMC& mcmc);

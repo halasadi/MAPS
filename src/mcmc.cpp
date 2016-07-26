@@ -34,8 +34,15 @@ int MCMC::num_iters_to_save( ) const {
     int a = (numMCMCIter - numBurnIter) / (numThinIter + 1);
     return (a);
 }
-int MCMC::to_save_iteration( ) const {
-    if (currIter>numBurnIter) {
+
+int MCMC::to_store_iteration() const {
+    int b = currIter % (numThinIter + 1);
+    if (b == 0){ return(1); }
+    return(-1);
+}
+
+int MCMC::to_write_iteration( ) const {
+    if (currIter>numBurnIter && temperature == 1) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }

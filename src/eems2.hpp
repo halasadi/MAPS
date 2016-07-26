@@ -105,6 +105,9 @@ public:
     
 private:
     
+    vector<Proposal> prev_stored_accepted_proposals;
+    vector<Proposal> now_stored_accepted_proposals;
+    
     Draw draw; // Random number generator
     Graph graph;
     Params params;

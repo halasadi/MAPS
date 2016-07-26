@@ -600,7 +600,7 @@ void EEMS2::print_iteration(const MCMC &mcmc) const {
     << "          Log llike = " << nowll << setprecision(4) << endl;
 }
 void EEMS2::save_iteration(const MCMC &mcmc) {
-    int iter = mcmc.to_save_iteration( );
+    int iter = mcmc.to_write_iteration( );
     mcmcqhyper(iter,0) = nowqrateMu;
     mcmcqhyper(iter,1) = nowqrateS2;
     mcmcmhyper(iter,0) = nowmrateMu;

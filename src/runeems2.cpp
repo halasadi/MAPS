@@ -37,7 +37,7 @@ void proposeMove(EEMS2 &eems2, Proposal &proposal){
             eems2.propose_df(proposal);
             break;
         case CHAIN_SWAP:
-            break;
+             break;
         default:
             cerr << "[RunEEMS2] Unknown move type" << endl;
             exit(EXIT_FAILURE);
@@ -119,8 +119,13 @@ int main(int argc, char** argv)
                 
                 // Check whether to save the current parameter state,
                 // as the thinned out iterations are not saved
-                int iter = mcmc.to_save_iteration( );
-                if (iter>=0 && temperature == 1) {
+                
+                if (mcmc.to_store_iteration() >= 0){
+                    //eems2.store_iteration(mcmc);
+                }
+                
+                int iter = mcmc.to_write_iteration( );
+                if (iter>=0) {
                     eems2.print_iteration(mcmc);
                     eems2.save_iteration(mcmc);
                     eems2.writePopSizes();
