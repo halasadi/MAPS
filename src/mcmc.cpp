@@ -1,12 +1,18 @@
 
 #include "mcmc.hpp"
 
-MCMC::MCMC(const Params &params) {
-    numMCMCIter = params.numMCMCIter;
+MCMC::MCMC(const Params &params, double Temp) {
+    
     numBurnIter = params.numBurnIter;
+    if (Temp != 1){
+        numMCMCIter = numBurnIter;
+    } else{
+        numMCMCIter = params.numMCMCIter;
+    }
+    Temperature = Temp;
     numThinIter = params.numThinIter;
     currIter = 0;
-    numTypes = 9;
+    numTypes = 10;
     finished = false;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
@@ -25,11 +31,16 @@ int MCMC::to_save_iteration( ) const {
     return (-1);
 }
 ostream& operator<<(ostream& out, const MCMC& mcmc) {
+    
+    out << "Temperature = " << mcmc.Temperature << endl;
     for ( int i = 0 ; i < mcmc.numTypes ; i++ ) {
         double a = mcmc.okayMoves.at(i);
         double A = mcmc.totalMoves.at(i);
         out << setprecision(2) << "\t(" << (int)a << "/" << (int)A << ") = " << 100.0*(a/A) << "% for type ";
         switch (i) {
+            case TRANSFER_FROM_HOT_CHAIN:
+                out << "\"CHAIN TRANSFER\"" << endl;
+                break;
             case Q_VORONOI_RATE_UPDATE:
                 out << "\"qTileRate\"" << endl;
                 break;
@@ -55,7 +66,7 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 out << "\"qMeanRate\"" << endl;
                 break;
             case DF_UPDATE:
-                out << "\"d.f.\"" << endl;
+                out << "\"phi\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

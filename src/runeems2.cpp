@@ -8,8 +8,11 @@
 string dist_metric;
 
 
-void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
-    switch ( eems2.choose_move_type( ) ) {
+void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc, int chain_no){
+    switch ( eems2.choose_move_type(chain_no) ) {
+        case TRANSFER_FROM_HOT_CHAIN:
+            proposal.move = TRANSFER_FROM_HOT_CHAIN;
+            break;
         case Q_VORONOI_BIRTH_DEATH:
             eems2.propose_birthdeath_qVoronoi(proposal);
             break;
@@ -78,8 +81,6 @@ int main(int argc, char** argv)
         EEMS2 eems2(params);
         eems2.initialize_state();
         
-        int nChains = 5;
-        
         if (error) {
             cerr << "[RunEEMS2] Error starting EEMS2." << endl;
             return(EXIT_FAILURE);
@@ -89,70 +90,64 @@ int main(int argc, char** argv)
         
         double s = 0.5;
         Draw draw; // Random number generator
-	
         
         // start with running the hottest chain
         
+        int nChains = 5;
+        double Temperatures [5] = { 50, 25, 12, 5, 1};
         for (int chain_no = 0; chain_no < nChains; chain_no++){
-            double Temperature = (nChains-chain_no)*10;
             
-            MCMC mcmc(params);
-            error = eems2.start_eems(mcmc.num_iters_to_save());
+            double Temperature = Temperatures[chain_no];
+            
+            MCMC mcmc(params, Temperature);
+            error = eems2.start_eems(mcmc.num_iters_to_save(), Temperature);
             
             if (chain_no > 0){
                 eems2.prev_stored_mcmc_states = eems2.now_stored_mcmc_states;
             }
-
+            
             while (!mcmc.finished) {
                 
-                if (draw.runif() < s || (chain_no == 0)) {
-                    
-                    proposeMove(eems2, proposal, mcmc);
-                    mcmc.add_to_total_moves(proposal.move);
-                    if (eems2.accept_proposal(proposal, Temperature)) { mcmc.add_to_okay_moves(proposal.move); }
-                    
-                    eems2.update_hyperparams( );
-                    mcmc.end_iteration( );
-                    
-                    int iter = mcmc.to_save_iteration( );
-                    if (iter>=0) {
-                        eems2.print_iteration(mcmc);
-                        eems2.store_iteration();
+                proposeMove(eems2, proposal, mcmc, chain_no);
+                mcmc.add_to_total_moves(proposal.move);
+                
+                if (proposal.move == TRANSFER_FROM_HOT_CHAIN){
+                    if (eems2.accept_transfer(proposal, Temperatures[chain_no], Temperatures[chain_no-1])){
+                        mcmc.add_to_okay_moves(proposal.move);
                     }
-                    
-                    // Check whether to save the current parameter state,
-                    // as the thinned out iterations are not saved
-                    // only save iterations from cold chain
-                    if (chain_no == (nChains-1) && iter >= 0 ){
-                        eems2.save_iteration(mcmc);
-                        eems2.writePopSizes();
-                        
-                    }
-                    
                 } else{
-                    
-                    // draw from previous stored states vector
-                    // then set new values using private function
-                    
-                    
-                    // hot-chain parameters transfers to cold-chain
-                    // sample from the hotter chain
-                    //double loga = eems2_hotchain.nowll - eems2_coldchain.nowll + (eems2_coldchain.nowll - eems2_hotchain.nowll) * (1/Temperature);
-                    double u = draw.runif();
-                    //if (log(u) < min(0.0,loga)){
-                        
-                        
-                    //}
-                    
+                    if (eems2.accept_proposal(proposal)) { mcmc.add_to_okay_moves(proposal.move); }
+                }
+                mcmc.end_iteration( );
+                eems2.update_hyperparams( );
+                
+                int iter = mcmc.to_save_iteration( );
+                if (iter>=0) {
+                    eems2.print_iteration(mcmc);
+                    eems2.store_iteration();
+                }
+                
+                // Check whether to save the current parameter state,
+                // as the thinned out iterations are not saved
+                // only save iterations from cold chain
+                if (Temperature == 1 && iter >= 0 ){
+                    eems2.save_iteration(mcmc);
+                    eems2.writePopSizes();
                     
                 }
+                
+                
             }
             
-            if (chain_no == (nChains-1)){
+            eems2.print_iteration(mcmc);
+            
+            if (Temperature == 1){
                 error = eems2.output_results(mcmc);
+                if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
+                
             }
-            
         }
+        
         
     } catch(exception& e) {
         cerr << e.what() << endl;
@@ -160,4 +155,6 @@ int main(int argc, char** argv)
     }
     
     return(0);
+    
 }
+    

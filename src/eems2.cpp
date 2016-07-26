@@ -167,7 +167,7 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
-bool EEMS2::start_eems(int num_iters_to_save) {
+bool EEMS2::start_eems(int num_iters_to_save, double Temperature) {
     bool error = false;
     
     // The deviation of move proposals is scaled by the habitat range
@@ -177,6 +177,8 @@ bool EEMS2::start_eems(int num_iters_to_save) {
     params.qSeedsProposalS2y = params.qSeedsProposalS2 * habitat.get_yspan();
     // MCMC draws are stored in memory, rather than saved to disk,
     // so it is important to thin
+    
+    temp = Temperature;
     
     int niters = num_iters_to_save;
     mcmcmhyper = MatrixXd::Zero(niters,2);
@@ -195,22 +197,32 @@ bool EEMS2::start_eems(int num_iters_to_save) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
     nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
-    cerr << "Input parameters: " << endl << params << endl
-    << "Initial log prior: " << nowpi << endl
-    << "Initial log llike: " << nowll << endl << endl;
+    //cerr << "Input parameters: " << endl << params << endl
+    //<< "Initial log prior: " << nowpi << endl
+    //<< "Initial log llike: " << nowll << endl << endl;
     if ((nowpi==-Inf) || (nowpi==Inf) || (nowll==-Inf) || (nowll==Inf)) { error = true; }
     
     return(error);
 }
-MoveType EEMS2::choose_move_type( ) {
+MoveType EEMS2::choose_move_type(int chain_no) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
+    double u3 = draw.runif( );
+    
     // There are 4 types of proposals:
     // * birth/death (with equal probability)
     // * move a tile (chosen uniformly at random)
     // * update the rate of a tile (chosen uniformly at random)
     // * update the mean migration rate or the mean coalescent rate (with equal probability)
+    
     MoveType move = UNKNOWN_MOVE_TYPE;
+
+    
+    if (u3 > 0.5 && chain_no > 0){
+        move = TRANSFER_FROM_HOT_CHAIN;
+        return(move);
+    }
+    
     if (u1 < 0.25) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
@@ -241,6 +253,7 @@ MoveType EEMS2::choose_move_type( ) {
             move = DF_UPDATE;
         }
     }
+    
     return(move);
 }
 
@@ -270,6 +283,52 @@ double EEMS2::eval_proposal_move_one_mtile(Proposal &proposal) const {
 double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
+
+
+void EEMS2::propose_transfer_hot_to_cold(Proposal &proposal, const MCMC &mcmc){
+    
+    proposal.move = TRANSFER_FROM_HOT_CHAIN;
+    // draw from previous stored states vector
+    // then set new values using private function
+    double r = rand() % mcmc.num_iters_to_save();
+    mcmc_state state = prev_stored_mcmc_states[r];
+    
+    proposal.newqtiles = state.qtiles;
+    proposal.newmtiles = state.mtiles;
+    proposal.newdf = state.df;
+    proposal.newll = state.ll;
+    proposal.newmrateMu = state.mrateMu;
+    proposal.newqrateMu = state.qrateMu;
+    proposal.newqEffcts = state.qEffcts;
+    proposal.newmEffcts = state.mEffcts;
+    proposal.newqSeeds = state.qSeeds;
+    proposal.newmSeeds = state.mSeeds;
+ 
+}
+
+bool EEMS2::accept_transfer(Proposal &proposal, double cold_temp, double hot_temp){
+    
+    double loga = ((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll);
+    double u = draw.runif();
+    if (log(u) < min(0.0,loga)){
+        nowqtiles = proposal.newqtiles;
+        nowmtiles = proposal.newmtiles;
+        nowdf = proposal.newdf;
+        nowll = proposal.newll;
+        nowmrateMu = proposal.newmrateMu;
+        nowqrateMu = proposal.newqrateMu;
+        nowqEffcts = proposal.newqEffcts;
+        nowmEffcts = proposal.newmEffcts;
+        nowqSeeds = proposal.newqSeeds;
+        nowmSeeds = proposal.newmSeeds;
+        return true;
+    } else{
+        
+        return false ;
+    }
+    
+}
+
 
 void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
@@ -516,7 +575,7 @@ void EEMS2::update_hyperparams( ) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
 }
-bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
+bool EEMS2::accept_proposal(Proposal &proposal) {
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
@@ -525,7 +584,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = (proposal.newpi - nowpi + proposal.newll - nowll)/Temperature;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/temp;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -604,7 +663,6 @@ void EEMS2::store_iteration(){
     state.df = nowdf;
     state.pi = pi;
     state.ll = nowll;
-    state.ratioln = nowratioln;
     state.mrateMu = nowmrateMu;
     state.qrateMu = nowqrateMu;
     state.qEffcts = nowqEffcts;
@@ -900,6 +958,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     return (logll);
 }
+
 double EEMS2::getMigrationRate(const int edge) const {
     int nEdges = graph.get_num_edges();
     assert((edge>=0) && (edge<nEdges));
@@ -930,6 +989,7 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
     double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
     return (q_alpha);
 }
+
 
 // this is a test function
 void EEMS2::writePopSizes() const{

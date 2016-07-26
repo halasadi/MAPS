@@ -6,6 +6,7 @@
 #define MCMC_H
 
 enum MoveType {
+    TRANSFER_FROM_HOT_CHAIN,
     Q_VORONOI_RATE_UPDATE,
     Q_VORONOI_POINT_MOVE,
     Q_VORONOI_BIRTH_DEATH,
@@ -21,7 +22,7 @@ enum MoveType {
 class MCMC {
 public:
     
-    MCMC(const Params &params);
+    MCMC(const Params &params, double Temp);
     ~MCMC();
     
     int currIter;
@@ -29,7 +30,7 @@ public:
     int numBurnIter;
     int numThinIter;
     bool finished;
-    
+    double Temperature;
     void end_iteration( );
     void add_to_okay_moves(const int type);
     void add_to_total_moves(const int type);

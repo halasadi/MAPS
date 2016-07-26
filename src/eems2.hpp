@@ -51,7 +51,6 @@ struct mcmc_state {
     double df; // degrees of freedom
     double pi; // log prior
     double ll; // log likelihood
-    double ratioln; // RJ-MCMC proposal ratio, on the log scale
     double mrateMu; // overall (mean) migration rate,
     double qrateMu;
     
@@ -71,7 +70,7 @@ public:
     
     void initialize_state( );
     void load_final_state( );
-    bool start_eems(int num_iters_to_save);
+    bool start_eems(int num_iters_to_save, double Temperature);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                       const double df) const;
@@ -80,7 +79,7 @@ public:
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
-    MoveType choose_move_type( );
+    MoveType choose_move_type(int chain_no);
     // These functions change the within demes component:
     double eval_proposal_rate_one_qtile(Proposal &proposal) const;
     double eval_proposal_move_one_qtile(Proposal &proposal) const;
@@ -104,7 +103,10 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal, double Temperature);
+    void propose_transfer_hot_to_cold(Proposal &proposal, const MCMC &mcmc);
+    bool accept_transfer(Proposal &proposal, double cold_temp, double hot_temp);
+    bool accept_proposal(Proposal &proposal);
+    
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);
@@ -133,6 +135,9 @@ private:
     Graph graph;
     Params params;
     Habitat habitat;
+    
+    // temperature
+    double temp;
     
     // The current set of parameter values:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
