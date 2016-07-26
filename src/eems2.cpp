@@ -203,15 +203,23 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     if ((nowpi==-Inf) || (nowpi==Inf) || (nowll==-Inf) || (nowll==Inf)) { error = true; }
     return(error);
 }
-MoveType EEMS2::choose_move_type( ) {
+MoveType EEMS2::choose_move_type(int chain) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
+    double u3 = draw.runif( );
+    
+    MoveType move = UNKNOWN_MOVE_TYPE;
+
+    if (u3 > 0.5 & chain > 0){
+        move = CHAIN_SWAP;
+        return(move);
+    }
+    
     // There are 4 types of proposals:
     // * birth/death (with equal probability)
     // * move a tile (chosen uniformly at random)
     // * update the rate of a tile (chosen uniformly at random)
     // * update the mean migration rate or the mean coalescent rate (with equal probability)
-    MoveType move = UNKNOWN_MOVE_TYPE;
     if (u1 < 0.25) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
@@ -272,6 +280,25 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
+void EEMS2::propose_chain_swap(Proposal &proposal){
+    
+    proposal.move = CHAIN_SWAP;
+    int r = rand() % prev_stored_accepted_proposals.size();
+    Proposal swap = prev_stored_accepted_proposals[r];
+    
+    proposal.newqtiles = swap.newqtiles;
+    proposal.newmtiles = swap.newmtiles;
+    proposal.newdf = swap.newdf;
+    proposal.newll = swap.newll;
+    proposal.newpi = swap.newpi;
+    proposal.newmrateMu = swap.newmrateMu;
+    proposal.newqrateMu = swap.newqrateMu;
+    proposal.newqEffcts = swap.newqEffcts;
+    proposal.newmEffcts = swap.newmEffcts;
+    proposal.newqSeeds = swap.newqSeeds;
+    proposal.newmSeeds = swap.newmSeeds;
+
+}
 void EEMS2::propose_df(Proposal &proposal) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
@@ -519,7 +546,43 @@ void EEMS2::update_hyperparams( ) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
 }
-bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
+
+// some kind of error in this function... what is it!!!
+
+bool EEMS2::accept_swap(Proposal &proposal, double hot_temp, double cold_temp){
+    
+    double loga = ((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll);
+    double u = draw.runif();
+    if (log(u) < min(0.0,loga)){
+        nowqtiles = proposal.newqtiles;
+        nowmtiles = proposal.newmtiles;
+        nowdf = proposal.newdf;
+        nowll = proposal.newll;
+        nowpi = proposal.newpi;
+        nowmrateMu = proposal.newmrateMu;
+        nowqrateMu = proposal.newqrateMu;
+        nowqEffcts = proposal.newqEffcts;
+        nowmEffcts = proposal.newmEffcts;
+        nowqSeeds = proposal.newqSeeds;
+        nowmSeeds = proposal.newmSeeds;
+        graph.index_closest_to_deme(nowqSeeds,nowqColors);
+        return true;
+    } else{
+        proposal.newpi = nowpi;
+        proposal.newll = nowll;
+        return false;
+    }
+    
+}
+
+
+bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double cold_temp) {
+    
+
+    if (proposal.move == CHAIN_SWAP){
+        return(accept_swap(proposal, hot_temp, cold_temp));
+    }
+    
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
@@ -528,7 +591,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double Temperature) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/Temperature;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/hot_temp;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -753,6 +816,7 @@ void EEMS2::check_ll_computation( ) const {
         exit(1);
     }
 }
+
 double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                          const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                          const double df) const {

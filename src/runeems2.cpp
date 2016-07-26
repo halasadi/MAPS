@@ -7,8 +7,8 @@
 string dist_metric;
 
 
-void proposeMove(EEMS2 &eems2, Proposal &proposal){
-    switch ( eems2.choose_move_type( ) ) {
+void proposeMove(EEMS2 &eems2, Proposal &proposal, int chain){
+    switch ( eems2.choose_move_type(chain) ) {
         case Q_VORONOI_BIRTH_DEATH:
             eems2.propose_birthdeath_qVoronoi(proposal);
             break;
@@ -37,7 +37,8 @@ void proposeMove(EEMS2 &eems2, Proposal &proposal){
             eems2.propose_df(proposal);
             break;
         case CHAIN_SWAP:
-             break;
+            eems2.propose_chain_swap(proposal);
+            break;
         default:
             cerr << "[RunEEMS2] Unknown move type" << endl;
             exit(EXIT_FAILURE);
@@ -101,18 +102,31 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
+        double cold_temperature;
+        double hot_temperature;
         double temperatures [5] = { 50, 25, 12, 5, 1};
         
         for (int chain = 0; chain < 5; chain ++ ){
             
             double temperature = temperatures[chain];
             mcmc.restart(params, temperature);
+            eems2.prev_stored_accepted_proposals.swap(eems2.now_stored_accepted_proposals);
+            eems2.now_stored_accepted_proposals.clear();
             
             while (!mcmc.finished) {
                 
-                proposeMove(eems2, proposal);
+                proposeMove(eems2, proposal, chain);
                 mcmc.add_to_total_moves(proposal.move);
-                if (eems2.accept_proposal(proposal, temperature)) { mcmc.add_to_okay_moves(proposal.move); }
+                
+                hot_temperature = temperatures[chain];
+                if (chain == 0){
+                    cold_temperature = -1;
+                } else{
+                    cold_temperature = temperatures[chain-1];
+                }
+                
+                
+                if (eems2.accept_proposal(proposal, hot_temperature, cold_temperature)) { mcmc.add_to_okay_moves(proposal.move); }
                 
                 eems2.update_hyperparams( );
                 mcmc.end_iteration( );
@@ -121,7 +135,7 @@ int main(int argc, char** argv)
                 // as the thinned out iterations are not saved
                 
                 if (mcmc.to_store_iteration() >= 0){
-                    //eems2.store_iteration(mcmc);
+                    eems2.now_stored_accepted_proposals.push_back(proposal);
                 }
                 
                 int iter = mcmc.to_write_iteration( );
@@ -136,6 +150,7 @@ int main(int argc, char** argv)
             
             cout << "Ending MCMC chain with temperature " << temperature << " with acceptance proportions: " << endl;
             cout << mcmc << endl;
+            eems2.prev_stored_accepted_proposals.clear();
             
             
             

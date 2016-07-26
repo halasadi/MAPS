@@ -61,7 +61,7 @@ public:
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
-    MoveType choose_move_type( );
+    MoveType choose_move_type(int chain );
     // These functions change the within demes component:
     double eval_proposal_rate_one_qtile(Proposal &proposal) const;
     double eval_proposal_move_one_qtile(Proposal &proposal) const;
@@ -85,7 +85,9 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal, double Temperature);
+    void propose_chain_swap(Proposal &proposal);
+    bool accept_swap(Proposal &proposal, double hot_temp, double cold_temp);
+    bool accept_proposal(Proposal &proposal, double hot_temp, double cold_temp);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);
@@ -101,12 +103,11 @@ public:
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
-
-    
-private:
     
     vector<Proposal> prev_stored_accepted_proposals;
     vector<Proposal> now_stored_accepted_proposals;
+    
+private:
     
     Draw draw; // Random number generator
     Graph graph;
