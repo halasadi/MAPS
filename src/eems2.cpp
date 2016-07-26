@@ -122,6 +122,7 @@ void EEMS2::initialize_state( ) {
     graph.index_closest_to_deme(nowmSeeds,nowmColors);
     cerr << "[EEMS2::initialize_state] Done." << endl << endl;
 }
+/*
 void EEMS2::load_final_state( ) {
     cerr << "[EEMS2::load_final_state]" << endl;
     MatrixXd tempi; bool error = false;
@@ -167,6 +168,7 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
+ */
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
     
@@ -270,14 +272,13 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
-void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
+void EEMS2::propose_df(Proposal &proposal) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
     // This should make it easier to move in the parameter space
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
     if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
       proposal.newdf = newdf;

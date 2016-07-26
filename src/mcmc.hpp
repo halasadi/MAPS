@@ -6,6 +6,7 @@
 #define MCMC_H
 
 enum MoveType {
+    CHAIN_SWAP,
     Q_VORONOI_RATE_UPDATE,
     Q_VORONOI_POINT_MOVE,
     Q_VORONOI_BIRTH_DEATH,
@@ -28,6 +29,7 @@ public:
     int numMCMCIter;
     int numBurnIter;
     int numThinIter;
+    double temperature;
     bool finished;
     
     void end_iteration( );
@@ -35,6 +37,7 @@ public:
     void add_to_total_moves(const int type);
     int num_iters_to_save( ) const;
     int to_save_iteration( ) const;
+    void restart(const Params &params, double temp);
     
     friend ostream& operator<<(ostream& out, const MCMC& mcmc);
     

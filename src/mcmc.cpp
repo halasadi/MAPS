@@ -5,12 +5,30 @@ MCMC::MCMC(const Params &params) {
     numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
+    temperature = 1;
     currIter = 0;
-    numTypes = 9;
+    numTypes = 10;
     finished = false;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
 }
+
+
+void MCMC::restart(const Params &params, double temp){
+    if (temp == 1){
+        numMCMCIter = params.numMCMCIter;
+    } else{
+        numMCMCIter = numBurnIter;
+    }
+    temperature = temp;
+    currIter = 0;
+    finished = false;
+    okayMoves.clear();
+    okayMoves = vector<double>(numTypes,0);
+    totalMoves.clear();
+    totalMoves = vector<double>(numTypes,0);
+}
+
 MCMC::~MCMC( ) { }
 int MCMC::num_iters_to_save( ) const {
     int a = (numMCMCIter - numBurnIter) / (numThinIter + 1);
@@ -56,6 +74,9 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 break;
             case DF_UPDATE:
                 out << "\"d.f.\"" << endl;
+                break;
+            case CHAIN_SWAP:
+                out << "\"chainSwap\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

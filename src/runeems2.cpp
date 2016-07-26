@@ -7,7 +7,7 @@
 string dist_metric;
 
 
-void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
+void proposeMove(EEMS2 &eems2, Proposal &proposal){
     switch ( eems2.choose_move_type( ) ) {
         case Q_VORONOI_BIRTH_DEATH:
             eems2.propose_birthdeath_qVoronoi(proposal);
@@ -34,7 +34,9 @@ void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
             eems2.propose_overall_qrate(proposal);
             break;
         case DF_UPDATE:
-            eems2.propose_df(proposal,mcmc);
+            eems2.propose_df(proposal);
+            break;
+        case CHAIN_SWAP:
             break;
         default:
             cerr << "[RunEEMS2] Unknown move type" << endl;
@@ -79,6 +81,7 @@ int main(int argc, char** argv)
         
         
         boost::filesystem::path dir(eems2.prevpath().c_str());
+        /*
         if (exists(dir)) {
             cerr << "Load final EEMS2 state from " << eems2.prevpath() << endl << endl;
             eems2.load_final_state();
@@ -86,7 +89,10 @@ int main(int argc, char** argv)
             cerr << "Initialize EEMS2 random state" << endl << endl;
             eems2.initialize_state();
         }
+         */
         
+        cerr << "Initialize EEMS2 random state" << endl << endl;
+        eems2.initialize_state();
         error = eems2.start_eems(mcmc);
         if (error) {
             cerr << "[RunEEMS2] Error starting EEMS2." << endl;
@@ -95,28 +101,41 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
-        double Temperature = 1;
+        double temperatures [5] = { 50, 25, 12, 5, 1};
         
-        while (!mcmc.finished) {
+        for (int chain = 0; chain < 5; chain ++ ){
             
-            proposeMove(eems2, proposal, mcmc);
-            mcmc.add_to_total_moves(proposal.move);
-            if (eems2.accept_proposal(proposal, Temperature)) { mcmc.add_to_okay_moves(proposal.move); }
+            double temperature = temperatures[chain];
+            mcmc.restart(params, temperature);
             
-            eems2.update_hyperparams( );
-            mcmc.end_iteration( );
-            
-            // Check whether to save the current parameter state,
-            // as the thinned out iterations are not saved
-            int iter = mcmc.to_save_iteration( );
-            if (iter>=0) {
-                eems2.print_iteration(mcmc);
-                eems2.save_iteration(mcmc);
-                eems2.writePopSizes();
-                //eems2.printMigrationAndCoalescenceRates();
+            while (!mcmc.finished) {
+                
+                proposeMove(eems2, proposal);
+                mcmc.add_to_total_moves(proposal.move);
+                if (eems2.accept_proposal(proposal, temperature)) { mcmc.add_to_okay_moves(proposal.move); }
+                
+                eems2.update_hyperparams( );
+                mcmc.end_iteration( );
+                
+                // Check whether to save the current parameter state,
+                // as the thinned out iterations are not saved
+                int iter = mcmc.to_save_iteration( );
+                if (iter>=0 && temperature == 1) {
+                    eems2.print_iteration(mcmc);
+                    eems2.save_iteration(mcmc);
+                    eems2.writePopSizes();
+                    //eems2.printMigrationAndCoalescenceRates();
+                }
+                
             }
             
+            cout << "Ending MCMC chain with temperature " << temperature << " with acceptance proportions: " << endl;
+            cout << mcmc << endl;
+            
+            
+            
         }
+        
         error = eems2.output_results(mcmc);
         if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
         

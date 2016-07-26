@@ -51,7 +51,7 @@ public:
     ~EEMS2( );
     
     void initialize_state( );
-    void load_final_state( );
+    //void load_final_state( );
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
@@ -76,7 +76,7 @@ public:
     // Gibbs updates:
     void update_hyperparams( );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal,const MCMC &mcmc);
+    void propose_df(Proposal &proposal);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
     void propose_overall_mrate(Proposal &proposal);
