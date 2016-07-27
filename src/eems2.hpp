@@ -42,6 +42,10 @@ struct Proposal {
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
+    // only used in the chain swaps
+    //double newmrateS2;
+    //double newqrateS2;
+    
 };
 
 class EEMS2 {
@@ -109,6 +113,7 @@ public:
     
 private:
     
+    
     Draw draw; // Random number generator
     Graph graph;
     Params params;
@@ -156,6 +161,7 @@ private:
     vector<double> mcmcwCoord;
     vector<double> mcmczCoord;
     
+    void setProposal(Proposal &proposal);
     void initialize_sims();
     void randpoint_in_habitat(MatrixXd &Seeds);
     void rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts);
