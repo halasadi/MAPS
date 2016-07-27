@@ -122,7 +122,7 @@ int main(int argc, char** argv)
                 if (chain == 0){
                     cold_temperature = -1;
                 } else{
-                    cold_temperature = temperatures[chain-1];
+                    cold_temperature = temperatures[chain+1];
                 }
                 
                 

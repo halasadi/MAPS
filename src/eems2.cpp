@@ -366,7 +366,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     
     // log10(0.5) = -0.0301
     // ensures that migration rates are bounded above by 0.5
-    newmEffct = min(-0.0301 - nowmrateMu, newmEffct);
+    //newmEffct = min(-0.0301 - nowmrateMu, newmEffct);
     
     proposal.move = M_VORONOI_RATE_UPDATE;
     proposal.newmEffcts = nowmEffcts;
@@ -387,7 +387,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
 void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
     double newmrateMu = draw.rnorm(nowmrateMu,params.mrateMuProposalS2);
-    newmrateMu = min(-0.301 - nowmEffcts.maxCoeff(), newmrateMu);
+    //newmrateMu = min(-0.301 - nowmEffcts.maxCoeff(), newmrateMu);
     
     proposal.move = M_MEAN_RATE_UPDATE;
     proposal.newmrateMu = newmrateMu;
@@ -602,6 +602,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double cold_tem
     
 
     if (proposal.move == CHAIN_SWAP){
+        //return(true);
         return(accept_swap(proposal, hot_temp, cold_temp));
     }
     
