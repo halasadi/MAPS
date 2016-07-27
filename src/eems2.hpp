@@ -42,6 +42,10 @@ struct Proposal {
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
+    // only used for the chain swap
+    double newqrateS2;
+    double newmrateS2;
+    
 };
 
 class EEMS2 {
@@ -99,6 +103,7 @@ public:
     string prevpath() const;
     string gridpath() const;
     
+    void getState(Proposal &proposal) const;
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
