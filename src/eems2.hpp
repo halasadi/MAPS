@@ -114,7 +114,6 @@ public:
     
 private:
     
-    
     Draw draw; // Random number generator
     Graph graph;
     Params params;
@@ -162,7 +161,6 @@ private:
     vector<double> mcmcwCoord;
     vector<double> mcmczCoord;
     
-    void setProposal(Proposal &proposal);
     void initialize_sims();
     void randpoint_in_habitat(MatrixXd &Seeds);
     void rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts);

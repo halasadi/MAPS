@@ -317,26 +317,9 @@ void EEMS2::propose_chain_swap(Proposal &proposal){
     proposal.newmrateS2 = swap.newmrateS2;
     proposal.newqrateS2 = swap.newqrateS2;
 
-
-void EEMS2::setProposal(Proposal &proposal){
-    proposal.newqtiles = nowqtiles;
-    proposal.newmtiles = nowmtiles;
-    proposal.newdf = nowdf;
-    proposal.newll = nowll;
-    proposal.newpi = nowpi;
-    proposal.newmrateMu = nowmrateMu;
-    proposal.newqrateMu = nowqrateMu;
-    proposal.newqEffcts = nowqEffcts;
-    proposal.newmEffcts = nowmEffcts;
-    proposal.newqSeeds = nowqSeeds;
-    proposal.newmSeeds = nowmSeeds;
-    //proposal.newqrateS2 = nowqrateS2;
-    //proposal.newmrateS2 = nowmrateS2;
-    
 }
 void EEMS2::propose_df(Proposal &proposal) {
     proposal.move = DF_UPDATE;
-    //setProposal(proposal);
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
@@ -344,16 +327,15 @@ void EEMS2::propose_df(Proposal &proposal) {
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
     if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-        proposal.newdf = newdf;
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    newdf);
-        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+      proposal.newdf = newdf;
+      proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+				  nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+				  newdf);
+      proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
     }
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
-    //setProposal(proposal);
     // Choose a tile at random to update
     int qtile = draw.runif_int(0,nowqtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
@@ -376,7 +358,6 @@ void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     }
 }
 void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
-    //setProposal(proposal);
     // Choose a tile at random to update
     int mtile = draw.runif_int(0,nowmtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
@@ -404,7 +385,6 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     }
 }
 void EEMS2::propose_overall_mrate(Proposal &proposal) {
-    //setProposal(proposal);
     // Make a random-walk Metropolis-Hastings proposal
     double newmrateMu = draw.rnorm(nowmrateMu,params.mrateMuProposalS2);
     newmrateMu = min(-0.301 - nowmEffcts.maxCoeff(), newmrateMu);
@@ -424,7 +404,6 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
 }
 
 void EEMS2::propose_overall_qrate(Proposal &proposal) {
-    //setProposal(proposal);
     // Make a random-walk Metropolis-Hastings proposal
     double newqrateMu = draw.rnorm(nowqrateMu,params.qrateMuProposalS2);
     proposal.move = Q_MEAN_RATE_UPDATE;
@@ -441,7 +420,6 @@ void EEMS2::propose_overall_qrate(Proposal &proposal) {
     }
 }
 void EEMS2::propose_move_one_qtile(Proposal &proposal) {
-    //setProposal(proposal);
     // Choose a tile at random to move
     int qtile = draw.runif_int(0,nowqtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
@@ -461,7 +439,6 @@ void EEMS2::propose_move_one_qtile(Proposal &proposal) {
     }
 }
 void EEMS2::propose_move_one_mtile(Proposal &proposal) {
-    //setProposal(proposal);
     // Choose a tile at random to move
     int mtile = draw.runif_int(0,nowmtiles-1);
     // Make a random-walk proposal, i.e., add small offset to current value
@@ -481,7 +458,6 @@ void EEMS2::propose_move_one_mtile(Proposal &proposal) {
     }
 }
 void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
-    //setProposal(proposal);
     int newqtiles = nowqtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
@@ -532,7 +508,6 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
     proposal.newll = eval_birthdeath_qVoronoi(proposal);
 }
 void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
-    //setProposal(proposal);
     int newmtiles = nowmtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
@@ -627,8 +602,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double cold_tem
     
 
     if (proposal.move == CHAIN_SWAP){
-        return(true);
-        //return(accept_swap(proposal, hot_temp, cold_temp));
+        return(accept_swap(proposal, hot_temp, cold_temp));
     }
     
     double u = draw.runif( );
