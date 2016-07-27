@@ -135,7 +135,9 @@ int main(int argc, char** argv)
                 // as the thinned out iterations are not saved
                 
                 if (mcmc.to_store_iteration() >= 0){
-                    eems2.now_stored_accepted_proposals.push_back(proposal);
+                    Proposal state;
+                    eems2.getState(state);
+                    eems2.now_stored_accepted_proposals.push_back(state);
                 }
                 
                 int iter = mcmc.to_write_iteration( );

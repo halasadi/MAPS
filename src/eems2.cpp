@@ -280,13 +280,43 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
+void EEMS2::getState(Proposal &proposal) const {
+    proposal.newqtiles = nowqtiles;
+    proposal.newmtiles = nowmtiles;
+    proposal.newdf = nowdf;
+    proposal.newmrateMu = nowmrateMu;
+    proposal.newqrateMu = nowqrateMu;
+    proposal.newqEffcts = nowqEffcts;
+    proposal.newmEffcts = nowmEffcts;
+    proposal.newll = nowll;
+    proposal.newpi = nowpi;
+    proposal.newqSeeds = nowqSeeds;
+    proposal.newmSeeds = nowmSeeds;
+    proposal.newqrateS2 = nowqrateS2;
+    proposal.newmrateS2 = nowmrateS2;
+    
+}
+
 void EEMS2::propose_chain_swap(Proposal &proposal){
     
     proposal.move = CHAIN_SWAP;
     int r = rand() % prev_stored_accepted_proposals.size();
-    proposal = prev_stored_accepted_proposals[r];
-    
-}
+    Proposal swap = prev_stored_accepted_proposals[r];
+
+    proposal.newqtiles = swap.newqtiles;
+    proposal.newmtiles = swap.newmtiles;
+    proposal.newdf = swap.newdf;
+    proposal.newll = swap.newll;
+    proposal.newpi = swap.newpi;
+    proposal.newmrateMu = swap.newmrateMu;
+    proposal.newqrateMu = swap.newqrateMu;
+    proposal.newqEffcts = swap.newqEffcts;
+    proposal.newmEffcts = swap.newmEffcts;
+    proposal.newqSeeds = swap.newqSeeds;
+    proposal.newmSeeds = swap.newmSeeds;
+    proposal.newmrateS2 = swap.newmrateS2;
+    proposal.newqrateS2 = swap.newqrateS2;
+
 
 void EEMS2::setProposal(Proposal &proposal){
     proposal.newqtiles = nowqtiles;
@@ -561,6 +591,7 @@ void EEMS2::update_hyperparams( ) {
                        nowdf);
 }
 
+
 // some kind of error in this function... what is it!!!
 
 bool EEMS2::accept_swap(Proposal &proposal, double hot_temp, double cold_temp){
@@ -579,9 +610,8 @@ bool EEMS2::accept_swap(Proposal &proposal, double hot_temp, double cold_temp){
         nowmEffcts = proposal.newmEffcts;
         nowqSeeds = proposal.newqSeeds;
         nowmSeeds = proposal.newmSeeds;
-        //nowmrateS2 = proposal.newmrateS2;
-        //nowqrateS2 = proposal.newqrateS2;
-        
+        nowqrateS2 = proposal.newqrateS2;
+        nowmrateS2 = proposal.newmrateS2;
         graph.index_closest_to_deme(nowqSeeds,nowqColors);
         return true;
     } else{
