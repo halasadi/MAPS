@@ -104,9 +104,9 @@ int main(int argc, char** argv)
         
         double cold_temperature;
         double hot_temperature;
-        double temperatures [5] = { 50, 25, 12, 5, 1};
+        double temperatures [4] = { 20, 10, 5, 1};
         
-        for (int chain = 0; chain < 5; chain ++ ){
+        for (int chain = 0; chain < 4; chain ++ ){
             
             double temperature = temperatures[chain];
             mcmc.restart(params, temperature);

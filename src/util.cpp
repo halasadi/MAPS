@@ -12,7 +12,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
-        ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
+        //("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
@@ -68,17 +68,20 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
+    /*
     qEffctLowerBound = -1;
     qEffctUpperBound = 1;
     mEffctLowerBound = -2;
     mEffctUpperBound = 2;
+     */
+    mEffctHalfInterval = 1;
+    qEffctHalfInterval = 1;
 
-    
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
     << "               mcmcpath = " << params.mcmcpath << endl
-    << "               prevpath = " << params.prevpath << endl
+    //<< "               prevpath = " << params.prevpath << endl
     << "               gridpath = " << params.gridpath << endl
     << "               distance = " << params.distance << endl
     << "                 nIndiv = " << params.nIndiv << endl
@@ -111,7 +114,7 @@ ostream& operator<<(ostream& out, const Params& params) {
 bool Params::check_input_params( ) const {
     bool error = false;
     boost::filesystem::path mcmcdir(mcmcpath.c_str());
-    boost::filesystem::path prevdir(prevpath.c_str());
+    //boost::filesystem::path prevdir(prevpath.c_str());
     cerr << "Using Boost " << BOOST_LIB_VERSION
     << " and Eigen " << EIGEN_WORLD_VERSION << "." << EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << endl
     << "  EEMS was tested with Boost 1_57 and Eigen 3.2.4" << endl << endl;
@@ -142,10 +145,11 @@ bool Params::check_input_params( ) const {
             cerr << "  Failed to find graph files " << gridpath << ".demes/edges/ipmap" << endl;
             error = true;
         }
-    if (!prevpath.empty() && !exists(prevdir)) {
+    /*if (!prevpath.empty() && !exists(prevdir)) {
         cerr << "  Failed to find directory " << prevpath << " to previous EEMS output" << endl;
         error = true;
     }
+     */
     if (!(mSeedsProposalS2>0) || !(mEffctProposalS2>0) || !(mrateMuProposalS2>0) ||
         !(qSeedsProposalS2>0) || !(qEffctProposalS2>0) || !(qrateMuProposalS2>0)) {
         cerr << "  Choose positive variance parameters for the proposal distributions:" << endl
@@ -423,6 +427,8 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
  */
+
+/*
 double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd) {
     double pln = -Inf;
     if ( (sigma2>0) && (x>=lowerBnd) && (x<=upperBnd) ) {
@@ -432,6 +438,18 @@ double dtrnormln(const double x, const double mu, const double sigma2, const dou
     }
     return (pln);
 }
+ */
+
+double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {
+    double pln = -Inf;
+    if ( (sigma2>0) && (x>=-bnd) && (x<=bnd) ) {
+        boost::math::normal pnorm(mu,sqrt(sigma2));
+        pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
+        - log(cdf(pnorm,bnd) - cdf(pnorm,-bnd));
+    }
+    return (pln);
+}
+
 VectorXd slice(const VectorXd &A, const VectorXi &I) {
     int elems = I.size();
     VectorXd B(elems);
