@@ -38,7 +38,9 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
-        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
+        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
+        ("nChains", po::value<int>(&nChains)->default_value(1), "nChains")
+        ("hottestTemp", po::value<double>(&hottestTemp)->default_value(10), "hottestTemp")
         ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -159,6 +161,18 @@ bool Params::check_input_params( ) const {
         error = true;
     }
     
+    if (nChains < 1){
+        cerr << "   Error with nChains: " << endl
+        << " nChains = " << nChains << endl;
+        error = true;
+    }
+    
+    if (hottestTemp < 1){
+        cerr << "   Error with hottestTemp: " << endl
+        << " hottestTemp = " << hottestTemp << endl;
+        error = true;
+    }
+ 
     if (genomeSize > 3.3e3){
         cerr << "  Error with genome size: " << endl
         << " genomeSize = " << genomeSize << endl;

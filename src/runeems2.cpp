@@ -102,29 +102,36 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
+        double start_temp;
+        double r;
+        if (params.nChains == 1){
+            r = 1;
+            start_temp = 1;
+        } else{
+            r = exp(-log(params.hottestTemp)/(params.nChains-1));
+            start_temp = params.hottestTemp;
+        }
+        
         double cold_temperature;
         double hot_temperature;
-        double temperatures [4] = { 20, 10, 5, 1};
-        
-        for (int chain = 0; chain < 4; chain ++ ){
-            
-            double temperature = temperatures[chain];
+        double temperature = start_temp;
+
+        for (int chain = 0; chain < params.nChains; chain ++ ){
             mcmc.restart(params, temperature);
             eems2.prev_stored_accepted_proposals.swap(eems2.now_stored_accepted_proposals);
             eems2.now_stored_accepted_proposals.clear();
+            
+            hot_temperature = temperature;
+            if (chain == 0){
+                cold_temperature = -1;
+            } else{
+                cold_temperature = temperature/r;
+            }
             
             while (!mcmc.finished) {
                 
                 proposeMove(eems2, proposal, chain);
                 mcmc.add_to_total_moves(proposal.move);
-                
-                hot_temperature = temperatures[chain];
-                if (chain == 0){
-                    cold_temperature = -1;
-                } else{
-                    cold_temperature = temperatures[chain+1];
-                }
-                
                 
                 if (eems2.accept_proposal(proposal, hot_temperature, cold_temperature)) { mcmc.add_to_okay_moves(proposal.move); }
                 
@@ -153,7 +160,7 @@ int main(int argc, char** argv)
             cout << "Ending MCMC chain with temperature " << temperature << " with acceptance proportions: " << endl;
             cout << mcmc << endl;
             eems2.prev_stored_accepted_proposals.clear();
-            
+            temperature = start_temp * r;
             
             
         }

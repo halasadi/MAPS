@@ -51,6 +51,8 @@ public:
     friend ostream& operator<<(ostream& out, const Params& params);
     
     long seed;
+    int nChains;
+    double hottestTemp;
     bool testing;
     string datapath, mcmcpath, prevpath, gridpath;
     double qEffctHalfInterval, mEffctHalfInterval;
