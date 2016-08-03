@@ -5,7 +5,7 @@ MCMC::MCMC(const Params &params) {
     numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
-    temperature = 1;
+    isbaseChain = true;
     currIter = 0;
     numTypes = 10;
     finished = false;
@@ -14,13 +14,13 @@ MCMC::MCMC(const Params &params) {
 }
 
 
-void MCMC::restart(const Params &params, double temp){
-    if (temp == 1){
+void MCMC::restart(const Params &params, bool isColdestChain){
+    isbaseChain = isColdestChain;
+    if (isbaseChain){
         numMCMCIter = params.numMCMCIter;
     } else{
         numMCMCIter = numBurnIter;
     }
-    temperature = temp;
     currIter = 0;
     finished = false;
     okayMoves.clear();
@@ -42,7 +42,7 @@ int MCMC::to_store_iteration() const {
 }
 
 int MCMC::to_write_iteration( ) const {
-    if (currIter>numBurnIter && temperature == 1) {
+    if (currIter>numBurnIter && isbaseChain) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }

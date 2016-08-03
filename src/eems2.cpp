@@ -586,8 +586,6 @@ void EEMS2::update_hyperparams( ) {
 }
 
 
-// some kind of error in this function... what is it!!!
-
 bool EEMS2::accept_swap(Proposal &proposal, double hot_temp, double cold_temp){
     
     double loga = ((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll);

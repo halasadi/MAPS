@@ -29,7 +29,7 @@ public:
     int numMCMCIter;
     int numBurnIter;
     int numThinIter;
-    double temperature;
+    bool isbaseChain;
     bool finished;
     
     void end_iteration( );
@@ -38,7 +38,7 @@ public:
     int num_iters_to_save( ) const;
     int to_store_iteration() const;
     int to_write_iteration( ) const;
-    void restart(const Params &params, double temp);
+    void restart(const Params &params, bool isbaseChain);
     
     friend ostream& operator<<(ostream& out, const MCMC& mcmc);
     
