@@ -91,7 +91,7 @@ public:
     void propose_birthdeath_mVoronoi(Proposal &proposal);
     void propose_chain_swap(Proposal &proposal);
     bool accept_swap(Proposal &proposal, double hot_temp, double cold_temp);
-    bool accept_proposal(Proposal &proposal, double hot_temp, double cold_temp);
+    bool accept_proposal(Proposal &proposal, double hot_temp, double now_temp);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);

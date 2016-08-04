@@ -102,6 +102,11 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
+ 
+        
+        // set up the temperature info
+        bool isColdestChain = false;
+        double hotter_temperature;
         double start_temp;
         double r;
         if (params.nChains == 1 || start_temp == 1){
@@ -111,10 +116,13 @@ int main(int argc, char** argv)
             r = exp(-log(params.hottestTemp)/(params.nChains-1));
             start_temp = params.hottestTemp;
         }
-        
-        double cold_temperature;
+        vector<double> temperatures;
         double temperature = start_temp;
-        bool isColdestChain = false;
+        for (int i = 0; i < params.nChains; i++){
+            temperatures.push_back(temperature);
+            temperature = temperature * r;
+        }
+        // end setting up the temperature info
         
         for (int chain = 0; chain < params.nChains; chain ++ ){
             
@@ -126,9 +134,9 @@ int main(int argc, char** argv)
             eems2.now_stored_accepted_proposals.clear();
             
             if (chain == 0){
-                cold_temperature = -1;
+                hotter_temperature = -1;
             } else{
-                cold_temperature = r*temperature;
+                hotter_temperature = temperatures[chain-1];
             }
             
             while (!mcmc.finished) {
@@ -136,7 +144,7 @@ int main(int argc, char** argv)
                 proposeMove(eems2, proposal, chain);
                 mcmc.add_to_total_moves(proposal.move);
                 
-                if (eems2.accept_proposal(proposal, temperature, cold_temperature)) { mcmc.add_to_okay_moves(proposal.move); }
+                if (eems2.accept_proposal(proposal, hotter_temperature, temperatures[chain])) { mcmc.add_to_okay_moves(proposal.move); }
                 
                 eems2.update_hyperparams( );
                 mcmc.end_iteration( );
@@ -155,17 +163,13 @@ int main(int argc, char** argv)
                     eems2.print_iteration(mcmc);
                     eems2.save_iteration(mcmc);
                     eems2.writePopSizes();
-                    //eems2.printMigrationAndCoalescenceRates();
                 }
                 
             }
             
-            cout << "Ending MCMC chain with temperature " << temperature << " with acceptance proportions: " << endl;
+            cout << "Ending MCMC chain with temperature " << temperatures[chain] << " with acceptance proportions: " << endl;
             cout << mcmc << endl;
             eems2.prev_stored_accepted_proposals.clear();
-    
-            temperature = temperature * r;
-
             
         }
         

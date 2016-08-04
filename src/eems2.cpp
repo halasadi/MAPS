@@ -42,13 +42,6 @@ void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, Vector
     }
 }
 
-/*void EEMS2::rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts) {
-    for (int i = 0 ; i < Effcts.rows() ; i++ ) {
-        Effcts(i) = draw.rtrnorm(0.0,rateS2,lowerBnd, upperBnd);
-    }
-}
- */
-
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
     MatrixXd sims = readMatrixXd(params.datapath + ".sims");
@@ -219,7 +212,7 @@ MoveType EEMS2::choose_move_type(int chain) {
     
     MoveType move = UNKNOWN_MOVE_TYPE;
 
-    if (u3 > 0.5 & chain > 0){
+    if (u3 < 0.25 & chain > 0){
         move = CHAIN_SWAP;
         return(move);
     }
@@ -331,7 +324,6 @@ void EEMS2::propose_df(Proposal &proposal) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
-    // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
     // This should make it easier to move in the parameter space
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
@@ -373,10 +365,6 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     double curmEffct = nowmEffcts(mtile);
     double newmEffct = draw.rnorm(curmEffct,params.mEffctProposalS2);
     
-    // log10(0.5) = -0.0301
-    // ensures that migration rates are bounded above by 0.5
-    //newmEffct = min(-0.0301 - nowmrateMu, newmEffct);
-    
     proposal.move = M_VORONOI_RATE_UPDATE;
     proposal.newmEffcts = nowmEffcts;
     proposal.newmEffcts(mtile) = newmEffct;
@@ -396,8 +384,6 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
 void EEMS2::propose_overall_mrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
     double newmrateMu = draw.rnorm(nowmrateMu,params.mrateMuProposalS2);
-    //newmrateMu = min(-0.301 - nowmEffcts.maxCoeff(), newmrateMu);
-    
     proposal.move = M_MEAN_RATE_UPDATE;
     proposal.newmrateMu = newmrateMu;
     // If the proposed value is in range, the prior probability does not change
@@ -535,7 +521,6 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         randpoint_in_habitat(newmSeed);
         pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
         double nowmEffct = nowmEffcts(r);
-        //double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
 
         insertRow(proposal.newmSeeds,newmSeed.row(0));
@@ -543,8 +528,6 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
         - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-        //- dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
-        
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
@@ -561,7 +544,6 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         double oldmEffct = nowmEffcts(mtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        //+ dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctLowerBound, params.mEffctUpperBound);
         + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
 
         
@@ -615,12 +597,11 @@ bool EEMS2::accept_swap(Proposal &proposal, double hot_temp, double cold_temp){
 }
 
 
-bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double cold_temp) {
+bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double now_temp) {
     
 
     if (proposal.move == CHAIN_SWAP){
-        //return(true);
-        return(accept_swap(proposal, hot_temp, cold_temp));
+        return(accept_swap(proposal, hot_temp, now_temp));
     }
     
     double u = draw.runif( );
@@ -631,7 +612,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double cold_tem
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/hot_temp;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/now_temp;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -872,9 +853,6 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     for ( int i = 0 ; i < mtiles ; i++ ) {
         if (!habitat.in_point(mSeeds(i,0),mSeeds(i,1))) { inrange = false; }
     }
-    
-    //if (qEffcts.minCoeff() < params.qEffctLowerBound || qEffcts.maxCoeff() > params.qEffctUpperBound) { inrange = false; }
-    //if (mEffcts.minCoeff() < params.mEffctLowerBound || mEffcts.maxCoeff() > params.mEffctUpperBound) { inrange = false; }
 
     if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
@@ -892,12 +870,10 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
     + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {
-        //logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctLowerBound, params.qEffctUpperBound);
         logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
 
     }
     for (int i = 0 ; i < mtiles ; i++) {
-        //logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctLowerBound, params.mEffctUpperBound);
         logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
 
     }
