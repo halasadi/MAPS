@@ -212,7 +212,7 @@ MoveType EEMS2::choose_move_type(int chain) {
     
     MoveType move = UNKNOWN_MOVE_TYPE;
 
-    if (u3 < 0.25 & chain > 0){
+    if (u3 < 0.1 & chain > 0){
         move = CHAIN_SWAP;
         return(move);
     }

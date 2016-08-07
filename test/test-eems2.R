@@ -1,7 +1,9 @@
 #detach("package:rEEMSplots2", unload=TRUE)
+#install.packages("../plotting/rEEMSplots", repos=NULL, type="source")
 #install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
 #setwd("~/eems2/test/")
 library(rEEMSplots2)
+#library(rEEMSplots)
 
 ## mcmcpath is a list of three output directories; the results will be averaged
 #plotpath <- 'data/popres/3.5_6/plots_lowerBnd_3.5_upperBnd_6'

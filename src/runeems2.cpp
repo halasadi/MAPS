@@ -102,8 +102,6 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
- 
-        
         // set up the temperature info
         bool isColdestChain = false;
         double hotter_temperature;
@@ -152,11 +150,12 @@ int main(int argc, char** argv)
                 // Check whether to save the current parameter state,
                 // as the thinned out iterations are not saved
                 
-                if (mcmc.to_store_iteration() >= 0){
-                    Proposal state;
-                    eems2.getState(state);
-                    eems2.now_stored_accepted_proposals.push_back(state);
-                }
+                //if (mcmc.to_store_iteration() >= 0){
+
+                Proposal state;
+                eems2.getState(state);
+                eems2.now_stored_accepted_proposals.push_back(state);
+		    //}
                 
                 int iter = mcmc.to_write_iteration( );
                 if (iter>=0) {
