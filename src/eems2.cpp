@@ -212,7 +212,7 @@ MoveType EEMS2::choose_move_type(int chain) {
     
     MoveType move = UNKNOWN_MOVE_TYPE;
 
-    if (u3 < 0.1 & chain > 0){
+    if (u3 < 0.2 & chain > 0){
         move = CHAIN_SWAP;
         return(move);
     }
@@ -612,7 +612,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double now_temp
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/now_temp;
+    double ratioln = (proposal.newpi - nowpi + proposal.newll - nowll)/now_temp;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -899,6 +899,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
+    // to parallize set, P and coalP as private, and integral as shared. I think this is OK.
     for (int t = 0; t < 25; t++){
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
         coalp = P * q.asDiagonal() * P.transpose();
