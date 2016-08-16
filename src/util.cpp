@@ -40,7 +40,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
         ("nChains", po::value<int>(&nChains)->default_value(1), "nChains")
-        ("hottestTemp", po::value<double>(&hottestTemp)->default_value(10), "hottestTemp")
+        ("hottestTemp", po::value<double>(&hottestTemp)->default_value(1), "hottestTemp")
         ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -110,6 +110,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
+    << "                nChains = " << params.nChains << endl
+    << "            hottestTemp = " << params.hottestTemp << endl
     << "               nthreads = " << params.nthreads << endl;
     return out;
 }

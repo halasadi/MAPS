@@ -7,8 +7,8 @@
 string dist_metric;
 
 
-void proposeMove(EEMS2 &eems2, Proposal &proposal, int chain){
-    switch ( eems2.choose_move_type(chain) ) {
+void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
+    switch ( eems2.choose_move_type(mcmc) ) {
         case Q_VORONOI_BIRTH_DEATH:
             eems2.propose_birthdeath_qVoronoi(proposal);
             break;
@@ -34,7 +34,7 @@ void proposeMove(EEMS2 &eems2, Proposal &proposal, int chain){
             eems2.propose_overall_qrate(proposal);
             break;
         case DF_UPDATE:
-            eems2.propose_df(proposal);
+            eems2.propose_df(proposal, mcmc);
             break;
         case CHAIN_SWAP:
             eems2.propose_chain_swap(proposal);
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
             
             while (!mcmc.finished) {
                 
-                proposeMove(eems2, proposal, chain);
+                proposeMove(eems2, proposal, mcmc);
                 mcmc.add_to_total_moves(proposal.move);
                 
                 if (eems2.accept_proposal(proposal, hotter_temperature, temperatures[chain])) { mcmc.add_to_okay_moves(proposal.move); }
@@ -150,12 +150,12 @@ int main(int argc, char** argv)
                 // Check whether to save the current parameter state,
                 // as the thinned out iterations are not saved
                 
-                //if (mcmc.to_store_iteration() >= 0){
-
-                Proposal state;
-                eems2.getState(state);
-                eems2.now_stored_accepted_proposals.push_back(state);
-		    //}
+                if (mcmc.to_store_iteration() >= 0){
+                    
+                    Proposal state;
+                    eems2.getState(state);
+                    eems2.now_stored_accepted_proposals.push_back(state);
+                }
                 
                 int iter = mcmc.to_write_iteration( );
                 if (iter>=0) {

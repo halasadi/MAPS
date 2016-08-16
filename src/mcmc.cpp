@@ -5,7 +5,7 @@ MCMC::MCMC(const Params &params) {
     numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
-    isbaseChain = true;
+    isBaseChain = true;
     currIter = 0;
     numTypes = 10;
     finished = false;
@@ -15,8 +15,8 @@ MCMC::MCMC(const Params &params) {
 
 
 void MCMC::restart(const Params &params, bool isColdestChain){
-    isbaseChain = isColdestChain;
-    if (isbaseChain){
+    isBaseChain = isColdestChain;
+    if (isBaseChain){
         numMCMCIter = params.numMCMCIter;
     } else{
         numMCMCIter = numBurnIter;
@@ -36,13 +36,16 @@ int MCMC::num_iters_to_save( ) const {
 }
 
 int MCMC::to_store_iteration() const {
-    int b = currIter % (numThinIter + 1);
-    if (b == 0){ return(1); }
+    //int b = currIter % (numThinIter + 1);
+    //if (b == 0){ return(1); }
+    if (currIter > (numBurnIter/2)){
+        return(1);
+    }
     return(-1);
 }
 
 int MCMC::to_write_iteration( ) const {
-    if (currIter>numBurnIter && isbaseChain) {
+    if (currIter>numBurnIter && isBaseChain) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }

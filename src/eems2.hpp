@@ -65,7 +65,7 @@ public:
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
-    MoveType choose_move_type(int chain );
+    MoveType choose_move_type(const MCMC &mcmc);
     // These functions change the within demes component:
     double eval_proposal_rate_one_qtile(Proposal &proposal) const;
     double eval_proposal_move_one_qtile(Proposal &proposal) const;
@@ -80,7 +80,7 @@ public:
     // Gibbs updates:
     void update_hyperparams( );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal);
+    void propose_df(Proposal &proposal, const MCMC &mcmc);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
     void propose_overall_mrate(Proposal &proposal);

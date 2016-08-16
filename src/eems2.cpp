@@ -1,4 +1,5 @@
 #include "eems2.hpp"
+#include <omp.h>
 
 EEMS2::EEMS2(const Params &params) {
     this->params = params;
@@ -205,14 +206,17 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     if ((nowpi==-Inf) || (nowpi==Inf) || (nowll==-Inf) || (nowll==Inf)) { error = true; }
     return(error);
 }
-MoveType EEMS2::choose_move_type(int chain) {
+MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
     double u3 = draw.runif( );
     
     MoveType move = UNKNOWN_MOVE_TYPE;
 
-    if (u3 < 0.2 & chain > 0){
+ 
+    // this code is temporary... the mcmc ladder approach not working so we don't care.
+    bool isNotHottestChain = false;
+    if (u3 < 0.1 & isNotHottestChain){
         move = CHAIN_SWAP;
         return(move);
     }
@@ -320,19 +324,21 @@ void EEMS2::propose_chain_swap(Proposal &proposal){
     proposal.newqrateS2 = swap.newqrateS2;
 
 }
-void EEMS2::propose_df(Proposal &proposal) {
+void EEMS2::propose_df(Proposal &proposal, const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     // This should make it easier to move in the parameter space
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-      proposal.newdf = newdf;
-      proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-				  nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-				  newdf);
-      proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+        double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+            proposal.newdf = newdf;
+            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                        newdf);
+            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+        }
     }
 }
 
@@ -612,7 +618,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, double hot_temp, double now_temp
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = (proposal.newpi - nowpi + proposal.newll - nowll)/now_temp;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll)/now_temp;
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -899,10 +905,20 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
-    // to parallize set, P and coalP as private, and integral as shared. I think this is OK.
+    //omp_set_num_threads(8);
+    //reduction(+:integral)
+    //#pragma omp parallel for num_threads(4)
+    
+    //MatrixXd X = eigenvecs.transpose() * q.asDiagonal() * eigenvecs;
+    DiagonalMatrix<double,Dynamic> D(d);
+    
     for (int t = 0; t < 25; t++){
-        P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
+        D = ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal();
+        P = eigenvecs.topRows(o) * ( D * eigenvecs.transpose());
         coalp = P * q.asDiagonal() * P.transpose();
+        
+        //coalp = eigenvecs.topRows(o) * ((D * X) * D) * eigenvecs.topRows(o).transpose();
+        
         integral += coalp*weights(t);
     }
     

@@ -497,8 +497,8 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
                              plot.xy = NULL,highlight.samples = NULL) {
     eems.colors <- plot.params$eems.colors
     num.levels <- length(eems.colors)
-
-
+    
+    
     ## Assume no standardization and no log10 transformation has been performed so far.
     ## Perform a *version* of the normalization, but it is not the exactly the same as before
     ## (In rEEMSplots, mean-zero standardization is applied separately for each MCMC state
@@ -1151,6 +1151,10 @@ eems.plots <- function(mcmcpath,
     par(las=1,font.main=1,xpd=xpd)
     mrates.raster = average.eems.contours(mcmcpath,dimns,longlat,plot.params,
         is.mrates = TRUE,plot.xy = m.plot.xy)
+        #require(maps)
+        #m <- map(add=T);
+        #m$x <- m$x + 360
+        #lines(m)
     dev.off( )
 
     ## Plot filled contour of estimated population sizes

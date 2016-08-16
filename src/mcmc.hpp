@@ -29,7 +29,7 @@ public:
     int numMCMCIter;
     int numBurnIter;
     int numThinIter;
-    bool isbaseChain;
+    bool isBaseChain;
     bool finished;
     
     void end_iteration( );
