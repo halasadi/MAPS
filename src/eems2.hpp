@@ -42,11 +42,8 @@ struct Proposal {
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
-    // only used for the chain swap
-    double newqrateS2;
-    double newmrateS2;
-    
 };
+
 
 class EEMS2 {
 public:
@@ -55,7 +52,7 @@ public:
     ~EEMS2( );
     
     void initialize_state( );
-    //void load_final_state( );
+    void load_final_state( );
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
@@ -64,8 +61,8 @@ public:
                             VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
-    
-    MoveType choose_move_type(const MCMC &mcmc);
+
+    MoveType choose_move_type( );
     // These functions change the within demes component:
     double eval_proposal_rate_one_qtile(Proposal &proposal) const;
     double eval_proposal_move_one_qtile(Proposal &proposal) const;
@@ -90,8 +87,7 @@ public:
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
     void propose_chain_swap(Proposal &proposal);
-    bool accept_swap(Proposal &proposal, double hot_temp, double cold_temp);
-    bool accept_proposal(Proposal &proposal, double hot_temp, double now_temp);
+    bool accept_proposal(Proposal &proposal);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);
@@ -103,14 +99,10 @@ public:
     string prevpath() const;
     string gridpath() const;
     
-    void getState(Proposal &proposal) const;
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
-    
-    vector<Proposal> prev_stored_accepted_proposals;
-    vector<Proposal> now_stored_accepted_proposals;
     
 private:
     

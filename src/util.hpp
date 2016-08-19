@@ -51,12 +51,9 @@ public:
     friend ostream& operator<<(ostream& out, const Params& params);
     
     long seed;
-    int nChains;
-    double hottestTemp;
     bool testing;
     string datapath, mcmcpath, prevpath, gridpath;
     double qEffctHalfInterval, mEffctHalfInterval;
-    //double qEffctLowerBound, qEffctUpperBound, mEffctLowerBound, mEffctUpperBound;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
     double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;

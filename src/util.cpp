@@ -39,8 +39,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
-        ("nChains", po::value<int>(&nChains)->default_value(1), "nChains")
-        ("hottestTemp", po::value<double>(&hottestTemp)->default_value(1), "hottestTemp")
+        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
         ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -56,7 +55,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     
-    dfmin = -10;
     dfmax = 10;
     testing = false;
     
@@ -83,7 +81,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
     << "               mcmcpath = " << params.mcmcpath << endl
-    //<< "               prevpath = " << params.prevpath << endl
+    << "               prevpath = " << params.prevpath << endl
     << "               gridpath = " << params.gridpath << endl
     << "               distance = " << params.distance << endl
     << "                 nIndiv = " << params.nIndiv << endl
@@ -110,8 +108,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
-    << "                nChains = " << params.nChains << endl
-    << "            hottestTemp = " << params.hottestTemp << endl
+    << "                  dfmin = " << params.dfmin << endl
     << "               nthreads = " << params.nthreads << endl;
     return out;
 }
@@ -160,18 +157,6 @@ bool Params::check_input_params( ) const {
         << "  mrateMuProposalS2 = " << mrateMuProposalS2 << ", qrateMuProposalS2 = " << qrateMuProposalS2 << endl
         << "   mSeedsProposalS2 = " << mSeedsProposalS2 << ", mEffctProposalS2 = " << mEffctProposalS2 << endl
         << "   qSeedsProposalS2 = " << qSeedsProposalS2 << ", qEffctProposalS2 = " << qEffctProposalS2 << endl;
-        error = true;
-    }
-    
-    if (nChains < 1){
-        cerr << "   Error with nChains: " << endl
-        << " nChains = " << nChains << endl;
-        error = true;
-    }
-    
-    if (hottestTemp < 1){
-        cerr << "   Error with hottestTemp: " << endl
-        << " hottestTemp = " << hottestTemp << endl;
         error = true;
     }
  

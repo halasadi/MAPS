@@ -5,29 +5,13 @@ MCMC::MCMC(const Params &params) {
     numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
-    isBaseChain = true;
     currIter = 0;
-    numTypes = 10;
+    numTypes = 9;
     finished = false;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
 }
 
-
-void MCMC::restart(const Params &params, bool isColdestChain){
-    isBaseChain = isColdestChain;
-    if (isBaseChain){
-        numMCMCIter = params.numMCMCIter;
-    } else{
-        numMCMCIter = numBurnIter;
-    }
-    currIter = 0;
-    finished = false;
-    okayMoves.clear();
-    okayMoves = vector<double>(numTypes,0);
-    totalMoves.clear();
-    totalMoves = vector<double>(numTypes,0);
-}
 
 MCMC::~MCMC( ) { }
 int MCMC::num_iters_to_save( ) const {
@@ -35,23 +19,15 @@ int MCMC::num_iters_to_save( ) const {
     return (a);
 }
 
-int MCMC::to_store_iteration() const {
-    //int b = currIter % (numThinIter + 1);
-    //if (b == 0){ return(1); }
-    if (currIter > (numBurnIter/2)){
-        return(1);
-    }
-    return(-1);
-}
-
-int MCMC::to_write_iteration( ) const {
-    if (currIter>numBurnIter && isBaseChain) {
+int MCMC::to_save_iteration( ) const {
+    if (currIter>numBurnIter) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }
     }
     return (-1);
 }
+
 ostream& operator<<(ostream& out, const MCMC& mcmc) {
     for ( int i = 0 ; i < mcmc.numTypes ; i++ ) {
         double a = mcmc.okayMoves.at(i);
@@ -83,10 +59,7 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 out << "\"qMeanRate\"" << endl;
                 break;
             case DF_UPDATE:
-                out << "\"d.f.\"" << endl;
-                break;
-            case CHAIN_SWAP:
-                out << "\"chainSwap\"" << endl;
+                out << "\"overdispersion\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;
