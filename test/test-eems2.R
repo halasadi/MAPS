@@ -10,12 +10,12 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popres_lowerBnd_3.5_upperBnd_6-EEMS2-test-sim'
 #plotpath <- 'data/popres/plots_lowerBnd_6_upperBnd_Inf'
 #mcmcpath <- 'data/popres/popres_lowerBnd_6_upperBnd_Inf-EEMS2-test-sim'
-#plotpath <- 'data/4x5/recent_barrier/8_Inf_plot'
-#mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
+plotpath <- 'data/4x5/recent_barrier/8_Inf_plot'
+mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-plotpath <- 'data/popres/plot'
-mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/popres/plot'
+#mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/recent_barrier/eems_8_Inf_plot'
@@ -45,5 +45,5 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      #m.log10transform = TRUE,
                                                      #q.log10transform = TRUE,
                                                      add.abline=TRUE,
-                                                     plot.height=8, plot.width=14, 
+                                                     plot.height=8, plot.width=14,
                                                      projection.in = "+proj=longlat +datum=WGS84"))
