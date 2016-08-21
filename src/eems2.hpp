@@ -61,7 +61,7 @@ public:
                             VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
-
+    
     MoveType choose_move_type( );
     // These functions change the within demes component:
     double eval_proposal_rate_one_qtile(Proposal &proposal) const;
@@ -86,7 +86,6 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    void propose_chain_swap(Proposal &proposal);
     bool accept_proposal(Proposal &proposal);
     
     void print_iteration(const MCMC &mcmc) const;
@@ -157,7 +156,7 @@ private:
     void randpoint_in_habitat(MatrixXd &Seeds);
     //void rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts);
     void rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts);
-
+    
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
                             const double df, const double qrateMu, const bool ismUpdate) const;

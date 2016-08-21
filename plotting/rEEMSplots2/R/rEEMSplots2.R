@@ -316,7 +316,7 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
     nPops <- nrow(oDemes)
     if (is.mrates) {
         rates <- scan(paste(mcmcpath,'/mcmcmrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        rates <- rates/nPops
+        #rates <- rates/nPops
         foo <- hist(rates, xlab = "unstandardized migration rates", main = paste0("mean: ", round(mean(rates),5),
         " median: ", round(median(rates), 5)), n = 40, xaxt = "n")
         axis(side=1,at=foo$mids)
@@ -325,7 +325,7 @@ read.voronoi <- function(mcmcpath,longlat,is.mrates,log10transform) {
         yseed <- scan(paste(mcmcpath,'/mcmcycoord.txt',sep=''),what=numeric(),quiet=TRUE)
     } else {
         rates <- scan(paste(mcmcpath,'/mcmcqrates.txt',sep=''),what=numeric(),quiet=TRUE)
-        rates <- rates/nPops
+        #rates <- rates/nPops
         # to turn the coalescent rates into population sizes
         rates <- 1/(2*rates)
         foo <- hist(rates, xlab = "unstandardized pop. sizes", main = paste0("mean: ", round(mean(rates),5), " median: ",
@@ -532,13 +532,13 @@ one.eems.contour <- function(mcmcpath,dimns,Zmean,longlat,plot.params,is.mrates,
         eems.levels <- eems.colscale(c(rates.min, rates.max),
                                      num.levels, plot.params$m.colscale)
         main.title <- "Migration rates : posterior mean"
-        key.title <- expression(paste(italic(m/d), sep=""))
+        key.title <- expression(paste(italic(m), sep=""))
     } else {
         #eems.colors <- default.eems.Ncolors()
         eems.levels <- eems.colscale(c(rates.min, rates.max),
                                      num.levels, plot.params$N.colscale)
         main.title <- "Population sizes : posterior mean"
-        key.title <- expression(paste(italic(Nd), sep=""))
+        key.title <- expression(paste(italic(d), sep=""))
     }
     rr <- flip(raster::raster(t(log10.rates),
                               xmn=dimns$xlim[1],xmx=dimns$xlim[2],

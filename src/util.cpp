@@ -12,7 +12,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
-        //("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
+        ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
@@ -39,7 +39,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
-        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
+        //("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
         ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -55,6 +55,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     
+    dfmin = -10;
     dfmax = 10;
     testing = false;
     
@@ -65,21 +66,12 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
-    
-    
-    // Ensure that mrateMuUpperBound + mEffectUpperBnd <= log(upperBound) so rates are between 0 and upperBound
-    /*
-    qEffctLowerBound = -1;
-    qEffctUpperBound = 1;
-    mEffctLowerBound = -2;
-    mEffctUpperBound = 2;
-     */
     mEffctHalfInterval = 1;
     qEffctHalfInterval = 1;
-
+    
 }
 ostream& operator<<(ostream& out, const Params& params) {
-    out << "               datapath = " << params.datapath << endl
+    out << "           datapath = " << params.datapath << endl
     << "               mcmcpath = " << params.mcmcpath << endl
     << "               prevpath = " << params.prevpath << endl
     << "               gridpath = " << params.gridpath << endl
@@ -108,14 +100,14 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
-    << "                  dfmin = " << params.dfmin << endl
+    //<< "                  dfmin = " << params.dfmin << endl
     << "               nthreads = " << params.nthreads << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
     bool error = false;
     boost::filesystem::path mcmcdir(mcmcpath.c_str());
-    //boost::filesystem::path prevdir(prevpath.c_str());
+    boost::filesystem::path prevdir(prevpath.c_str());
     cerr << "Using Boost " << BOOST_LIB_VERSION
     << " and Eigen " << EIGEN_WORLD_VERSION << "." << EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << endl
     << "  EEMS was tested with Boost 1_57 and Eigen 3.2.4" << endl << endl;
@@ -146,11 +138,10 @@ bool Params::check_input_params( ) const {
             cerr << "  Failed to find graph files " << gridpath << ".demes/edges/ipmap" << endl;
             error = true;
         }
-    /*if (!prevpath.empty() && !exists(prevdir)) {
+    if (!prevpath.empty() && !exists(prevdir)) {
         cerr << "  Failed to find directory " << prevpath << " to previous EEMS output" << endl;
         error = true;
     }
-     */
     if (!(mSeedsProposalS2>0) || !(mEffctProposalS2>0) || !(mrateMuProposalS2>0) ||
         !(qSeedsProposalS2>0) || !(qEffctProposalS2>0) || !(qrateMuProposalS2>0)) {
         cerr << "  Choose positive variance parameters for the proposal distributions:" << endl
@@ -159,7 +150,7 @@ bool Params::check_input_params( ) const {
         << "   qSeedsProposalS2 = " << qSeedsProposalS2 << ", qEffctProposalS2 = " << qEffctProposalS2 << endl;
         error = true;
     }
- 
+    
     if (genomeSize > 3.3e3){
         cerr << "  Error with genome size: " << endl
         << " genomeSize = " << genomeSize << endl;
@@ -430,15 +421,15 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  */
 
 /*
-double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd) {
-    double pln = -Inf;
-    if ( (sigma2>0) && (x>=lowerBnd) && (x<=upperBnd) ) {
-        boost::math::normal pnorm(mu,sqrt(sigma2));
-        pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
-        - log(cdf(pnorm,upperBnd) - cdf(pnorm,lowerBnd));
-    }
-    return (pln);
-}
+ double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd) {
+ double pln = -Inf;
+ if ( (sigma2>0) && (x>=lowerBnd) && (x<=upperBnd) ) {
+ boost::math::normal pnorm(mu,sqrt(sigma2));
+ pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
+ - log(cdf(pnorm,upperBnd) - cdf(pnorm,lowerBnd));
+ }
+ return (pln);
+ }
  */
 
 double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {

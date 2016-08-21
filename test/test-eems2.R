@@ -14,8 +14,8 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/popres/plot'
-#mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/popres/plot'
+mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/recent_barrier/eems_8_Inf_plot'
@@ -33,8 +33,8 @@ library(rEEMSplots2)
 # FALSE FOR POPRES
 longlat <- FALSE
 
-mcmcpath <- 'data/4x5/test/eems_4_Inf-EEMS2-test-sim'
-plotpath <- 'data/4x5/test/eems_4_Inf'
+#mcmcpath <- 'data/4x5/test/eems_4_Inf-EEMS2-test-sim'
+#plotpath <- 'data/4x5/test/eems_4_Inf'
 #mcmcpath <- paste('../data/POBI/POBI_14_Inf/output_',1:10,sep='')
 #plotpath <- '../data/POBI/POBI_14_Inf/plot'
 

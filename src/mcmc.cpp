@@ -1,4 +1,3 @@
-
 #include "mcmc.hpp"
 
 MCMC::MCMC(const Params &params) {
@@ -11,14 +10,11 @@ MCMC::MCMC(const Params &params) {
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
 }
-
-
 MCMC::~MCMC( ) { }
 int MCMC::num_iters_to_save( ) const {
     int a = (numMCMCIter - numBurnIter) / (numThinIter + 1);
     return (a);
 }
-
 int MCMC::to_save_iteration( ) const {
     if (currIter>numBurnIter) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
@@ -27,7 +23,6 @@ int MCMC::to_save_iteration( ) const {
     }
     return (-1);
 }
-
 ostream& operator<<(ostream& out, const MCMC& mcmc) {
     for ( int i = 0 ; i < mcmc.numTypes ; i++ ) {
         double a = mcmc.okayMoves.at(i);
@@ -59,7 +54,7 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 out << "\"qMeanRate\"" << endl;
                 break;
             case DF_UPDATE:
-                out << "\"overdispersion\"" << endl;
+                out << "\"d.f.\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

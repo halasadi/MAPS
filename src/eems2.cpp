@@ -274,23 +274,24 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
-
-void EEMS2::propose_df(Proposal &proposal, const MCMC &mcmc) {
+void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
+    // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
     // This should make it easier to move in the parameter space
-    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-            proposal.newdf = newdf;
-            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                        newdf);
-            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
-        }
+    // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
+    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+        proposal.newdf = newdf;
+        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    newdf);
+        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
     }
 }
+
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // Choose a tile at random to update
@@ -425,7 +426,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         // The new tile is assigned a rate by perturbing the current rate at the new seed
         double nowqEffct = nowqEffcts(r);
         double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-
+        
         //double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         insertRow(proposal.newqSeeds,newqSeed.row(0));
         insertElem(proposal.newqEffcts,newqEffct);
@@ -452,7 +453,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         proposal.newratioln = log(pBirth/pDeath)
         //+ dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-
+        
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
@@ -478,7 +479,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
         double nowmEffct = nowmEffcts(r);
         double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-
+        
         insertRow(proposal.newmSeeds,newmSeed.row(0));
         insertElem(proposal.newmEffcts,newmEffct);
         // Compute log(prior ratio) and log(proposal ratio)
@@ -501,7 +502,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
         + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-
+        
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
@@ -533,13 +534,13 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + proposal.newll - nowll;
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll);
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
         ratioln += proposal.newratioln;
     }
-
+    
     if ( log(u) < min(0.0,ratioln) ) {
         switch (proposal.move) {
             case Q_VORONOI_RATE_UPDATE:
@@ -774,7 +775,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     for ( int i = 0 ; i < mtiles ; i++ ) {
         if (!habitat.in_point(mSeeds(i,0),mSeeds(i,1))) { inrange = false; }
     }
-
+    
     if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.mrateMuLowerBound) { inrange = false; }
@@ -782,7 +783,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     
     
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
-   
+    
     if (!inrange) { return (-Inf); }
     
     double logpi =
@@ -792,11 +793,11 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {
         logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
-
+        
     }
     for (int i = 0 ; i < mtiles ; i++) {
         logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
-
+        
     }
     return (logpi);
 }
@@ -860,7 +861,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
         q(alpha) = pow(10.0,log10q_alpha);
     }
-
+    
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){

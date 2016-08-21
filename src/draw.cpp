@@ -36,15 +36,15 @@ double Draw::rtrnorm(const double mu, const double var, const double bnd) {
 
 
 /*
-double Draw::rtrnorm(const double mu, const double var, const double lowerBnd, const double upperBnd) {
-    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
-    rnorm(randgen, boost::normal_distribution<>(mu,sqrt(var)));
-    //  forces the x to be initialized outside the range. So it will have to enter the loop and call
-    //  randraw(rnorm) at least once.
-    double x = lowerBnd - 1.0;
-    while ((x< lowerBnd) || (x>upperBnd)) { x = randraw(rnorm); }
-    return (x);
-}
+ double Draw::rtrnorm(const double mu, const double var, const double lowerBnd, const double upperBnd) {
+ boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
+ rnorm(randgen, boost::normal_distribution<>(mu,sqrt(var)));
+ //  forces the x to be initialized outside the range. So it will have to enter the loop and call
+ //  randraw(rnorm) at least once.
+ double x = lowerBnd - 1.0;
+ while ((x< lowerBnd) || (x>upperBnd)) { x = randraw(rnorm); }
+ return (x);
+ }
  */
 
 double Draw::rinvgam(const double shape, const double scale) {
