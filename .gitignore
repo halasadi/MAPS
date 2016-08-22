@@ -16,3 +16,4 @@ test/check_priors.R
 test/data
 *png
 *.txt
+.Rproj.user
