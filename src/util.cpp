@@ -38,6 +38,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
+        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -53,7 +54,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     
-    dfmin = -10;
     dfmax = 10;
     testing = false;
     
@@ -100,6 +100,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
+    << "                  dfmin = " << params.dfmin << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
@@ -248,35 +249,6 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
     return(ll);
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBD, const VectorXd &cvec){
-    double ll = 0;
-    double epsilon = 1e-8;
-    int n = expectedIBD.rows();
-    double lamda;
-    double weight = 1;
-    // if unweighted, keep weight = 1
-    for (int i = 0; i < n; i++){
-        for (int j = i; j < n; j++){
-            if (expectedIBD(i,j) < epsilon){
-                lamda = epsilon;
-            } else{
-                lamda = expectedIBD(i,j);
-            }
-            if (i == j){
-                // comment out weight for unweighted
-                //weight = (2*cvec(i)-3)/((cvec(i)*(cvec(i)-1))/2);
-                ll += weight * (observedIBD(i,j)*log(lamda)-((cvec(i)*(cvec(i)-1))/2)*lamda);
-            }
-            else{
-                // comment out weight for unweighted
-                //weight = (2*(cvec(i)+cvec(j))-3)/(cvec(i)*cvec(j));
-                ll += weight * (observedIBD(i,j)*log(lamda)-cvec(i)*cvec(j)*lamda);
-            }
-            
-        }
-    }
-    return(ll);
-}
 
 double mvgammaln(const double a, const int p) {
     double val = 0.25*log_pi*p*(p-1);

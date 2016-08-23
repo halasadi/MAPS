@@ -279,15 +279,15 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
     //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-        proposal.newdf = newdf;
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    newdf);
-        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+            proposal.newdf = newdf;
+            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                        newdf);
+            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+        }
     }
-    //}
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
