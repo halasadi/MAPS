@@ -58,9 +58,6 @@ int main(int argc, char** argv)
         
         Proposal proposal;
         
-        cout << params << endl;
-        
-        
         while (!mcmc.finished) {
             
             switch ( eems2.choose_move_type( ) ) {
@@ -109,6 +106,7 @@ int main(int argc, char** argv)
             if (iter>=0) {
                 eems2.print_iteration(mcmc);
                 eems2.save_iteration(mcmc);
+                eems2.writePopSizes();
                 //eems2.printMigrationAndCoalescenceRates();
             }
         }

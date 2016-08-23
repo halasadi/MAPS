@@ -3,7 +3,6 @@
 #include "util.hpp"
 #include "mcmc.hpp"
 #include "draw.hpp"
-//#include "<omp.h>"
 
 #include "graph.hpp"
 #include "habitat.hpp"
@@ -33,6 +32,7 @@ struct Proposal {
     double newdf; // degrees of freedom
     double newpi; // log prior
     double newll; // log likelihood
+    //double newsigma2; // variance scale
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
@@ -43,7 +43,6 @@ struct Proposal {
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
 };
-
 
 class EEMS2 {
 public:
@@ -75,9 +74,12 @@ public:
     double eval_birthdeath_mVoronoi(Proposal &proposal) const;
     
     // Gibbs updates:
+    // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0
+    //void update_sigma2( );
     void update_hyperparams( );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal, const MCMC &mcmc);
+    void propose_df(Proposal &proposal,const MCMC &mcmc);
+    //void propose_sigma2(Proposal &proposal);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
     void propose_overall_mrate(Proposal &proposal);
@@ -102,6 +104,7 @@ public:
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
+
     
 private:
     
@@ -154,7 +157,6 @@ private:
     
     void initialize_sims();
     void randpoint_in_habitat(MatrixXd &Seeds);
-    //void rnorm_effects(const double lowerBnd, const double upperBnd, const double rateS2, VectorXd &Effcts);
     void rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts);
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,

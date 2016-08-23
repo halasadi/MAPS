@@ -27,7 +27,6 @@ public:
     int rnegbin(const int r, const double p);
     int runif_int(const int min, const int max);
     double rnorm(const double mu, const double var);
-    //double rtrnorm(const double mu, const double var, const double lowerBnd, const double upperBnd);
     double rtrnorm(const double mu, const double var, const double bnd);
     double rinvgam(const double shape, const double scale);
     

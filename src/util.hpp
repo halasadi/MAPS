@@ -64,7 +64,7 @@ public:
     double dfmin, dfmax, qVoronoiPr;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
-    int nDemes, nIndiv, mnegBiSize, qnegBiSize, nthreads;
+    int nDemes, nIndiv, mnegBiSize, qnegBiSize;
     string distance;
 };
 
@@ -87,8 +87,6 @@ double dnegbinln(const int k, const int size, const double prob);
 double dinvgamln(const double x, const double shape, const double scale);
 double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma);
 double dtrnormln(const double x, const double mu, const double sigma2, const double bnd);
-
-//double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd);
 
 VectorXd slice(const VectorXd &A, const VectorXi &I);
 MatrixXd slice(const MatrixXd &A, const VectorXi &R, const VectorXi &C);

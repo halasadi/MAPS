@@ -72,14 +72,6 @@ void EEMS2::initialize_sims( ) {
     // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
     
-    
-    // DELETE COMMENT: Only haploid
-    /*int nchr = 1;
-     if (params.diploid){
-     nchr = 2;
-     }
-     */
-    
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
@@ -175,7 +167,6 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
-
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
     
@@ -193,7 +184,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmcpilogl = MatrixXd::Zero(niters,2);
     mcmcmtiles = VectorXd::Zero(niters);
     mcmcqtiles = VectorXd::Zero(niters);
-    //mcmcthetas = VectorXd::Zero(niters);
+    mcmcthetas = VectorXd::Zero(niters);
     mcmcmRates.clear();
     mcmcqRates.clear();
     mcmcxCoord.clear();
@@ -288,15 +279,15 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
     //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-    if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-        proposal.newdf = newdf;
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                    newdf);
-        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+            proposal.newdf = newdf;
+            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
+                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                        newdf);
+            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+        }
     }
-    //}
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
@@ -431,14 +422,11 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         // The new tile is assigned a rate by perturbing the current rate at the new seed
         double nowqEffct = nowqEffcts(r);
         double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-        
-        //double newqEffct = draw.rtrnorm(nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         insertRow(proposal.newqSeeds,newqSeed.row(0));
         insertElem(proposal.newqEffcts,newqEffct);
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
         - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-        //- dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
@@ -456,9 +444,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         double oldqEffct = nowqEffcts(qtileToRemove);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
-        //+ dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctLowerBound, params.qEffctUpperBound);
         + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
-        
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
@@ -484,12 +470,12 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
         double nowmEffct = nowmEffcts(r);
         double newmEffct = draw.rtrnorm(nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-        
         insertRow(proposal.newmSeeds,newmSeed.row(0));
         insertElem(proposal.newmEffcts,newmEffct);
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
         - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
+        
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                                     nowdf)
@@ -507,7 +493,6 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
         + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
-        
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
@@ -601,7 +586,7 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
 void EEMS2::print_iteration(const MCMC &mcmc) const {
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and effective degrees of freedom = " << pow(10, nowdf) << setprecision(4) << endl
+    << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
     << "          Log prior = " << nowpi << setprecision(4) << endl
@@ -617,7 +602,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcpilogl(iter,1) = nowll;
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
-    //mcmcthetas(iter) = nowdf;
+    mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
     }
@@ -685,9 +670,11 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << nowqSeeds << endl;
     out.close( );
+    
     return(error);
 }
 bool EEMS2::output_results(const MCMC &mcmc) const {
+    
     ofstream out; bool error = false;
     MatrixXd oDemes = MatrixXd::Zero(o,3);
     oDemes << graph.get_the_obsrv_demes(),cvec;
@@ -712,10 +699,10 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcmtiles << endl;
     out.close( );
-    //out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
-    //if (!out.is_open()) { return false; }
-    //out << fixed << setprecision(14) << mcmcthetas << endl;
-    //out.close( );
+    out.open((params.mcmcpath + "/mcmcthetas.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { return false; }
+    out << fixed << setprecision(14) << mcmcthetas << endl;
+    out.close( );
     out.open((params.mcmcpath + "/mcmcqhyper.txt").c_str(),ofstream::out);
     if (!out.is_open()) { return false; }
     out << fixed << setprecision(14) << mcmcqhyper << endl;
@@ -759,7 +746,6 @@ void EEMS2::check_ll_computation( ) const {
         exit(1);
     }
 }
-
 double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                          const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                          const double df) const {
@@ -778,12 +764,9 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     
     if (qEffcts.cwiseAbs().minCoeff()>params.qEffctHalfInterval) { inrange = false; }
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
-    if (mrateMu>params.mrateMuUpperBound || mrateMu < params.mrateMuLowerBound) { inrange = false; }
+    if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
-    
-    
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
-    
     if (!inrange) { return (-Inf); }
     
     double logpi =
@@ -793,19 +776,15 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {
         logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
-        
     }
     for (int i = 0 ; i < mtiles ; i++) {
         logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
-        
     }
     return (logpi);
 }
 
-
 void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
     
-    // store 50 weights and 50 abissca
     // weights for the gaussian quadrature
     VectorXd weights(50);
     // abisca for the gaussian quadrature
@@ -813,6 +792,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     getWeights(weights, x);
     
+    // change of variable ("u substitution")
     weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
     x = x/(2*bnd/100);
     
@@ -823,7 +803,6 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
-        // exponentiate the matrix
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
         coalp = P * q.asDiagonal() * P.transpose();
         integral += coalp*weights(t);
@@ -852,7 +831,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
         q(alpha) = pow(10.0,log10q_alpha);
     }
-    
+
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
@@ -931,6 +910,24 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
      */
     double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
     return (q_alpha);
+}
+
+// this is a test function
+void EEMS2::writePopSizes() const{
+    ofstream out;
+    VectorXi mColors, qColors;
+    graph.index_closest_to_deme(nowqSeeds,qColors);
+    graph.index_closest_to_deme(nowmSeeds,mColors);
+    VectorXd q = VectorXd::Zero(d);
+    for ( int alpha = 0 ; alpha < d ; alpha++ ) {
+        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu;
+        q(alpha) = pow(10.0,log10q_alpha);
+    }
+    
+    out.open((params.mcmcpath + "/coalescentrates.txt").c_str(), ios::out | ios::app);
+    out << fixed << setprecision(14) << q.transpose() << endl;
+    out.close( );
+    
 }
 
 void EEMS2::printMigrationAndCoalescenceRates( ) const {

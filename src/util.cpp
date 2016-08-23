@@ -38,16 +38,15 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
-        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
-        //("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
-        ("nthreads", po::value<int>(&nthreads)->default_value(1), "nthreads");
+        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
+        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
         po::store(po::parse_config_file(instrm,eems_options,true),vm);
         po::notify(vm);
         instrm.close();
     } catch(exception& e) {
-        cerr << "[MAPS::Params] Error parsing input parameters in " << params_file << ": " << endl;
+        cerr << "[EEMS::Params] Error parsing input parameters in " << params_file << ": " << endl;
         cerr << e.what() << endl; exit(1);
     }
     mrateShape_2 /= 2.0;
@@ -55,23 +54,25 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     
-    dfmin = -10;
     dfmax = 10;
     testing = false;
     
     
     
-    // Remember, rates are paramterized on the log scale
-    mrateMuUpperBound = 10;
-    qrateMuUpperBound = 10;
+    // let's assume a maximum population size of 2N = 500
+    // and maximum migration rate of m = 0.1. Remember, rates are paramterized on the log scale
+    mrateMuUpperBound = -0.301; // log10(0.5)
+    qrateMuUpperBound = -2.3; // log10(0.005)
+    
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
-    mEffctHalfInterval = 1;
-    qEffctHalfInterval = 1;
     
+    // Ensure that mrateMuUpperBound + mEffectHalfInterval <= 0 so rates are between 0 and 1.
+    mEffctHalfInterval = 0.301;
+    qEffctHalfInterval = 2.0;
 }
 ostream& operator<<(ostream& out, const Params& params) {
-    out << "           datapath = " << params.datapath << endl
+    out << "               datapath = " << params.datapath << endl
     << "               mcmcpath = " << params.mcmcpath << endl
     << "               prevpath = " << params.prevpath << endl
     << "               gridpath = " << params.gridpath << endl
@@ -99,9 +100,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
-    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
-    //<< "                  dfmin = " << params.dfmin << endl
-    << "               nthreads = " << params.nthreads << endl;
+    << "                  dfmin = " << params.dfmin << endl
+    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
@@ -419,19 +419,6 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
  */
-
-/*
- double dtrnormln(const double x, const double mu, const double sigma2, const double lowerBnd, const double upperBnd) {
- double pln = -Inf;
- if ( (sigma2>0) && (x>=lowerBnd) && (x<=upperBnd) ) {
- boost::math::normal pnorm(mu,sqrt(sigma2));
- pln = - 0.5 * log(sigma2) - 0.5 * (x-mu) * (x-mu) / sigma2
- - log(cdf(pnorm,upperBnd) - cdf(pnorm,lowerBnd));
- }
- return (pln);
- }
- */
-
 double dtrnormln(const double x, const double mu, const double sigma2, const double bnd) {
     double pln = -Inf;
     if ( (sigma2>0) && (x>=-bnd) && (x<=bnd) ) {
@@ -441,7 +428,6 @@ double dtrnormln(const double x, const double mu, const double sigma2, const dou
     }
     return (pln);
 }
-
 VectorXd slice(const VectorXd &A, const VectorXi &I) {
     int elems = I.size();
     VectorXd B(elems);
