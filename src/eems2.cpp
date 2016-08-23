@@ -98,7 +98,14 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
-    nowdf = 2;
+    
+    // if default
+    if (params.dfmin <= -10){
+        nowdf = 2;
+    // else not default
+    } else{
+        nowdf = params.dfmin;
+    }
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -232,12 +239,22 @@ MoveType EEMS2::choose_move_type( ) {
             move = M_VORONOI_RATE_UPDATE;
         }
     } else {
-        if (u2 < 0.333) {
-            move = M_MEAN_RATE_UPDATE;
-        } else if (u2 < 0.6666) {
-            move = Q_MEAN_RATE_UPDATE;
+        // if the params.dfmin is the default then allow df updates
+        if (params.dfmin <= -10){
+            if (u2 < 0.333) {
+                move = M_MEAN_RATE_UPDATE;
+            } else if (u2 < 0.6666) {
+                move = Q_MEAN_RATE_UPDATE;
+            } else{
+                move = DF_UPDATE;
+            }
+        // else do not allow df updates
         } else{
-            move = DF_UPDATE;
+            if (u2 < 0.5){
+                move = M_MEAN_RATE_UPDATE;
+            } else{
+                move = Q_MEAN_RATE_UPDATE;
+            }
         }
     }
     return(move);
@@ -275,9 +292,6 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     // Keep df = nIndiv for the first mcmc.numBurnIter/2 iterations
-    // This should make it easier to move in the parameter space
-    // since the likelihood is proportional to 0.5 * pdf * ll_atfixdf
-    //if (mcmc.currIter > (mcmc.numBurnIter/2)) {
     double newdf = draw.rnorm(nowdf,params.dfProposalS2);
     if (mcmc.currIter > (mcmc.numBurnIter/2)) {
         if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {

@@ -61,7 +61,7 @@ public:
     double mrateShape_2, mrateScale_2;
     double qrateShape_2, qrateScale_2;
     double dfProposalS2, mnegBiProb, qnegBiProb;
-    double dfmin, dfmax, qVoronoiPr;
+    double dfmin, dfmax, qVoronoiPr, ofix;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, mnegBiSize, qnegBiSize;
