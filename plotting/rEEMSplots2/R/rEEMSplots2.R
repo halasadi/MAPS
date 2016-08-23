@@ -30,7 +30,7 @@ sub.axes.labels <- function() {
     mainTRUE = "There should be at least two observed demes to plot pairwise dissimilarities")
     Between <- list(
     xlab = expression(paste("Fitted similarity between demes:   ",
-    Delta[alpha * beta], " - (", S[alpha*alpha], "+", S[beta * beta], ") / 2")),
+    S[alpha * beta], " - (", S[alpha*alpha], "+", S[beta * beta], ") / 2")),
     ylab = expression(paste("Observed similarity between demes:   ",
     Sobs[alpha * beta], " - (", Sobs[alpha * alpha], "+", Sobs[beta * beta], ") / 2")),
     mainTRUE = expression(paste("Similarities between pairs of sampled demes (", alpha , ", ", beta, ")")),

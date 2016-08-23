@@ -59,17 +59,14 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     
-    // let's assume a maximum population size of 2N = 500
-    // and maximum migration rate of m = 0.1. Remember, rates are paramterized on the log scale
-    mrateMuUpperBound = -0.301; // log10(0.5)
-    qrateMuUpperBound = -2.3; // log10(0.005)
-    
+    mrateMuUpperBound = 10; 
+    qrateMuUpperBound =  1;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
-    // Ensure that mrateMuUpperBound + mEffectHalfInterval <= 0 so rates are between 0 and 1.
-    mEffctHalfInterval = 0.301;
-    qEffctHalfInterval = 2.0;
+    
+    mEffctHalfInterval = 2.0;
+    qEffctHalfInterval = 1.0;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
