@@ -43,7 +43,7 @@ As mentioned above, the parameters in MAPs are nearly identical. The differences
 
 * `qrateMuProposalS2` (optional, acts in the same was as in mrateMuProposalS2 except for the coalescent rates)
 
-* `mindf` (optional, if the MAPs plots look blockly, it sometimes helpful to put a lower bound on the overdispersion parameter in the negative-binomial. This in effect tempers the likelihood, and allows the mcmc to move around more freely)
+* `dfmin` (optional, if the MAPs plots look blockly, it sometimes helpful to put a lower bound on the overdispersion parameter in the negative-binomial. This in effect tempers the likelihood, and allows the mcmc to move around more freely)
 
 ```
 ./runeems2 --params params.ini --seed 123
