@@ -38,7 +38,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
-        ("ofix", po::value<double>(&ofix)->default_value(-10), "ofix")
+        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -55,7 +55,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateScale_2 /= 2.0;
     
     dfmax = 10;
-    dfmin = ofix;
     testing = false;
     
     
@@ -98,7 +97,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
-    << "                   ofix = " << params.ofix << endl
+    << "                  dfmin = " << params.dfmin << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
