@@ -126,7 +126,7 @@ is.color <- function(x) {
     ## grepl("^#[0-9A-F]{6}$", x)
     sapply(x, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) })
 }
-set.colscale <- function(x) {
+set.colscale <- function(colscale) {
     if ( is.numeric(colscale) ) {
         minx <- min(colscale)
         maxx <- max(colscale)

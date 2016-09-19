@@ -1,4 +1,4 @@
-ndiploids = 200
+ndiploids = 480
 
 toIndex = matrix(nrow=ndiploids, ncol = 2, 0)
 cnt = 1
@@ -33,15 +33,15 @@ readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/4x5/test/"
+workingDir <- "/Users/halasadi/eems2/test/data/12x8/mixed/"
 nchr = 20
 lowerCutOff = 4e6
 upperCutoff = Inf
 nhaploids = ndiploids*2
-ibdM = readIBD(paste0(workingDir, "test_mt_300_nsamp_20_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+ibdM = readIBD(paste0(workingDir, "mixed_mt300_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 
 for (i in 2:nchr){
   print(paste0("on chr: ", i))
-  ibdM = ibdM + readIBD(paste0(workingDir, "test_mt_300_nsamp_20_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+  ibdM = ibdM + readIBD(paste0(workingDir, "mixed_mt300_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 }
 write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)

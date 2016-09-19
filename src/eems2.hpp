@@ -104,6 +104,7 @@ public:
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
     void writePopSizes() const;
+    void writemrates() const;
 
     
 private:

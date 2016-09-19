@@ -106,7 +106,10 @@ int main(int argc, char** argv)
             if (iter>=0) {
                 eems2.print_iteration(mcmc);
                 eems2.save_iteration(mcmc);
+                
+                // remember that these don't over-write the files!!!
                 eems2.writePopSizes();
+                eems2.writemrates();
                 //eems2.printMigrationAndCoalescenceRates();
             }
         }

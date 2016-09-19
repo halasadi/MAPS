@@ -8,14 +8,14 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-plotpath <- 'data/popres/plot'
-mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
+#plotpath <- 'data/popres/plot'
+#mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/4x5/recent_barrier/eems_8_Inf_plot'
-#mcmcpath <- 'data/4x5/recent_barrier/eems_8_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/4x5/heter_popsizes/eems_4_Inf_plot'
-#mcmcpath <- 'data/4x5/heter_popsizes/eems_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/recent_barrier/eems_2_6_plot'
+mcmcpath <- 'data/4x5/recent_barrier/eems_2_6' 
+#plotpath <- 'data/4x5/unevensample_heter_popsizes/eems_4_Inf_plot'
+#mcmcpath <- 'data/4x5/unevensample_heter_popsizes/eems_4_Inf' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_6_plot'
 #mcmcpath <- 'data/4x5/past_barrier/eems_2_6-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/high_migration/plot'
@@ -25,12 +25,12 @@ mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim'
 
 
 # FALSE FOR POPRES
-longlat <- FALSE
+longlat <- TRUE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.map=TRUE, add.demes = TRUE,
-                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=1, col.grid="black",
+                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=0.4, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
                                                      add.abline=TRUE,
                                                      plot.height=8, plot.width=14,
-                                                     projection.in = "+proj=longlat +datum=WGS84"))
+                                                     projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE))

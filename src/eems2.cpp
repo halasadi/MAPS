@@ -932,6 +932,29 @@ void EEMS2::writePopSizes() const{
     
 }
 
+void EEMS2::writemrates() const{
+    ofstream out;
+    VectorXi mColors;
+    graph.index_closest_to_deme(nowmSeeds,mColors);
+    
+    VectorXd M = VectorXd::Zero(d);
+    int alpha, beta;
+    // Transform the log10 migration parameters into migration rates on the original scale
+    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
+        graph.get_edge(edge,alpha,beta);
+        double log10m_alpha = nowmEffcts(mColors(alpha)) + nowmrateMu;
+        double log10m_beta = nowmEffcts(mColors(beta)) + nowmrateMu;
+        M(alpha) = pow(10.0,log10m_alpha);
+        M(beta) = pow(10.0,log10m_beta);
+    }
+    
+    out.open((params.mcmcpath + "/mrates.txt").c_str(), ios::out | ios::app);
+    out << fixed << setprecision(14) << M.transpose() << endl;
+    out.close( );
+    
+}
+
+
 void EEMS2::printMigrationAndCoalescenceRates( ) const {
     
     int nDemes = graph.get_num_total_demes();
