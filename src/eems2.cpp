@@ -914,24 +914,6 @@ double EEMS2::getCoalescenceRate(const int alpha) const {
     return (q_alpha);
 }
 
-// this is a test function
-void EEMS2::writePopSizes() const{
-    ofstream out;
-    VectorXi mColors, qColors;
-    graph.index_closest_to_deme(nowqSeeds,qColors);
-    graph.index_closest_to_deme(nowmSeeds,mColors);
-    VectorXd q = VectorXd::Zero(d);
-    for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu;
-        q(alpha) = pow(10.0,log10q_alpha);
-    }
-    
-    out.open((params.mcmcpath + "/coalescentrates.txt").c_str(), ios::out | ios::app);
-    out << fixed << setprecision(14) << q.transpose() << endl;
-    out.close( );
-    
-}
-
 void EEMS2::printMigrationAndCoalescenceRates( ) const {
     
     int nDemes = graph.get_num_total_demes();

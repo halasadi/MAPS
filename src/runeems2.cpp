@@ -106,7 +106,6 @@ int main(int argc, char** argv)
             if (iter>=0) {
                 eems2.print_iteration(mcmc);
                 eems2.save_iteration(mcmc);
-                eems2.writePopSizes();
                 //eems2.printMigrationAndCoalescenceRates();
             }
         }
