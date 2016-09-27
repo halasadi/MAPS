@@ -1,13 +1,16 @@
 
 #include "mcmc.hpp"
 
-MCMC::MCMC(const Params &params) {
+MCMC::MCMC(const Params &params, vector<double> temperatures_in) {
     numMCMCIter = params.numMCMCIter;
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
     currIter = 0;
-    numTypes = 9;
+    numTypes = 10;
     finished = false;
+    temperatures = temperatures_in;
+    nChains = temperatures.size();
+    chain_no = nChains-1;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
 }
@@ -16,14 +19,46 @@ int MCMC::num_iters_to_save( ) const {
     int a = (numMCMCIter - numBurnIter) / (numThinIter + 1);
     return (a);
 }
-int MCMC::to_save_iteration( ) const {
-    if (currIter>numBurnIter) {
+int MCMC::to_write_iteration( ) const {
+    if (currIter>numBurnIter & temperatures[chain_no] == 1) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }
     }
     return (-1);
 }
+
+
+bool MCMC::to_print_iteration( ) const {
+    if ((currIter % 1000) == 0){
+        return(true);
+    } else{
+        return(false);
+    }
+}
+
+int MCMC::to_save_iteration( ) const {
+    if (currIter > (numBurnIter/2)){
+        return(1);
+    }
+    return(-1);
+}
+
+void MCMC::restart(const Params &params, int chain_in){
+    chain_no = chain_in;
+    if (temperatures[chain_no] == 1){
+        numMCMCIter = params.numMCMCIter;
+    } else{
+        numMCMCIter = numBurnIter;
+    }
+    currIter = 0;
+    finished = false;
+    okayMoves.clear();
+    okayMoves = vector<double>(numTypes,0);
+    totalMoves.clear();
+    totalMoves = vector<double>(numTypes,0);
+}
+
 ostream& operator<<(ostream& out, const MCMC& mcmc) {
     for ( int i = 0 ; i < mcmc.numTypes ; i++ ) {
         double a = mcmc.okayMoves.at(i);
@@ -56,6 +91,9 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 break;
             case DF_UPDATE:
                 out << "\"d.f.\"" << endl;
+                break;
+            case CHAIN_SWAP:
+                out << "\"chainSwap\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

@@ -42,6 +42,9 @@ struct Proposal {
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
     MatrixXd newmSeeds;  // the location of each m tile within the habitat
     
+    double newmrateS2;
+    double newqrateS2;
+    
 };
 
 class EEMS2 {
@@ -77,6 +80,7 @@ public:
     // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0
     //void update_sigma2( );
     void update_hyperparams( );
+    void propose_chain_swap(Proposal &proposal, const MCMC &mcmc);
     // Random-walk Metropolis-Hastings proposals:
     void propose_df(Proposal &proposal,const MCMC &mcmc);
     //void propose_sigma2(Proposal &proposal);
@@ -88,7 +92,7 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal);
+    bool accept_proposal(Proposal &proposal, const MCMC &mcmc);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);
@@ -103,6 +107,11 @@ public:
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
+    vector<Proposal> prev_stored_accepted_proposals;
+    vector<Proposal> now_stored_accepted_proposals;
+    void get_state(Proposal &proposal) const;
+    bool accept_swap(Proposal &proposal, const MCMC &mcmc);
+    
 
     
 private:

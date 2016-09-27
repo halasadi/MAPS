@@ -6,6 +6,45 @@
 // Choose 'euclidean' (the default) or 'greatcirc' (great circle distance)
 string dist_metric;
 
+void proposeMove(EEMS2 &eems2, Proposal &proposal, MCMC &mcmc){
+    switch ( eems2.choose_move_type() ) {
+        case Q_VORONOI_BIRTH_DEATH:
+            eems2.propose_birthdeath_qVoronoi(proposal);
+            break;
+        case M_VORONOI_BIRTH_DEATH:
+            eems2.propose_birthdeath_mVoronoi(proposal);
+            break;
+        case Q_VORONOI_POINT_MOVE:
+            eems2.propose_move_one_qtile(proposal);
+            break;
+        case M_VORONOI_POINT_MOVE:
+            eems2.propose_move_one_mtile(proposal);
+            break;
+        case Q_VORONOI_RATE_UPDATE:
+            eems2.propose_rate_one_qtile(proposal);
+            break;
+        case M_VORONOI_RATE_UPDATE:
+            eems2.propose_rate_one_mtile(proposal);
+            break;
+        case M_MEAN_RATE_UPDATE:
+            eems2.propose_overall_mrate(proposal);
+            break;
+        case Q_MEAN_RATE_UPDATE:
+            eems2.propose_overall_qrate(proposal);
+            break;
+        case DF_UPDATE:
+            eems2.propose_df(proposal, mcmc);
+            break;
+        case CHAIN_SWAP:
+            eems2.propose_chain_swap(proposal, mcmc);
+            break;
+        default:
+            cerr << "[RunEEMS2] Unknown move type" << endl;
+            exit(EXIT_FAILURE);
+    }
+    
+}
+
 int main(int argc, char** argv)
 {
     try {
@@ -37,8 +76,14 @@ int main(int argc, char** argv)
         // Specify the distance metric in the params.ini file
         dist_metric = params.distance;
         
+        
+        int nChains = 1;
+        // 2 1 from hottest to coldest
+        vector<double> temperatures;
+        //temperatures.push_back(2);
+        temperatures.push_back(1);
         EEMS2 eems2(params);
-        MCMC mcmc(params);
+        MCMC mcmc(params, temperatures);
         
         
         boost::filesystem::path dir(eems2.prevpath().c_str());
@@ -56,59 +101,47 @@ int main(int argc, char** argv)
             return(EXIT_FAILURE);
         }
         
+        
         Proposal proposal;
         
-        while (!mcmc.finished) {
+        for (int chain = 0; chain < nChains; chain++){
+            mcmc.restart(params, chain);
+            eems2.prev_stored_accepted_proposals.swap(eems2.now_stored_accepted_proposals);
+            eems2.now_stored_accepted_proposals.clear();
             
-            switch ( eems2.choose_move_type( ) ) {
-                case Q_VORONOI_BIRTH_DEATH:
-                    eems2.propose_birthdeath_qVoronoi(proposal);
-                    break;
-                case M_VORONOI_BIRTH_DEATH:
-                    eems2.propose_birthdeath_mVoronoi(proposal);
-                    break;
-                case Q_VORONOI_POINT_MOVE:
-                    eems2.propose_move_one_qtile(proposal);
-                    break;
-                case M_VORONOI_POINT_MOVE:
-                    eems2.propose_move_one_mtile(proposal);
-                    break;
-                case Q_VORONOI_RATE_UPDATE:
-                    eems2.propose_rate_one_qtile(proposal);
-                    break;
-                case M_VORONOI_RATE_UPDATE:
-                    eems2.propose_rate_one_mtile(proposal);
-                    break;
-                case M_MEAN_RATE_UPDATE:
-                    eems2.propose_overall_mrate(proposal);
-                    break;
-                case Q_MEAN_RATE_UPDATE:
-                    eems2.propose_overall_qrate(proposal);
-                    break;
-                case DF_UPDATE:
-                    eems2.propose_df(proposal,mcmc);
-                    break;
-                default:
-                    cerr << "[RunEEMS2] Unknown move type" << endl;
-                    return(EXIT_FAILURE);
+            while (!mcmc.finished) {
+                proposeMove(eems2, proposal, mcmc);
+                mcmc.add_to_total_moves(proposal.move);
+
+                if (eems2.accept_proposal(proposal, mcmc)) { mcmc.add_to_okay_moves(proposal.move); }
+                if (params.testing) { eems2.check_ll_computation( ); }
+                
+                eems2.update_hyperparams( );
+                mcmc.end_iteration( );
+                
+                // Check whether to save the current parameter state,
+                // as the thinned out iterations are not saved
+                if (mcmc.to_write_iteration( )>=0) {
+                    eems2.save_iteration(mcmc);
+                }
+                
+                if (mcmc.to_print_iteration( )) {
+                    eems2.print_iteration(mcmc);
+                }
+                
+                if (mcmc.to_save_iteration( ) >= 0) {
+                    Proposal state;
+                    eems2.get_state(state);
+                    eems2.now_stored_accepted_proposals.push_back(state);
+                }
             }
             
-            mcmc.add_to_total_moves(proposal.move);
-            if (eems2.accept_proposal(proposal)) { mcmc.add_to_okay_moves(proposal.move); }
-            if (params.testing) { eems2.check_ll_computation( ); }
+            cout << "Ending MCMC chain with temperature " << temperatures[chain] << " with acceptance proportions: " << endl;
+            cout << mcmc << endl;
+            eems2.prev_stored_accepted_proposals.clear();
             
-            eems2.update_hyperparams( );
-            mcmc.end_iteration( );
-            
-            // Check whether to save the current parameter state,
-            // as the thinned out iterations are not saved
-            int iter = mcmc.to_save_iteration( );
-            if (iter>=0) {
-                eems2.print_iteration(mcmc);
-                eems2.save_iteration(mcmc);
-                //eems2.printMigrationAndCoalescenceRates();
-            }
         }
+     
         error = eems2.output_results(mcmc);
         if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
         
