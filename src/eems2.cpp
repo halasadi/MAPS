@@ -588,6 +588,7 @@ bool EEMS2::accept_swap(Proposal &proposal, const MCMC &mcmc){
     double hot_temp = mcmc.temperatures[(mcmc.chain_no-1)];
     
     double loga = ((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll);
+    //double a = exp(((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll));
     double u = draw.runif();
     if (log(u) < min(0.0,loga)){
         nowqtiles = proposal.newqtiles;
@@ -607,6 +608,10 @@ bool EEMS2::accept_swap(Proposal &proposal, const MCMC &mcmc){
         graph.index_closest_to_deme(nowqSeeds,nowqColors);
         graph.index_closest_to_deme(nowmSeeds,nowmColors);
         return true;
+    } else{
+        proposal.newpi = nowpi;
+        proposal.newll = nowll;
+        return(false);
     }
     
 }
@@ -693,8 +698,8 @@ void EEMS2::print_iteration(const MCMC &mcmc) const {
     << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
-    << "          Log prior = " << nowpi << setprecision(4) << endl
-    << "          Log llike = " << nowll << setprecision(4) << endl;
+    << "          Log prior = " << nowpi << setprecision(12) << endl
+    << "          Log llike = " << nowll << setprecision(12) << endl;
 }
 void EEMS2::save_iteration(const MCMC &mcmc) {
     int iter = mcmc.to_write_iteration( );

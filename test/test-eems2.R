@@ -4,12 +4,12 @@
 library(rEEMSplots2)
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-plotpath <- 'data/4x5/recent_barrier/eems_6_Inf_plot'
-mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
+#plotpath <- 'data/4x5/recent_barrier/eems_6_Inf_plot'
+#mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
 #plotpath <- 'data/4x5/uniform/plot'
 #mcmcpath <- 'data/4x5/uniform/eems_4_Inf-EEMS2-test-sim' 
-#plotpath <- 'data/popres/plot'
-#mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
+plotpath <- 'data/popres/plot'
+mcmcpath <- 'data/popres/popressard_4_Inf-EEMS2-test-sim' 
 #mcmcpath <- 'data/12x8/mixed/eems_4_Inf'
 #plotpath <- 'data/12x8/mixed/plot'
 #plotpath <- 'data/12x8/uniform/plot'
@@ -27,11 +27,11 @@ mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
 
 
 # FALSE FOR POPRES
-longlat <- TRUE
+longlat <- FALSE
 
 mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
-                                                     add.map=FALSE, add.demes = TRUE,
-                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=1, col.grid="black",
+                                                     add.map=TRUE, add.demes = TRUE,
+                                                     add.grid=TRUE, add.outline=FALSE, lwd.grid=0.1, col.grid="black",
                                                      lwd.map=2, col.map = "black", 
                                                      add.abline=TRUE,
                                                      plot.height=8, plot.width=14,

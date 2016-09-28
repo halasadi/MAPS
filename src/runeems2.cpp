@@ -77,11 +77,15 @@ int main(int argc, char** argv)
         dist_metric = params.distance;
         
         
-        int nChains = 1;
-        // 2 1 from hottest to coldest
+        // from hottest to coldest
         vector<double> temperatures;
-        //temperatures.push_back(2);
+        temperatures.push_back(2);
+	temperatures.push_back(1.75);
+	temperatures.push_back(1.25);
+	temperatures.push_back(1.125);
+	temperatures.push_back(1.05);
         temperatures.push_back(1);
+	int nChains = temperatures.size();
         EEMS2 eems2(params);
         MCMC mcmc(params, temperatures);
         
