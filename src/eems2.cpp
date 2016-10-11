@@ -588,6 +588,7 @@ bool EEMS2::accept_swap(Proposal &proposal, const MCMC &mcmc){
     double hot_temp = mcmc.temperatures[(mcmc.chain_no-1)];
     
     double loga = ((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll);
+
     //double a = exp(((1/cold_temp) - (1/hot_temp)) * (proposal.newll - nowll));
     double u = draw.runif();
     if (log(u) < min(0.0,loga)){
@@ -614,6 +615,27 @@ bool EEMS2::accept_swap(Proposal &proposal, const MCMC &mcmc){
         return(false);
     }
     
+}
+
+
+void EEMS2::savelogl(int chain_no) {
+    logls.push_back(nowll);
+    chains.push_back(chain_no);
+    
+}
+
+
+void EEMS2::writelogl( ) const{
+    
+    ofstream out;
+    out.open((params.mcmcpath + "/logl.txt").c_str(),ofstream::out);
+    copy(logls.begin(), logls.end(), ostream_iterator<double>(out , ", "));
+    out.close();
+
+
+    out.open((params.mcmcpath + "/chains.txt").c_str(),ofstream::out);
+    copy(chains.begin(), chains.end(), ostream_iterator<int>(out , ", "));
+    out.close();
 }
 
 

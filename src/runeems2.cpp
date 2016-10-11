@@ -79,13 +79,20 @@ int main(int argc, char** argv)
         
         // from hottest to coldest
         vector<double> temperatures;
-        temperatures.push_back(2);
-	temperatures.push_back(1.75);
-	temperatures.push_back(1.25);
-	temperatures.push_back(1.125);
-	temperatures.push_back(1.05);
+        temperatures.push_back(1000);
+        temperatures.push_back(500);
+        temperatures.push_back(250);
+        temperatures.push_back(125);
+        temperatures.push_back(50);
+        temperatures.push_back(25);
+        temperatures.push_back(15);
+        temperatures.push_back(10);
+        temperatures.push_back(5);
+	temperatures.push_back(3.5);
+        temperatures.push_back(2.5);
+        temperatures.push_back(1.5);
         temperatures.push_back(1);
-	int nChains = temperatures.size();
+        int nChains = temperatures.size();
         EEMS2 eems2(params);
         MCMC mcmc(params, temperatures);
         
@@ -110,6 +117,9 @@ int main(int argc, char** argv)
         
         for (int chain = 0; chain < nChains; chain++){
             mcmc.restart(params, chain);
+            // should not affect anything
+            eems2.prev_stored_accepted_proposals.clear();
+            
             eems2.prev_stored_accepted_proposals.swap(eems2.now_stored_accepted_proposals);
             eems2.now_stored_accepted_proposals.clear();
             
@@ -130,6 +140,7 @@ int main(int argc, char** argv)
                 }
                 
                 if (mcmc.to_print_iteration( )) {
+                    eems2.savelogl(chain);
                     eems2.print_iteration(mcmc);
                 }
                 
@@ -146,6 +157,7 @@ int main(int argc, char** argv)
             
         }
      
+        eems2.writelogl();
         error = eems2.output_results(mcmc);
         if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
         

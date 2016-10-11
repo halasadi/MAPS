@@ -10,7 +10,8 @@ MCMC::MCMC(const Params &params, vector<double> temperatures_in) {
     finished = false;
     temperatures = temperatures_in;
     nChains = temperatures.size();
-    chain_no = nChains-1;
+    // 0 based
+    chain_no = 0;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
 }
@@ -20,7 +21,7 @@ int MCMC::num_iters_to_save( ) const {
     return (a);
 }
 int MCMC::to_write_iteration( ) const {
-    if (currIter>numBurnIter & temperatures[chain_no] == 1) {
+    if (currIter>numBurnIter & chain_no == (nChains-1)) {
         int a = (currIter - numBurnIter) / (numThinIter + 1);
         int b = (currIter - numBurnIter) % (numThinIter + 1);
         if (b==0) { return (a-1); }
@@ -38,7 +39,7 @@ bool MCMC::to_print_iteration( ) const {
 }
 
 int MCMC::to_save_iteration( ) const {
-    if (currIter > (numBurnIter/2)){
+    if (currIter > numBurnIter){
         return(1);
     }
     return(-1);
@@ -46,11 +47,6 @@ int MCMC::to_save_iteration( ) const {
 
 void MCMC::restart(const Params &params, int chain_in){
     chain_no = chain_in;
-    if (temperatures[chain_no] == 1){
-        numMCMCIter = params.numMCMCIter;
-    } else{
-        numMCMCIter = numBurnIter;
-    }
     currIter = 0;
     finished = false;
     okayMoves.clear();

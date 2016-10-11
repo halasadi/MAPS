@@ -112,6 +112,11 @@ public:
     void get_state(Proposal &proposal) const;
     bool accept_swap(Proposal &proposal, const MCMC &mcmc);
     
+    
+    void savelogl(int chain_no);
+    void writelogl() const;
+    vector<int> chains;
+    vector<double> logls;
 
     
 private:
