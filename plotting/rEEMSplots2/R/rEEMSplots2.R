@@ -754,6 +754,24 @@ compute.eems.contours <- function(mcmcpath, dimns, longlat, plot.params) {
     raster.Nm <- list(means = means.Nm, prGTx = prGTx.Nm, prLTx = prLTx.Nm)
     return(list(raster.m = raster.m, raster.N = raster.N, raster.Nm = raster.Nm))
 }
+
+#plot.all.voronoi <- function(mcmcpath, dimns, longlat, plot.params, plot.type = "m"){
+#    writeLines('Plotting Voronoi tessellation of estimated effective rates')
+#    voronoi <- read.voronoi(mcmcpath, longlat, plot.type)
+#    rates <- voronoi$rates
+#    tiles <- voronoi$tiles
+#    xseed <- voronoi$xseed
+#    yseed <- voronoi$yseed
+#
+#    ## Choose one saved posterior draw at random
+#    niters <- length(tiles)
+#
+#    for (i in 1:niters){
+#
+#    }
+#}
+
+
 ## This function is mainly for testing purposes and will create on Voronoi diagram for each saved MCMC iteration
 voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params, post.draws = 1, plot.type = "m") {
     writeLines('Plotting Voronoi tessellation of estimated effective rates')
@@ -1507,7 +1525,7 @@ add.title = FALSE) {
     save.graphics(paste0(plotpath, '-mvoronoi'), save.params)
     par(las = 1, font.main = 1)
     for (draw in seq(post.draws)) {
-        ## Choose one output directory at random
+    #    ## Choose one output directory at random
         voronoi.diagram(sample(mcmcpath, 1),
         dimns, longlat, plot.params, post.draws = post.draws, plot.type = "m")
     }

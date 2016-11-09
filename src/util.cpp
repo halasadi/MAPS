@@ -214,34 +214,40 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi){
-    
-    double lamda;
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &phi, map<string, VectorXd> counts){
+    double lambda;
     int odemes = observedIBDCnt.rows();
-    int n_i;
+    int n;
     double ll = 0;
-    for (int i = 0; i < odemes; i++){
-        for (int j = i; j < odemes; j++){
+    VectorXd tmp;
+
+    double r;
+    for (int deme_a = 0; deme_a < odemes; deme_a++){
+        for (int deme_b = deme_a; deme_b < odemes; deme_b++){
             
-            if (i == j){
-                n_i = (cvec(i)*(cvec(i)-1))/2;
-            } else{
-                n_i = cvec(i)*cvec(j);
-            }
-            
-            if (expectedIBD(i,j) < 1e-8){
-                lamda = 1e-8;
+            if (deme_a == deme_b){
+                n = (cvec(deme_a)*(cvec(deme_a)-1))/2;
             } else {
-                lamda = expectedIBD(i,j);
+                n = cvec(deme_a)*cvec(deme_b);
             }
             
-            ll +=  (n_i/phi) * log(1.0/ (1.0 + lamda*phi)) + observedIBDCnt(i,j)*log( (phi * lamda) / (1.0 + phi * lamda));
+            if (expectedIBD(deme_a, deme_b) < 1e-8){
+                lambda = 1e-8;
+            } else{
+                lambda = expectedIBD(deme_a, deme_b);
+            }
+            
+            r=phi[deme_a]*phi[deme_b];
+            ll += n * r * log(1.0 / (1.0 + lambda/r)) + observedIBDCnt(deme_a, deme_b) * log(1.0 / (r/lambda + 1.0));
+            
+            string str = boost::lexical_cast<std::string>(deme_a) + "," + boost::lexical_cast<std::string>(deme_b);
+            tmp = counts[str];
+            for (int j = 1; j < tmp.size(); j++){
+                ll += tmp[j] * (lgamma(j + r) - lgamma(r));
+            } 
             
         }
-    }
-    
-    for (int i = 1; i < cClasses.size(); i++){
-        ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
+        
     }
     return(ll);
 }

@@ -62,7 +62,7 @@ void EEMS2::initialize_sims( ) {
     
     // counts the number of IBD segments that are 0, 1, 2, etc.
     // pre-computation
-    cClasses = VectorXd::Zero(maxCnt+1);
+    //cClasses = VectorXd::Zero(maxCnt+1);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
@@ -72,17 +72,33 @@ void EEMS2::initialize_sims( ) {
     // TO DO: there is a more simple way to fill in cMatrix (or get it from cvec)
     
     
+    string strx;
+    string stry;
+    
+    for (int alpha = 0; alpha < o; alpha++){
+        for(int beta = 0; beta < o; beta++){
+            strx = boost::lexical_cast<std::string>(alpha) + "," + boost::lexical_cast<std::string>(beta);
+            counts[strx] = VectorXd::Zero(maxCnt+1);
+        }
+    }
+    
     for ( int i = 0 ; i < n ; i ++ ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
+
             cMatrix(demei, demej) += 1;
             cMatrix(demej, demei) = cMatrix(demei, demej);
             
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
             
-            cClasses(Sims(i,j)) += 1;
+            strx = boost::lexical_cast<std::string>(demei) + "," + boost::lexical_cast<std::string>(demej);
+            stry = boost::lexical_cast<std::string>(demej) + "," + boost::lexical_cast<std::string>(demei);
+
+            counts[strx](Sims(i,j)) += 1;
+            counts[stry];(Sims(i,j)) += 1;
+
         }
     }
     
@@ -105,8 +121,10 @@ void EEMS2::initialize_state( ) {
         nowdf = params.dfmin;
     }
     // Initialize the two Voronoi tessellations
+    
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
+    
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     // Draw the Voronoi centers Coord uniformly within the habitat
     nowqSeeds = MatrixXd::Zero(nowqtiles,2); randpoint_in_habitat(nowqSeeds);
@@ -408,6 +426,7 @@ void EEMS2::propose_move_one_mtile(Proposal &proposal) {
     }
 }
 void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
+    
     int newqtiles = nowqtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
@@ -458,6 +477,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
     proposal.newll = eval_birthdeath_qVoronoi(proposal);
 }
 void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
+
     int newmtiles = nowmtiles,r;
     double u = draw.runif();
     double pBirth = 0.5;
@@ -872,10 +892,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     
-    double phi = pow(10.0, df);
+    VectorXd phi = VectorXd::Zero(o);
+    for (int i = 0; i < o; i++){
+        phi(i) = pow(10.0, df);
+    }
     
-    double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
-    
+    double logll = negbiln(expectedIBD, observedIBD, cvec, phi, counts);
     if (logll != logll){
         cerr << "trouble with ll" << endl;
         throw std::exception();

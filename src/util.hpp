@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <fstream>
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include <Eigen/Core>
@@ -75,7 +76,7 @@ MatrixXd pairwise_distance(const MatrixXd &X, const MatrixXd &Y);
 MatrixXd readMatrixXd(const string &filename);
 double trace_AxB(const MatrixXd &A, const MatrixXd &B);
 void getWeights(VectorXd &w, VectorXd &x);
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi);
+double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &phi, map<string, VectorXd> counts);
 
 bool dlmcell(const string &filename, const VectorXd &sizes, const vector<double> &array);
 void removeRow(MatrixXd &matrix, const int rowToRemove);
