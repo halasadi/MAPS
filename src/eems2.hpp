@@ -29,7 +29,7 @@ struct Proposal {
     MoveType move; // the type of proposal/update
     int newqtiles; // number of m and q tiles, respectively
     int newmtiles;
-    double newdf; // degrees of freedom
+    //double newdf; // degrees of freedom
     double newpi; // log prior
     double newll; // log likelihood
     //double newsigma2; // variance scale
@@ -37,6 +37,7 @@ struct Proposal {
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
     
+    VectorXd newdf;
     VectorXd newqEffcts; // the diversity rate of each q tile
     VectorXd newmEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
     MatrixXd newqSeeds;  // the location of each q tile within the habitat
@@ -55,9 +56,12 @@ public:
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                      const double df) const;
-    double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
+                      const VectorXd df) const;
+    
+    double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
+                     const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu,
+                            const VectorXd df, const bool ismUpdate) const;
+    
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
@@ -132,7 +136,8 @@ private:
     MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
     double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
     //double nowsigma2, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
-    double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
+    double nowqrateMu, nowpi, nowll; // variance scale, log prior, log likelihood, degrees of freedom
+    VectorXd nowdf;
     
     VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
     VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
@@ -158,9 +163,10 @@ private:
     void randpoint_in_habitat(MatrixXd &Seeds);
     void rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts);
     
-    double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
-                            const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu, const bool ismUpdate) const;
+    //double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
+    //                        const MatrixXd &qSeeds, const VectorXd &qEffcts,
+    //                        const VectorXd df, const double qrateMu, const bool ismUpdate) const;
+
 };
 
 #endif

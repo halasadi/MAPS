@@ -221,7 +221,7 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
     double ll = 0;
     VectorXd tmp;
 
-    double r;
+    double od;
     for (int deme_a = 0; deme_a < odemes; deme_a++){
         for (int deme_b = deme_a; deme_b < odemes; deme_b++){
             
@@ -237,13 +237,13 @@ double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, cons
                 lambda = expectedIBD(deme_a, deme_b);
             }
             
-            r=phi[deme_a]*phi[deme_b];
-            ll += n * r * log(1.0 / (1.0 + lambda/r)) + observedIBDCnt(deme_a, deme_b) * log(1.0 / (r/lambda + 1.0));
+            od=phi(deme_a)*phi(deme_b);
+            ll += (n/od) * log(1.0 / (1.0 + lambda*od)) + observedIBDCnt(deme_a, deme_b) * log( (od*lambda) / (od*lambda + 1.0));
             
             string str = boost::lexical_cast<std::string>(deme_a) + "," + boost::lexical_cast<std::string>(deme_b);
             tmp = counts[str];
             for (int j = 1; j < tmp.size(); j++){
-                ll += tmp[j] * (lgamma(j + r) - lgamma(r));
+                ll += tmp[j] * (lgamma(j + (1/od)) - lgamma(1/od));
             } 
             
         }

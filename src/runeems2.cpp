@@ -42,6 +42,8 @@ int main(int argc, char** argv)
         
         
         boost::filesystem::path dir(eems2.prevpath().c_str());
+        
+        /*
         if (exists(dir)) {
             cerr << "Load final EEMS2 state from " << eems2.prevpath() << endl << endl;
             eems2.load_final_state();
@@ -49,7 +51,10 @@ int main(int argc, char** argv)
             cerr << "Initialize EEMS2 random state" << endl << endl;
             eems2.initialize_state();
         }
+         */
         
+        cerr << "Initialize EEMS2 random state" << endl << endl;
+        eems2.initialize_state();
         error = eems2.start_eems(mcmc);
         if (error) {
             cerr << "[RunEEMS2] Error starting EEMS2." << endl;

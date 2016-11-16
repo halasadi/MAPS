@@ -99,8 +99,8 @@ subtitle = NULL, add = FALSE) {
             legend("topleft", legend = substitute(paste(R^2, " = ", val), list(val = r.squared)), bty = "n")
         }
     }
-    points(dist.data$fitted,
-    dist.data$obsrvd,
+    text(dist.data$fitted,
+    dist.data$obsrvd, 
     col = dist.data$col,
     pch = dist.data$pch,
     cex = dist.data$cex)
@@ -126,7 +126,7 @@ is.color <- function(x) {
     ## grepl("^#[0-9A-F]{6}$", x)
     sapply(x, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) })
 }
-set.colscale <- function(x) {
+set.colscale <- function(colscale) {
     if ( is.numeric(colscale) ) {
         minx <- min(colscale)
         maxx <- max(colscale)
@@ -210,7 +210,7 @@ check.plot.params <- function(params) {
     }
     
     if (is.numeric(params$m.colscale)) params$m.colscale <- set.colscale(params$m.colscale)
-    if (!is.null(params$N.colscale)) { params$N.colscale = set.colscale(params$N.colscale) }
+    if (!is.null(params$N.colscale)) { params$N.colscale <- set.colscale(params$N.colscale) }
     if ( is.null(params$eems.colors) ||
     sum(is.na(params$eems.colors)) ||
     sum(!is.color(params$eems.colors))) {

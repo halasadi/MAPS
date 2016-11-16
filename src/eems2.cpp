@@ -60,10 +60,6 @@ void EEMS2::initialize_sims( ) {
     observedIBD = MatrixXd::Zero(o, o);
     maxCnt = Sims.maxCoeff();
     
-    // counts the number of IBD segments that are 0, 1, 2, etc.
-    // pre-computation
-    //cClasses = VectorXd::Zero(maxCnt+1);
-    
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
     int demei;
@@ -97,7 +93,7 @@ void EEMS2::initialize_sims( ) {
             stry = boost::lexical_cast<std::string>(demej) + "," + boost::lexical_cast<std::string>(demei);
 
             counts[strx](Sims(i,j)) += 1;
-            counts[stry];(Sims(i,j)) += 1;
+            counts[stry](Sims(i,j)) += 1;
 
         }
     }
@@ -115,10 +111,16 @@ void EEMS2::initialize_sims( ) {
 void EEMS2::initialize_state( ) {
     cerr << "[EEMS2::initialize_state]" << endl;
     
-    if (params.dfmin <= 2){
+    /*if (params.dfmin <= 2){
         nowdf = 2;
     } else{
         nowdf = params.dfmin;
+    }
+     */
+    
+    nowdf = VectorXd::Zero(o);
+    for (int i = 0; i < o; i++){
+        nowdf(i) =  1;
     }
     // Initialize the two Voronoi tessellations
     
@@ -145,6 +147,7 @@ void EEMS2::initialize_state( ) {
     graph.index_closest_to_deme(nowmSeeds,nowmColors);
     cerr << "[EEMS2::initialize_state] Done." << endl << endl;
 }
+/*
 void EEMS2::load_final_state( ) {
     cerr << "[EEMS2::load_final_state]" << endl;
     MatrixXd tempi; bool error = false;
@@ -190,6 +193,7 @@ void EEMS2::load_final_state( ) {
     }
     cerr << "[EEMS::load_final_state] Done." << endl << endl;
 }
+ */
 bool EEMS2::start_eems(const MCMC &mcmc) {
     bool error = false;
     
@@ -298,9 +302,12 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
     proposal.move = DF_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
-    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
+    VectorXd newdf = VectorXd::Zero(o);
+    for (int i = 0; i < o; i++){
+        newdf(i) = draw.rnorm(nowdf(i),params.dfProposalS2);
+    }
     if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
+        if ( (newdf.minCoeff() > params.dfmin) && (newdf.maxCoeff() <params.dfmax) ) {
             proposal.newdf = newdf;
             proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                         nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
@@ -608,7 +615,9 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
 void EEMS2::print_iteration(const MCMC &mcmc) const {
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
+    << " and min. over-dispersion parameter = " << pow(10, nowdf.minCoeff()) << setprecision(4) << endl
+    << " and max. over-dispersion parameter = " << pow(10, nowdf.maxCoeff()) << setprecision(4) << endl
+    //<< " and over-dispersion parameters = " << nowdf << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
     << "          Log prior = " << nowpi << setprecision(4) << endl
@@ -624,7 +633,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcpilogl(iter,1) = nowll;
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
-    mcmcthetas(iter) = nowdf;
+    //mcmcthetas(iter) = nowdf;
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
     }
@@ -656,10 +665,11 @@ bool EEMS2::output_current_state( ) const {
     if (!out.is_open()) { error = true; return(error); }
     out << nowmtiles << endl;
     out.close( );
-    out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
+    /*out.open((params.mcmcpath + "/lastthetas.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << nowdf << endl;
     out.close( );
+     */
     out.open((params.mcmcpath + "/lastdfpars.txt").c_str(),ofstream::out);
     if (!out.is_open()) { error = true; return(error); }
     out << fixed << setprecision(6) << params.dfmin << " " << params.dfmax << endl;
@@ -770,7 +780,7 @@ void EEMS2::check_ll_computation( ) const {
 }
 double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                          const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                         const double df) const {
+                         const VectorXd df) const {
     // Important: Do not use any of the current parameter values in this function,
     // i.e., those that start with nowXXX
     
@@ -788,7 +798,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
-    if (df<params.dfmin || df>params.dfmax) { inrange = false; }
+    if (df.minCoeff() <params.dfmin || df.maxCoeff() >params.dfmax) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
     double logpi =
@@ -834,7 +844,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                                const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu,
-                               const double df, const bool ismUpdate) const {
+                               const VectorXd df, const bool ismUpdate) const {
     
     // Important: Do not use any of the current parameter values in this function,
     // i.e., those that start with nowXXX
@@ -894,7 +904,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     VectorXd phi = VectorXd::Zero(o);
     for (int i = 0; i < o; i++){
-        phi(i) = pow(10.0, df);
+        phi(i) = pow(10.0, df(i));
     }
     
     double logll = negbiln(expectedIBD, observedIBD, cvec, phi, counts);
