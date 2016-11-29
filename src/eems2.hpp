@@ -50,8 +50,10 @@ public:
     EEMS2(const Params &params);
     ~EEMS2( );
     
-    void initialize_state( );
+    void initialize_state(const MCMC &mcmc);
     void load_final_state( );
+    void load_older_rates( );
+
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
@@ -98,8 +100,11 @@ public:
     string datapath() const;
     string mcmcpath() const;
     string prevpath() const;
+    string olderpath() const;
     string gridpath() const;
-    
+    void store_rates(const MCMC &mcmc);
+    bool write_rates();
+
     double getMigrationRate(const int edge) const;
     double getCoalescenceRate(const int deme) const;
     void printMigrationAndCoalescenceRates( ) const;
@@ -120,6 +125,12 @@ private:
     VectorXd cvec; // c is the vector of counts
     VectorXd cClasses; // cClasses is a vector of count of the number of 0's, number of 1's, etc. For likelihood;
     double maxCnt; // the maximum number of IBD segments shared (over all pairs)
+    
+    MatrixXd log10_mRates;
+    MatrixXd log10_qRates;
+    
+    VectorXd old_log10_mMeanRates;
+    VectorXd old_log10_qMeanRates;
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;

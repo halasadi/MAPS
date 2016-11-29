@@ -47,7 +47,7 @@ int main(int argc, char** argv)
             eems2.load_final_state();
         } else {
             cerr << "Initialize EEMS2 random state" << endl << endl;
-            eems2.initialize_state();
+            eems2.initialize_state(mcmc);
         }
         
         error = eems2.start_eems(mcmc);
@@ -106,11 +106,16 @@ int main(int argc, char** argv)
             if (iter>=0) {
                 eems2.print_iteration(mcmc);
                 eems2.save_iteration(mcmc);
+                eems2.store_rates(mcmc);
                 //eems2.printMigrationAndCoalescenceRates();
             }
         }
         error = eems2.output_results(mcmc);
         if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
+        
+        error = eems2.write_rates();
+        if (error) { cerr << "[RunEEMS2] Error saving eems means to " << eems2.mcmcpath() << endl; }
+
         
         
     } catch(exception& e) {

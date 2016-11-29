@@ -52,7 +52,7 @@ public:
     
     long seed;
     bool testing;
-    string datapath, mcmcpath, prevpath, gridpath;
+    string datapath, mcmcpath, prevpath, gridpath, olderpath;
     double qEffctHalfInterval, mEffctHalfInterval;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;

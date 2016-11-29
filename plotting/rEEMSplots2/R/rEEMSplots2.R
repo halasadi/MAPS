@@ -608,7 +608,7 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
     myfilledContour(rr, col = eems.colors, levels = eems.levels, asp = 1,
     add.key = plot.params$add.colbar,
     key.title = mtext(key.title, side = 3, cex = 1.5, line = 1.5, font = 1),
-    add.title = plot.params$add.title,
+    add.title = plot.params$add.title, add.expression = plot.params$add.expression,
     plot.title = mtext(text = main.title, side = 3, line = 0, cex = 1.5),
     plot.axes = {
         filled.contour.outline(mcmcpath, longlat, plot.params);
@@ -1011,7 +1011,7 @@ zlim = range(z, finite = TRUE),
 levels = pretty(zlim, nlevels), nlevels = 20, color.palette = cm.colors,
 col = color.palette(length(levels) - 1), plot.title, plot.axes,
 key.title, key.axes, asp = NA, xaxs = "i", yaxs = "i", las = 1,
-axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE,
+axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.expression = TRUE,
 ...) {
     
     if (missing(z)) {
@@ -1058,7 +1058,11 @@ axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE,
             ## That is: have labels c(10^-2, 10^0, 10^2) rather than c(0.001, 1, 100)
             ## which emphasizes the logarithmic scale
             axis.ticks = axTicks(4)
-            axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i))))
+            if (add.expression){
+                axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i))))
+            } else{
+                axis.labels = axis.ticks
+            }
             ## hadj and padj specify the horizontal and perpendicular adjustment, respectively
             ## hadj = 0 means adjust to the left in the horizontal (reading) direction
             ## padj = 0.5 means adjust centrally in the vertical direction
@@ -1138,6 +1142,7 @@ load.required.package <- function(package, required.by) {
 #' @param col.outline The color of the habitat outline. Defaults to \code{white}.
 #' @param lwd.outline The line width of the habitat outline. Defaults to 2.
 #' @param add.demes A logical value indicating whether to add the observed demes or not.
+#' @prams add.expression A logical values indicating whether to add 10^(x) to the labels
 #' @param col.demes The color of the demes. Defaults to \code{black}.
 #' @param pch.demes The symbol, specified as an integer, or the character to be used for plotting the demes. Defaults to 19.
 #' @param min.cex.demes, max.cex.demes The minimum and the maximum size of the deme symbol/character. Defaults to 1 and 3, respectively. If \code{max.cex.demes} > \code{min.cex.demes}, then demes with more samples also have bigger size: the deme with the fewest samples has size \code{min.cex.demes} and the deme with the most samples has size \code{max.cex.demes}.
@@ -1300,6 +1305,9 @@ add.r.squared = FALSE,
 ## scale by number of demes?
 scale.by.demes = FALSE,
 
+## add 10^() to the plot label?
+add.expression = TRUE,
+
 ## Extra options
 add.title = TRUE,
 m.plot.xy = NULL,
@@ -1311,7 +1319,7 @@ q.plot.xy = NULL) {
     lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
     min.cex.demes = min.cex.demes, proj.in = projection.in, add.colbar = add.colbar,
     max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title,
-    prob.levels = prob.levels, scale.by.demes = scale.by.demes)
+    prob.levels = prob.levels, scale.by.demes = scale.by.demes, add.expression = add.expression)
     plot.params <- check.plot.params(plot.params)
     
     ## A vector of EEMS output directories, for the same dataset.

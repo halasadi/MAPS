@@ -19,6 +19,7 @@ EEMS2::~EEMS2( ) { }
 string EEMS2::datapath( ) const { return params.datapath; }
 string EEMS2::mcmcpath( ) const { return params.mcmcpath; }
 string EEMS2::prevpath( ) const { return params.prevpath; }
+string EEMS2::olderpath( ) const { return params.olderpath; }
 string EEMS2::gridpath( ) const { return params.gridpath; }
 // Draw points randomly inside the habitat: the habitat is two-dimensional, so
 // a point is represented as a row in a matrix with two columns
@@ -96,7 +97,7 @@ void EEMS2::initialize_sims( ) {
     
 }
 
-void EEMS2::initialize_state( ) {
+void EEMS2::initialize_state(const MCMC &mcmc) {
     cerr << "[EEMS2::initialize_state]" << endl;
     
     if (params.dfmin <= 2){
@@ -114,9 +115,23 @@ void EEMS2::initialize_state( ) {
     nowmrateS2 = draw.rinvgam(0.5,0.5);
     nowqrateS2 = draw.rinvgam(0.5,0.5);
     
+    int niters = mcmc.num_iters_to_save();
+    log10_mRates = MatrixXd::Zero(niters, d);
+    log10_qRates = MatrixXd::Zero(niters, d);
+    
+    old_log10_mMeanRates = VectorXd::Zero(d);
+    old_log10_qMeanRates = VectorXd::Zero(d);
+    
+    if (!params.olderpath.empty()){
+        cout << "OLD PATH: " << params.olderpath << endl;
+        load_older_rates();
+    }
+    
     // Assign migration rates to the Voronoi tiles
-    nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
-    nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
+    //nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
+    //nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
+    nowmrateMu = 0;
+    nowqrateMu = 0;
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
@@ -127,6 +142,79 @@ void EEMS2::initialize_state( ) {
     graph.index_closest_to_deme(nowmSeeds,nowmColors);
     cerr << "[EEMS2::initialize_state] Done." << endl << endl;
 }
+
+void EEMS2::store_rates(const MCMC &mcmc) {
+    
+    int iter = mcmc.to_save_iteration( );
+
+    VectorXi mColors, qColors;
+    // For every deme in the graph -- which diversity tile does the deme fall into?
+    graph.index_closest_to_deme(nowqSeeds,qColors);
+    // For every deme in the graph -- which migration tile does the deme fall into?
+    graph.index_closest_to_deme(nowmSeeds,mColors);
+    
+    for ( int alpha = 0 ; alpha < d ; alpha++ ) {
+        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu + old_log10_qMeanRates(alpha);
+        log10_qRates(iter, alpha) = log10q_alpha;
+    }
+    
+    int alpha, beta;
+        // Transform the log10 migration parameters into migration rates on the original scale
+    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
+        graph.get_edge(edge,alpha,beta);
+        double log10m_alpha = nowmEffcts(mColors(alpha)) + nowmrateMu + old_log10_mMeanRates(alpha);
+        double log10m_beta = nowmEffcts(mColors(beta)) + nowmrateMu + old_log10_mMeanRates(beta);
+        log10_mRates(iter, alpha) = log10m_alpha;
+        log10_mRates(iter, beta) = log10m_beta;
+    }
+   
+    
+}
+
+bool EEMS2::write_rates() {
+    
+    VectorXd qmeans(d);
+    VectorXd mmeans(d);
+    
+    for ( int alpha = 0; alpha < d; alpha++){
+        qmeans(alpha) = log10_qRates.col(alpha).mean();
+        mmeans(alpha) = log10_mRates.col(alpha).mean();
+
+    }
+    ofstream out; bool error = false;
+    out.open((params.mcmcpath + "/log10qMeanRates.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { error = true; return(error); }
+    out << fixed << setprecision(6) << qmeans << endl;
+    out.close( );
+    
+    out.open((params.mcmcpath + "/log10mMeanRates.txt").c_str(),ofstream::out);
+    if (!out.is_open()) { error = true; return(error); }
+    out << fixed << setprecision(6) << mmeans << endl;
+    out.close( );
+    
+    
+}
+
+void EEMS2::load_older_rates( ){
+    
+    cerr << "[EEMS2::load_older_rates]" << endl;
+    MatrixXd older_rates; bool error = false;
+    
+    older_rates = readMatrixXd(params.olderpath + "/log10mMeanRates.txt");
+    if ((older_rates.rows()<1) || (older_rates.cols()!=1)) { error = true; }
+    old_log10_mMeanRates = older_rates;
+    
+    older_rates = readMatrixXd(params.olderpath + "/log10qMeanRates.txt");
+    if ((older_rates.rows()<1) || (older_rates.cols()!=1)) { error = true; }
+    old_log10_qMeanRates = older_rates;
+    
+    if (error) {
+        cerr << "  Error loading older means from " << params.olderpath << endl; exit(1);
+    }
+    cerr << "[EEMS::load_older_rates] Done." << endl << endl;
+    
+}
+
 void EEMS2::load_final_state( ) {
     cerr << "[EEMS2::load_final_state]" << endl;
     MatrixXd tempi; bool error = false;
@@ -209,13 +297,25 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
 MoveType EEMS2::choose_move_type( ) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
+    double u3 = draw.runif( );
     // There are 4 types of proposals:
     // * birth/death (with equal probability)
     // * move a tile (chosen uniformly at random)
     // * update the rate of a tile (chosen uniformly at random)
     // * update the mean migration rate or the mean coalescent rate (with equal probability)
+    
     MoveType move = UNKNOWN_MOVE_TYPE;
-    if (u1 < 0.25) {
+    
+    if (u3 < 0.25 && params.olderpath.empty()){
+        if (u2 < 0.5) {
+            move = M_MEAN_RATE_UPDATE;
+        } else  {
+            move = Q_MEAN_RATE_UPDATE;
+        }
+        
+        return(move);
+    }
+        if (u1 < 0.3) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
@@ -224,28 +324,22 @@ MoveType EEMS2::choose_move_type( ) {
         } else {
             move = M_VORONOI_BIRTH_DEATH;
         }
-    } else if (u1 < 0.5) {
+    } else if (u1 < 0.6) {
         if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
         }
-    } else if (u1 < 0.75) {
+    } else if (u1 < 0.9) {
         if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;
         }
     } else {
-        if (u2 < 0.333) {
-            move = M_MEAN_RATE_UPDATE;
-        } else if (u2 < 0.6666) {
-            move = Q_MEAN_RATE_UPDATE;
-        } else{
-            move = DF_UPDATE;
-        }
-        
+        move = DF_UPDATE;
     }
+    
     return(move);
 }
 
@@ -830,7 +924,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu;
+        double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + old_log10_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
 
@@ -843,8 +937,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
-            double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
+            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu + old_log10_mMeanRates(alpha);
+            double log10m_beta = mEffcts(mColors(beta)) + mrateMu + old_log10_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }

@@ -39,6 +39,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
         ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
+        ("olderpath", po::value<string>(&olderpath)->default_value(""), "Path to a run with a older time period")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
@@ -65,8 +66,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuLowerBound = -10.0;
     
     
-    mEffctHalfInterval = 2.0;
-    qEffctHalfInterval = 1.0;
+    mEffctHalfInterval = 3.0;
+    qEffctHalfInterval = 3.0;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
