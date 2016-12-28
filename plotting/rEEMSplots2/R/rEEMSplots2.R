@@ -30,18 +30,18 @@ sub.axes.labels <- function() {
     mainTRUE = "There should be at least two observed demes to plot pairwise dissimilarities")
     Between <- list(
     xlab = expression(paste("Fitted similarity between demes:   ",
-    S[alpha * beta], " - (", S[alpha*alpha], "+", S[beta * beta], ") / 2")),
+    S[alpha * beta])),
     ylab = expression(paste("Observed similarity between demes:   ",
-    Sobs[alpha * beta], " - (", Sobs[alpha * alpha], "+", Sobs[beta * beta], ") / 2")),
+    Sobs[alpha * beta])),
     mainTRUE = expression(paste("Similarities between pairs of sampled demes (", alpha , ", ", beta, ")")),
-    subTRUE = "Singleton demes, if any, are excluded from this plot ",
+    subTRUE = "demes with less than 10 samples, if any, are excluded from this plot ",
     mainFALSE = expression(paste("Similarities between pairs of sampled demes (", alpha , ", ", beta, ")")),
     subFALSE = expression(paste("Gray means that a single individual is sampled from either ", alpha, " or ", beta)))
     Within <- list(
     xlab = expression(paste("Fitted similarity within demes:   ", S[alpha * alpha])),
     ylab = expression(paste("Observed similarity within demes:   ", Sobs[alpha * alpha])),
     mainTRUE = expression(paste("Similarities within sampled demes ", alpha)),
-    subTRUE = "Singleton demes, if any, are excluded from this plot ",
+    subTRUE = "demes with less than 10 samples, if any, are excluded from this plot ",
     mainFALSE = expression(paste("Similarities within sampled demes ", alpha)))
     GeoDist <- Between
     GeoDist$xlab <- "Great circle distance between demes (km)"
@@ -74,7 +74,8 @@ sub.scattercols <- function(sizes) {
 sub.scatterplot <- function(dist.type, dist.data, remove.singletons, add.abline, add.r.squared,
 subtitle = NULL, add = FALSE) {
     if (remove.singletons) {
-        dist.data <- dist.data[dist.data$size > 1, ]
+        # remove demes that have pairwise distance less than 10 samples
+        dist.data <- dist.data[dist.data$size > 10, ]
     }
     if (is.null(dist.data$size)) dist.data$size <- 2
     if (is.null(dist.data$pch))  dist.data$pch <- 1
@@ -116,7 +117,7 @@ JtDJ2BandW <- function(JtDJ, sizes = NULL) {
     n <- nrow(JtDJ)
     W <- diag(JtDJ)
     S <- matrix(W, n, n)
-    B <- JtDJ - (S + t(S)) / 2
+    B <- JtDJ #- (S + t(S)) / 2
     B <- B[upper.tri(B, diag = FALSE)]
     return (list(W = W, B = B))
 }
@@ -126,7 +127,7 @@ is.color <- function(x) {
     ## grepl("^#[0-9A-F]{6}$", x)
     sapply(x, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) })
 }
-set.colscale <- function(x) {
+set.colscale <- function(colscale) {
     if ( is.numeric(colscale) ) {
         minx <- min(colscale)
         maxx <- max(colscale)
@@ -209,7 +210,7 @@ check.plot.params <- function(params) {
         }
     }
     
-    if (is.numeric(params$m.colscale)) params$m.colscale <- set.colscale(params$m.colscale)
+    if (is.numeric(params$m.colscale)) params$m.colscale = set.colscale(params$m.colscale)
     if (!is.null(params$N.colscale)) { params$N.colscale = set.colscale(params$N.colscale) }
     if ( is.null(params$eems.colors) ||
     sum(is.na(params$eems.colors)) ||
@@ -608,7 +609,7 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
     myfilledContour(rr, col = eems.colors, levels = eems.levels, asp = 1,
     add.key = plot.params$add.colbar,
     key.title = mtext(key.title, side = 3, cex = 1.5, line = 1.5, font = 1),
-    add.title = plot.params$add.title, add.expression = plot.params$add.expression,
+    add.title = plot.params$add.title, add.scale = plot.params$add.scale,
     plot.title = mtext(text = main.title, side = 3, line = 0, cex = 1.5),
     plot.axes = {
         filled.contour.outline(mcmcpath, longlat, plot.params);
@@ -1011,7 +1012,7 @@ zlim = range(z, finite = TRUE),
 levels = pretty(zlim, nlevels), nlevels = 20, color.palette = cm.colors,
 col = color.palette(length(levels) - 1), plot.title, plot.axes,
 key.title, key.axes, asp = NA, xaxs = "i", yaxs = "i", las = 1,
-axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.expression = TRUE,
+axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.scale = TRUE,
 ...) {
     
     if (missing(z)) {
@@ -1058,7 +1059,7 @@ axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.expressio
             ## That is: have labels c(10^-2, 10^0, 10^2) rather than c(0.001, 1, 100)
             ## which emphasizes the logarithmic scale
             axis.ticks = axTicks(4)
-            if (add.expression){
+            if (add.scale){
                 axis.labels = sapply(axis.ticks, function(i) as.expression(bquote(10^ .(i))))
             } else{
                 axis.labels = axis.ticks
@@ -1142,7 +1143,7 @@ load.required.package <- function(package, required.by) {
 #' @param col.outline The color of the habitat outline. Defaults to \code{white}.
 #' @param lwd.outline The line width of the habitat outline. Defaults to 2.
 #' @param add.demes A logical value indicating whether to add the observed demes or not.
-#' @prams add.expression A logical values indicating whether to add 10^(x) to the labels
+#' @prams add.scale A logical values indicating whether to add 10^(x) to the labels
 #' @param col.demes The color of the demes. Defaults to \code{black}.
 #' @param pch.demes The symbol, specified as an integer, or the character to be used for plotting the demes. Defaults to 19.
 #' @param min.cex.demes, max.cex.demes The minimum and the maximum size of the deme symbol/character. Defaults to 1 and 3, respectively. If \code{max.cex.demes} > \code{min.cex.demes}, then demes with more samples also have bigger size: the deme with the fewest samples has size \code{min.cex.demes} and the deme with the most samples has size \code{max.cex.demes}.
@@ -1306,7 +1307,7 @@ add.r.squared = FALSE,
 scale.by.demes = FALSE,
 
 ## add 10^() to the plot label?
-add.expression = TRUE,
+add.scale = TRUE,
 
 ## Extra options
 add.title = TRUE,
@@ -1319,7 +1320,7 @@ q.plot.xy = NULL) {
     lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
     min.cex.demes = min.cex.demes, proj.in = projection.in, add.colbar = add.colbar,
     max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title,
-    prob.levels = prob.levels, scale.by.demes = scale.by.demes, add.expression = add.expression)
+    prob.levels = prob.levels, scale.by.demes = scale.by.demes, add.scale = add.scale)
     plot.params <- check.plot.params(plot.params)
     
     ## A vector of EEMS output directories, for the same dataset.
