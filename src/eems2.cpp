@@ -699,6 +699,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
     mcmcthetas(iter) = nowdf;
+    
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
     }
