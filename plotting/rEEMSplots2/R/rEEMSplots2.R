@@ -23,6 +23,7 @@ default.eems.colors <- function( ) {
     "#CCFDFF", "#99F8FF", "#66F0FF", "#33E4FF", "#00AACC", "#007A99") ## blue sequence
     return (eems.colors)
 }
+
 sub.axes.labels <- function() {
     JtDJ <- list(
     xlab = expression(paste("Fitted similarity between individuals  ", S[i * j])),
@@ -1343,6 +1344,7 @@ q.plot.xy = NULL) {
         plot.params$add.scale = TRUE
     } else{
         plot.params$add.scale = FALSE
+        plot.params$eems.colors = diff.eems.colors()
     }
     
     ## Plot filled contour of estimated effective migration rates
@@ -1384,9 +1386,10 @@ q.plot.xy = NULL) {
     if (!is.na(oldcontourpath)){
         
         load(oldcontourpath)
-        
         plot.params$add.scale = TRUE
-        
+        plot.params$eems.colors = default.eems.colors()
+
+
         ## Plot filled contour of estimated effective migration rates
         save.graphics(paste0(plotpath, '-mrates_abs'), save.params)
         par(las = 1, font.main = 1, xpd = xpd)
