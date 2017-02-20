@@ -1344,7 +1344,6 @@ q.plot.xy = NULL) {
         plot.params$add.scale = TRUE
     } else{
         plot.params$add.scale = FALSE
-        plot.params$eems.colors = diff.eems.colors()
     }
     
     ## Plot filled contour of estimated effective migration rates
