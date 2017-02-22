@@ -1,0 +1,45 @@
+Input parameter values:
+               datapath = popressard_3_5
+               mcmcpath = output
+               prevpath = 
+               gridpath = 
+               distance = euclidean
+                 nIndiv = 2780
+             genomeSize = 3000.00000000000000
+             lowerBound = 3.00000000000000
+             upperBound = 5.00000000000000
+                 nDemes = 200
+                   seed = 23903
+            numMCMCIter = 5000000
+            numBurnIter = 4000000
+            numThinIter = 1000
+              mnegBiSize = 10
+              mnegBiProb = 0.67000000000000
+              qnegBiSize = 10
+              qnegBiProb = 0.67000000000000
+             qVoronoiPr = 0.50000000000000
+             mrateShape = 0.00100000000000
+             qrateShape = 0.00100000000000
+             qrateScale = 1.00000000000000
+             mrateScale = 1.00000000000000
+       mSeedsProposalS2 = 0.10000000000000
+       qSeedsProposalS2 = 0.01000000000000
+       mEffctProposalS2 = 0.10000000000000
+       qEffctProposalS2 = 0.01000000000000
+      mrateMuProposalS2 = 0.10000000000000
+                  dfmin = 3.00000000000000
+      qrateMuProposalS2 = 0.01000000000000
+
+Acceptance proportions:
+	(180563/562096) = 32.12% for type "qTileRate"
+	(171598/563296) = 30.46% for type "qTileMove"
+	(22348/561783) = 3.98% for type "qBirthDeath"
+	(25111/624528) = 4.02% for type "qMeanRate"
+	(317299/561286) = 56.53% for type "mTileRate"
+	(211573/563042) = 37.58% for type "mTileMove"
+	(95955/563886) = 17.02% for type "mBirthDeath"
+	(33210/625088) = 5.31% for type "mMeanRate"
+	(0/374995) = 0.00% for type "d.f."
+
+Final log prior: 18.51
+Final log llike: -1627129.93
