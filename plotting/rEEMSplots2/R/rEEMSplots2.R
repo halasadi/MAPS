@@ -128,18 +128,6 @@ is.color <- function(x) {
     ## grepl("^#[0-9A-F]{6}$", x)
     sapply(x, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) })
 }
-set.colscale <- function(colscale) {
-    if ( is.numeric(colscale) ) {
-        minx <- min(colscale)
-        maxx <- max(colscale)
-        if (minx<maxx) {
-            colscale <- c(minx,maxx)
-        } else {
-            colscale <- NULL
-        }
-    }
-    return(colscale)
-}
 check.plot.params <- function(params) {
     
     ## Is there a way to check if a string is a valid PROJ.4 string?
@@ -211,12 +199,10 @@ check.plot.params <- function(params) {
         }
     }
     
-    if (is.numeric(params$m.colscale)) params$m.colscale = set.colscale(params$m.colscale)
-    if (!is.null(params$N.colscale)) { params$N.colscale = set.colscale(params$N.colscale) }
     if ( is.null(params$eems.colors) ||
-    sum(is.na(params$eems.colors)) ||
-    sum(!is.color(params$eems.colors))) {
-        params$eems.colors = default.eems.colors( )
+         sum(is.na(params$eems.colors)) ||
+         sum(!is.color(params$eems.colors))) {
+      params$eems.colors = default.eems.colors( )
     }
     
     if (is.logical(params$add.title))  params$add.title <- params$add.title[1]
@@ -230,16 +216,13 @@ check.plot.params <- function(params) {
     
     return(params)
 }
-eems.colscale <- function(Zvals, num.levels, colscale) {
+eems.colscale <- function(Zvals, num.levels, center_zero = FALSE) {
     maxZ <- max(Zvals)
     minZ <- min(Zvals)
-    if (is.numeric(colscale)) {
-        if (max(colscale) > maxZ) {
-            maxZ = max(colscale)
-        }
-        if (min(colscale) < minZ) {
-            minZ = min(colscale)
-        }
+    if (center_zero) {
+      abs_max <- max(abs(c(minZ, maxZ)))
+      maxZ <- +abs_max
+      minZ <- -abs_max
     }
     return(seq(from = minZ, to = maxZ, length = num.levels + 1))
 }
@@ -585,18 +568,21 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
     num.levels <- length(eems.colors)
     rslt <- normalize.rates(Zmean)
     Zmean <- rslt$rates
+    
+    center_zero <- !plot.params$add.scale
+    
     if (plot.type == "m") {
-        eems.levels <- eems.colscale(rslt$range, num.levels, plot.params$m.colscale)
+        eems.levels <- eems.colscale(rslt$range, num.levels, center_zero)
         main.title <- "Posterior mean migration rates m"
         key.title <- "m"
     } else if (plot.type == "N") {
-        eems.levels <- eems.colscale(rslt$range, num.levels, plot.params$N.colscale)
+        eems.levels <- eems.colscale(rslt$range, num.levels, center_zero)
         main.title <- "Posterior mean population sizes N = 1/2*q"
         key.title <- "N"
     } else {
         ## Let's not create yet one more parameter here and use N.colscale
         ## instead of Nm.colscale. Easy to add if necessary.
-        eems.levels <- eems.colscale(rslt$range, num.levels, plot.params$N.colscale)
+        eems.levels <- eems.colscale(rslt$range, num.levels, center_zero)
         main.title <- "Population size * migration rate (N*m)"
         key.title <- "Nm"
     }
@@ -775,10 +761,10 @@ voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params, post.draws = 
     num.levels <- length(eems.colors)
     if (plot.type == "m") {
         main.title <- 'Effective migration rates m'
-        eems.levels <- eems.colscale(rates, num.levels, plot.params$m.colscale)
+        eems.levels <- eems.colscale(rates, num.levels)
     } else {
         main.title <- 'Effective population sizes 1/2*q'
-        eems.levels <- eems.colscale(rates, num.levels, plot.params$N.colscale)
+        eems.levels <- eems.colscale(rates, num.levels)
     }
     n.levels <- length(eems.levels)
     max.levels <- max(eems.levels)
@@ -1153,7 +1139,6 @@ load.required.package <- function(package, required.by) {
 #' @param col.map The color of the geographic map. Default is \code{gray60}.
 #' @param lwd.map The line width of the geographic map. Defaults to 2.
 #' @param eems.colors The EEMS color scheme as a vector of colors, ordered from low to high. Defaults to a DarkOrange to Blue divergent palette with six orange shades, white in the middle, six blue shades. Acknowledgement: The default color scheme is adapted from the \code{dichromat} package.
-#' @param m.colscale, N.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
 #' @param add.colbar A logical value indicating whether to add the color bar (the key that shows how colors map to rates) to the right of the plot. Defaults to TRUE.
 #' @param remove.singletons Remove demes with a single observation from the diagnostic scatter plots. Defaults to TRUE.
 #' @param add.abline Add the line \code{y = x} to the diagnostic scatter plots of observed vs fitted genetic dissimilarities.
@@ -1294,8 +1279,6 @@ prob.levels = c(0.9, 0.95),
 
 ## Properties of the color key
 add.colbar = TRUE,
-m.colscale = NULL,
-N.colscale = NULL,
 
 ## Remove demes with a single observation
 remove.singletons = TRUE,
@@ -1314,7 +1297,7 @@ add.title = TRUE,
 m.plot.xy = NULL,
 q.plot.xy = NULL) {
     
-    plot.params <- list(eems.colors = eems.colors, m.colscale = m.colscale, N.colscale = N.colscale,
+    plot.params <- list(eems.colors = eems.colors,
     add.map = add.map, add.grid = add.grid, add.outline = add.outline, add.demes = add.demes,
     col.map = col.map, col.grid = col.grid, col.outline = col.outline, col.demes = col.demes,
     lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
@@ -1465,7 +1448,6 @@ q.plot.xy = NULL) {
 #' @param col.demes The color of the demes. Defaults to \code{gray80}.
 #' @param pch.demes The symbol, specified as an integer, or the character to be used for plotting the demes. Defaults to 1.
 #' @param cex.demes The size of the deme symbol/character. Defaults to 1.
-#' @param m.colscale, N.colscale A fixed range for log10-transformed migration and diversity rates, respectively. If the estimated rates fall outside the specified range, then the color scale is ignored. By default, no range is specified for either type of rates.
 #' @param add.title A logical value indicating whether to add the main title in the contour plots. Defaults to TRUE.
 #' @references Light A and Bartlein PJ (2004). The End of the Rainbow? Color Schemes for Improved Data Graphics. EOS Transactions of the American Geophysical Union, 85(40), 385.
 #' @export
@@ -1523,14 +1505,10 @@ cex.seeds = 1,
 ## Color palette
 eems.colors = NULL,
 
-## Properties of the color key
-m.colscale = NULL,
-N.colscale = NULL,
-
 ## Extra options
 add.title = FALSE) {
     
-    plot.params <- list(eems.colors = eems.colors, m.colscale = m.colscale, N.colscale = N.colscale,
+    plot.params <- list(eems.colors = eems.colors,
     add.grid = add.grid, add.outline = add.outline, add.demes = add.demes, add.seeds = add.seeds,
     col.grid = col.grid, col.outline = col.outline, col.demes = col.demes, col.seeds = col.seeds,
     lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes, pch.seeds = pch.seeds,
