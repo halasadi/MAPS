@@ -3,8 +3,8 @@
 library(rEEMSplots2)
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-mcmcpath <- 'include_swiss/chain1/popressard_4_10/output'
-plotpath <- 'include_swiss/chain1/popressard_4_10/plot'
+mcmcpath <- 'include_swiss/chain1/popressard_10_Inf/output'
+plotpath <- 'include_swiss/chain1/popressard_10_Inf/plot'
 #mcmcpath <- 'test-df/df_free/popressard_4_Inf/output'
 #plotpath <- 'test-df/df_free/popressard_4_Inf/plot'
 
@@ -16,7 +16,7 @@ longlat <- FALSE
 
 # read the estimates from the previous run 
 # important for plotting the plots with 'abs' in the filename
-oldcontourpath = 'include_swiss/chain1/popressard_2_4/output/contours.rda'
+oldcontourpath = 'include_swiss/chain1/popressard_5_10/output/contours.rda'
 #oldcontourpath = NA
 
 
