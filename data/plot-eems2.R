@@ -1,28 +1,54 @@
 #detach("package:rEEMSplots2", unload=TRUE)
 #install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
+library(maps)
 library(rEEMSplots2)
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-mcmcpath <- 'include_swiss/chain1/popressard_10_Inf/output'
-plotpath <- 'include_swiss/chain1/popressard_10_Inf/plot'
+#mcmcpath <- 'include_swiss/overall_run/r10/popressard_2_Inf/output'
+inds <- seq(1,25,1)
+inds <- c(2)
+
+mcmcpath <- rep(NA, length(inds))
+
+for (i in 1:length(inds)){
+  mcmcpath[i] <- paste0('overall_run/r', inds[i], '/popressard_2_Inf/output')
+}
+plotpath <- rep(NA, length(inds))
+for (i in 1:length(inds)){
+  plotpath[i] <- paste0('overall_run/r', inds[i], '/popressard_2_Inf/plot')
+}
+#plotpath <- 'include_swiss/overall_run/popressard_2_Inf/plot'
 #mcmcpath <- 'test-df/df_free/popressard_4_Inf/output'
 #plotpath <- 'test-df/df_free/popressard_4_Inf/plot'
 
 # FALSE FOR POPRES
 longlat <- FALSE
 
+# total area = 7955710
+#N.scalingfactor = totalarea/ndemes (330)
+#m.scalignfactor = dx^2
+#m.scalingfactor = 39842
+#N.scalingfactor = 24108
+
+# 200 demes
+#m.scalingfactor = 76000
+#N.scalingfactor = 40000
+
 
 #lwd.map=2
 
 # read the estimates from the previous run 
 # important for plotting the plots with 'abs' in the filename
-oldcontourpath = 'include_swiss/chain1/popressard_5_10/output/contours.rda'
-#oldcontourpath = NA
+oldcontourpath = NA
+#oldcontourpath = 'include_swiss/chain3-3/popressard_2_8/output/contours.rda'
 
+# 117 demes
+m.scalingfactor = 115943
+N.scalingfactor = 68000
 
-eems.plots(mcmcpath, plotpath, longlat, add.map=TRUE, add.demes=TRUE, oldcontourpath = oldcontourpath,
+eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE, oldcontourpath = oldcontourpath,
                                                      add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
-                                                     lwd.map=2, col.map = "black", # m.colscale = c(-4, 0),
+                                                     lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),
                                                                add.abline=TRUE, #N.colscale = c(3.5,7),
                                                      plot.height=8, plot.width=14, 
                                                      projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)

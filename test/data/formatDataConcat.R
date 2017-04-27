@@ -33,15 +33,15 @@ readIBD <- function(infile, nhaploids, lowerCutOff, upperCutOff)
   return(ibdM)
 }
 
-workingDir <- "/Users/halasadi/eems2/test/data/4x5/test/"
+workingDir <- "/Users/halasadi/eems2/test/data/4x5/uniform/"
 nchr = 20
-lowerCutOff = 4e6
-upperCutoff = Inf
+lowerCutOff = 2e6
+upperCutoff = 6e6
 nhaploids = ndiploids*2
-ibdM = readIBD(paste0(workingDir, "test_mt_300_nsamp_20_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+ibdM = readIBD(paste0(workingDir, "uniform_mt_300gen_nsamp_20_1.out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 
 for (i in 2:nchr){
   print(paste0("on chr: ", i))
-  ibdM = ibdM + readIBD(paste0(workingDir, "test_mt_300_nsamp_20_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
+  ibdM = ibdM + readIBD(paste0(workingDir, "uniform_mt_300gen_nsamp_20_", i, ".out.qc.ibd"), nhaploids, lowerCutOff, upperCutoff)
 }
-write.table(ibdM, file = paste0(workingDir, "eems_4_Inf.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
+write.table(ibdM, file = paste0(workingDir, "eems_2_6.sims"), quote=FALSE, sep = " ", row.names = FALSE, col.names=FALSE)
