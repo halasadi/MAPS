@@ -929,12 +929,43 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         q(alpha) = pow(10.0,log10q_alpha);
     }
 
+
+    int alpha, beta;
+
+    /*
+    MatrixXd m = readMatrixXd("/Users/halasadi/eems2/data/overall_run/M.txt");
+    MatrixXd qv = readMatrixXd("/Users/halasadi/eems2/data/overall_run/q.txt");
+    
+    MatrixXd Mv = MatrixXd::Zero(d,d);
+    // Transform the log10 migration parameters into migration rates on the original scale
+    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
+        graph.get_edge(edge,alpha,beta);
+        Mv(alpha,beta) = 0.5 * m(alpha) + 0.5 * m(beta);
+        Mv(beta,alpha) = Mv(alpha,beta);
+    }
+    
+    Mv.diagonal() = -1* Mv.rowwise().sum();
+    SelfAdjointEigenSolver<MatrixXd> esv;
+    esv.compute(Mv);
+    MatrixXd eigenvalsv = esv.eigenvalues();
+    MatrixXd eigenvecsv = esv.eigenvectors();
+    MatrixXd lowerExpectedIBDv = MatrixXd::Zero(o, o);
+    calculateIntegral(eigenvalsv, eigenvecsv, qv, lowerExpectedIBDv, params.lowerBound);
+    cout << lowerExpectedIBDv << endl;
+    
+    ofstream out; bool error = false;
+    out.open("fit.txt");
+    out << lowerExpectedIBDv << endl;
+    out.close( );
+    */
+ 
+    
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
         MatrixXd M = MatrixXd::Zero(d,d);
-        int alpha, beta;
+        //int alpha, beta;
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
