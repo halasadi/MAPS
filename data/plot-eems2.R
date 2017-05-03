@@ -6,19 +6,18 @@ library(rEEMSplots2)
 ## mcmcpath is a list of three output directories; the results will be averaged
 #mcmcpath <- 'include_swiss/overall_run/r10/popressard_2_Inf/output'
 #inds <- seq(1,10,1)
-inds <- c(5)
-mcmcpath <- rep(NA, length(inds))
+#inds <- c(5)
+#mcmcpath <- rep(NA, length(inds))
 
-for (i in 1:length(inds)){
-  mcmcpath[i] <- paste0('overall_run_more_samples/r', inds[i], '/popressard_2_Inf/output')
-}
-plotpath <- rep(NA, length(inds))
-for (i in 1:length(inds)){
-  plotpath[i] <- paste0('overall_run_more_samples/r', inds[i], '/popressard_2_Inf/plot')
-}
-#plotpath <- 'include_swiss/overall_run/popressard_2_Inf/plot'
-#mcmcpath <- 'test-df/df_free/popressard_4_Inf/output'
-#plotpath <- 'test-df/df_free/popressard_4_Inf/plot'
+#for (i in 1:length(inds)){
+#  mcmcpath[i] <- paste0('overall_run_more_samples/r', inds[i], '/popressard_2_Inf/output')
+#}
+#plotpath <- rep(NA, length(inds))
+#for (i in 1:length(inds)){
+#  plotpath[i] <- paste0('overall_run_more_samples/r', inds[i], '/popressard_2_Inf/plot')
+#}
+plotpath <- 'include_swiss/chain2-2/mindf_none/popressard_2_Inf/plot'
+mcmcpath <- 'include_swiss/chain2-2/mindf_none/popressard_2_Inf/output'
 
 # FALSE FOR POPRES
 longlat <- FALSE

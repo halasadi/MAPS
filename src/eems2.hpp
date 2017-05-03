@@ -126,11 +126,11 @@ private:
     VectorXd cClasses; // cClasses is a vector of count of the number of 0's, number of 1's, etc. For likelihood;
     double maxCnt; // the maximum number of IBD segments shared (over all pairs)
     
-    MatrixXd log10_mRates;
-    MatrixXd log10_qRates;
+    MatrixXd mRates;
+    MatrixXd qRates;
     
-    VectorXd old_log10_mMeanRates;
-    VectorXd old_log10_qMeanRates;
+    VectorXd old_mMeanRates;
+    VectorXd old_qMeanRates;
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;
