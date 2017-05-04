@@ -129,8 +129,8 @@ private:
     MatrixXd mRates;
     MatrixXd qRates;
     
-    VectorXd old_mMeanRates;
-    VectorXd old_qMeanRates;
+    VectorXd log10_old_mMeanRates;
+    VectorXd log10_old_qMeanRates;
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;

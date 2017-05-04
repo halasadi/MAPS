@@ -119,8 +119,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     mRates = MatrixXd::Zero(niters, d);
     qRates = MatrixXd::Zero(niters, d);
     
-    old_mMeanRates = VectorXd::Zero(d);
-    old_qMeanRates = VectorXd::Zero(d);
+    log10_old_mMeanRates = VectorXd::Zero(d);
+    log10_old_qMeanRates = VectorXd::Zero(d);
     
     if (!params.olderpath.empty()){
         cout << "Previous Run " << params.olderpath << endl;
@@ -154,7 +154,7 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     graph.index_closest_to_deme(nowmSeeds,mColors);
     
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu + log10(old_qMeanRates(alpha));
+        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu + log10_old_qMeanRates(alpha);
         qRates(iter, alpha) = pow(10.0, log10q_alpha);
     }
     
@@ -162,8 +162,8 @@ void EEMS2::store_rates(const MCMC &mcmc) {
         // Transform the log10 migration parameters into migration rates on the original scale
     for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
         graph.get_edge(edge,alpha,beta);
-        double log10m_alpha = nowmEffcts(mColors(alpha)) + nowmrateMu + log10(old_mMeanRates(alpha));
-        double log10m_beta = nowmEffcts(mColors(beta)) + nowmrateMu + log10(old_mMeanRates(beta));
+        double log10m_alpha = nowmEffcts(mColors(alpha)) + nowmrateMu + log10_old_mMeanRates(alpha);
+        double log10m_beta = nowmEffcts(mColors(beta)) + nowmrateMu + log10_old_mMeanRates(beta);
         mRates(iter, alpha) = pow(10.0, log10m_alpha);
         mRates(iter, beta) = pow(10.0, log10m_beta);
     }
@@ -202,11 +202,17 @@ void EEMS2::load_older_rates( ){
     
     older_rates = readMatrixXd(params.olderpath + "/mMeanRates.txt");
     if ((older_rates.rows()<1) || (older_rates.cols()!=1)) { error = true; }
-    old_mMeanRates = older_rates;
+    for (int i = 0; i < older_rates.size(); i++){
+        log10_old_mMeanRates(i) = log10(older_rates(i));
+    }
+    
     
     older_rates = readMatrixXd(params.olderpath + "/qMeanRates.txt");
     if ((older_rates.rows()<1) || (older_rates.cols()!=1)) { error = true; }
-    old_qMeanRates = older_rates;
+    for (int i = 0; i < older_rates.size(); i++){
+        log10_old_qMeanRates(i) = log10(older_rates(i));
+    }
+    
     
     if (error) {
         cerr << "  Error loading older means from " << params.olderpath << endl; exit(1);
@@ -925,16 +931,16 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + log10(old_qMeanRates(alpha));
+        double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
 
 
     int alpha, beta;
 
+    /*
     MatrixXd m = readMatrixXd("/Users/halasadi/eems2/data/overall_run/r1/popressard_2_Inf/output/log10mMeanRates.txt");
     MatrixXd qv = readMatrixXd("/Users/halasadi/eems2/data/overall_run/r1/popressard_2_Inf/output/log10qMeanRates.txt");
-    
     MatrixXd Mv = MatrixXd::Zero(d,d);
     // Transform the log10 migration parameters into migration rates on the original scale
     for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
@@ -954,14 +960,9 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     MatrixXd eigenvecsv = esv.eigenvectors();
     MatrixXd lowerExpectedIBDv = MatrixXd::Zero(o, o);
     calculateIntegral(eigenvalsv, eigenvecsv, qv, lowerExpectedIBDv, params.lowerBound);
-    
     double phi = pow(10.0, df);
-    
     double logll = negbiln(lowerExpectedIBDv, observedIBD, cvec, cClasses, phi);
-    
     cout << logll << endl;
-    
-    /*
     ofstream out; bool error = false;
     out.open("fit.txt");
     out << lowerExpectedIBDv << endl;
@@ -970,7 +971,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double penalty = 0;
      */
     
-    /*
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
@@ -980,12 +980,10 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu + log10(old_mMeanRates(alpha));
-            double log10m_beta = mEffcts(mColors(beta)) + mrateMu + log10(old_mMeanRates(beta));
+            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu + log10_old_mMeanRates(alpha);
+            double log10m_beta = mEffcts(mColors(beta)) + mrateMu + log10_old_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
-            diff = log10m_alpha - log10m_beta;
-            penalty = penalty + pow(2, diff);
         }
         
         // Make M into a rate matrix
@@ -1013,7 +1011,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     double phi = pow(10.0, df);
     
     double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
-     */
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;
