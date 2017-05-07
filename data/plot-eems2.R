@@ -16,8 +16,8 @@ library(rEEMSplots2)
 #for (i in 1:length(inds)){
 #  plotpath[i] <- paste0('overall_run_more_samples/r', inds[i], '/popressard_2_Inf/plot')
 #}
-plotpath <- 'include_swiss/chain2-2/mindf_none/popressard_2_Inf/plot'
-mcmcpath <- 'include_swiss/chain2-2/mindf_none/popressard_2_Inf/output'
+plotpath <- 'backup/r20/popressard_2_Inf/plot'
+mcmcpath <- 'backup/r20/popressard_2_Inf/output'
 
 # FALSE FOR POPRES
 longlat <- FALSE
