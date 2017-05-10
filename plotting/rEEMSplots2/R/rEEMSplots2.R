@@ -7,6 +7,7 @@
 #' @importFrom graphics .filled.contour
 #' @importFrom grDevices dev.off col2rgb bitmap pdf colorRampPalette
 
+
 default.eems.colors <- function( ) {
     writeLines(paste0("Using the default DarkOrange to Blue color scheme, with 'white' as the midpoint color.\n",
     "It combines two color schemes from the 'dichromat' package, which itself is based on\n",
@@ -226,6 +227,7 @@ check.plot.params <- function(params) {
     return(params)
 }
 eems.colscale <- function(Zvals, num.levels, center_zero = FALSE) {
+
     maxZ <- max(Zvals)
     minZ <- min(Zvals)
     if (center_zero) {
@@ -567,7 +569,12 @@ normalize.rates <- function(rates) {
     }
     list(rates = log10.rates, range = c(rates.min, rates.max))
 }
-plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot.type, plot.xy = NULL) {
+
+normalize.rates.difference <- function(Zmean){
+    list(rates = Zmean, range = c(min(Zmean), max(Zmean)))
+}
+
+plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot.type, plot.xy = NULL, plot.diff = FALSE) {
     if (plot.type == "m") {
         writeLines('Plotting effective migration rates m')
     } else if (plot.type == "N") {
@@ -577,8 +584,13 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
     }
     eems.colors <- plot.params$eems.colors
     num.levels <- length(eems.colors)
-    rslt <- normalize.rates(Zmean)
+    if (plot.diff){
+        rslt <- normalize.rates.difference(Zmean)
+    } else{
+        rslt <- normalize.rates(Zmean)
+    }
     Zmean <- rslt$rates
+    
     
     center_zero <- !plot.params$add.scale
     
@@ -604,6 +616,7 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
         raster::projection(rr) <- CRS(plot.params$proj.in)
         rr <- raster::projectRaster(rr, crs = CRS(plot.params$proj.out))
     }
+    
     myfilledContour(rr, col = eems.colors, levels = eems.levels, asp = 1,
     add.key = plot.params$add.colbar,
     key.title = mtext(key.title, side = 3, cex = 1.5, line = 1.5, font = 1),
@@ -615,6 +628,7 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
         plot.xy;
         filled.contour.graph(mcmcpath, longlat, plot.params);
     })
+    
     return (list(eems.colors = eems.colors, eems.levels = eems.levels))
 }
 plot.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, plot.type, plot.xy = NULL) {
@@ -1033,6 +1047,7 @@ axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.scale = T
         y <- x$y
         x <- x$x
     }
+    
     if (any(diff(x) <= 0) || any(diff(y) <= 0))
     stop("increasing 'x' and 'y' values expected")
     mar.orig <- (par.orig <- par(c("mar", "las", "mfrow")))$mar
@@ -1084,6 +1099,7 @@ axes = TRUE, frame.plot = axes, add.title = FALSE, add.key = TRUE, add.scale = T
     } else {
         par(plt = c(0.02, 0.98, 0.02, 0.98))
     }
+    
     plot.window(xlim, ylim, "", asp = asp)
     .filled.contour(x, y, z, levels, col)
     if (missing(plot.axes)) {
@@ -1249,6 +1265,120 @@ load.required.package <- function(package, required.by) {
 #'
 #' @seealso \code{\link{eems.voronoi.samples}, \link{eems.posterior.draws}, \link{eems.population.grid}}
 
+#' @export
+eems.plot.difference <- function(mcmcpath, contourpath1, contourpath2,
+plotpath,
+longlat,
+
+## Properties of the figures to generate
+plot.width = 7,
+plot.height = 7,
+out.png = TRUE,
+res = 600,
+xpd = FALSE,
+
+## Properties of the population grid
+add.grid = FALSE,
+col.grid = "gray80",
+lwd.grid = 1,
+
+## Properties of the observed demes
+add.demes = FALSE,
+col.demes = "black",
+pch.demes = 19,
+min.cex.demes = 1,
+max.cex.demes = 3,
+
+## Properties of the habitat outline
+add.outline = FALSE,
+col.outline = "gray90",
+lwd.outline = 2,
+
+## Properties of the cartographic projection
+projection.in = NULL,
+projection.out = NULL,
+
+## Properties of the geographic map
+add.map = FALSE,
+col.map = "gray60",
+lwd.map = 2,
+
+## Color palette
+eems.colors = NULL,
+
+## Properties of the color key
+add.colbar = TRUE,
+
+## Remove demes with a single observation
+remove.singletons = TRUE,
+
+## Add the line y = x and/or the R squared coefficient to scatter plots
+add.abline = FALSE,
+add.r.squared = FALSE,
+
+m.scalingfactor = 1,
+
+N.scalingfactor = 1,
+
+## scale by number of demes?
+scale.by.demes = FALSE,
+
+oldcontourpath = NA,
+
+## Extra options
+add.title = TRUE,
+m.plot.xy = NULL,
+q.plot.xy = NULL) {
+    
+    
+    plot.params <- list(eems.colors = eems.colors,
+    add.map = add.map, add.grid = add.grid, add.outline = add.outline, add.demes = add.demes,
+    col.map = col.map, col.grid = col.grid, col.outline = col.outline, col.demes = col.demes,
+    lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
+    min.cex.demes = min.cex.demes, proj.in = projection.in, add.colbar = add.colbar,
+    max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title, scale.by.demes = scale.by.demes, add.scale = TRUE)
+    plot.params <- check.plot.params(plot.params)
+    plot.params$add.scale = FALSE
+    
+    save.params <- list(height = plot.height, width = plot.width, res = res, out.png = out.png)
+    
+    dimns <- read.dimns(mcmcpath[1], longlat)
+
+    cp1 <- readRDS(contourpath1)
+    cp2 <- readRDS(contourpath2)
+    
+    mmeans <- log10(cp2$raster.m$means) - log10(cp1$raster.m$means)
+    Nmmeans <- log10(cp2$raster.Nm$means) - log10(cp1$raster.Nm$means)
+    Nmeans <- log10(cp2$raster.N$means) - log10(cp1$raster.N$means)
+    
+    plot.params$eems.colors = diff.eems.colors()
+    
+    #mmeans <- cp2$raster.m$means - cp1$raster.m$means
+    #Nmmeans <- cp2$raster.Nm$means - cp1$raster.Nm$means
+    #Nmeans <- cp2$raster.N$means - cp1$raster.N$means
+    
+    save.graphics(paste0(plotpath, '-N'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    plot.eems.contour(mcmcpath[1], dimns, Nmeans, longlat, plot.params,
+    plot.type = "N", plot.xy = plot.xy, plot.diff = TRUE)
+    dev.off( )
+    
+    save.graphics(paste0(plotpath, '-mrates'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    plot.eems.contour(mcmcpath[1], dimns, mmeans, longlat, plot.params,
+    plot.type = "m", plot.xy = plot.xy, plot.diff = TRUE)
+    dev.off( )
+    
+    save.graphics(paste0(plotpath, '-Nm'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    plot.eems.contour(mcmcpath[1], dimns, Nmmeans, longlat, plot.params,
+    plot.type = "Nm", plot.xy = plot.xy, plot.diff = TRUE)
+
+    dev.off( )
+
+}
+
+#' @export
 eems.plots <- function(mcmcpath,
 plotpath,
 longlat,
@@ -1338,119 +1468,43 @@ q.plot.xy = NULL) {
     writeLines(mcmcpath)
     
     contours <- compute.eems.contours(mcmcpath, dimns, longlat, plot.params)
-    oldcontour <- contours
-    for (path in mcmcpath){
-        save(oldcontour, file = paste0(path, "/contours.rda"))
-    }
-
+    saveRDS(contours, file = paste0(mcmcpath[1], file = "/contours.rds"))
+ 
     
-    if (is.na(oldcontourpath)){
-        ## Plot filled contour of estimated effective migration rates
-        save.graphics(paste0(plotpath, '-mrates'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.m$means * m.scalingfactor
-        #probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
-        ## Pass one mcmcpath (shouldn't matter which one) in case adding extra information
-        ## (demes, edges, etc.) on top of the contour plot.
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "m", plot.xy = plot.xy)
-        #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-        #plot.type = "m", plot.xy = plot.xy)
-        dev.off( )
+    ## Plot filled contour of estimated effective migration rates
+    save.graphics(paste0(plotpath, '-mrates'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    means <- contours$raster.m$means * m.scalingfactor
+    #probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
+    ## Pass one mcmcpath (shouldn't matter which one) in case adding extra information
+    ## (demes, edges, etc.) on top of the contour plot.
+    plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
+    plot.type = "m", plot.xy = plot.xy)
+    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    #plot.type = "m", plot.xy = plot.xy)
+    dev.off( )
         
-        ## Plot filled contour of estimated effective diversity rates
-        save.graphics(paste0(plotpath, '-N'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.N$means / N.scalingfactor
-        #probs <- contours$raster.N$prGTx - contours$raster.N$prLTx
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "N", plot.xy = plot.xy)
-        #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-        #plot.type = "N", plot.xy = plot.xy)
-        dev.off( )
+    ## Plot filled contour of estimated effective diversity rates
+    save.graphics(paste0(plotpath, '-N'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    means <- contours$raster.N$means / N.scalingfactor
+    #probs <- contours$raster.N$prGTx - contours$raster.N$prLTx
+    plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
+    plot.type = "N", plot.xy = plot.xy)
+    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    #plot.type = "N", plot.xy = plot.xy)
+    dev.off( )
         
-        save.graphics(paste0(plotpath, '-Nm'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.Nm$means
-        #probs <- contours$raster.Nm$prGTx - contours$raster.Nm$prLTx
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "Nm", plot.xy = plot.xy)
-        #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-        #plot.type = "Nm", plot.xy = plot.xy)
-        dev.off( )
-        
-    } else {
-        
-        plot.params$eems.colors = diff.eems.colors()
-        plot.params$add.scale = FALSE
-        save.graphics(paste0(plotpath, '-mrates'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.m$means
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "m", plot.xy = plot.xy)
-        dev.off( )
-        
-        save.graphics(paste0(plotpath, '-N'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.N$means
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "N", plot.xy = plot.xy)
-        dev.off( )
-        
-        save.graphics(paste0(plotpath, '-Nm'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- contours$raster.Nm$means
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "Nm", plot.xy = plot.xy)
-        dev.off( )
-        
-        
-        load(oldcontourpath)
-        plot.params$add.scale = TRUE
-        plot.params$eems.colors = default.eems.colors()
-        contours <- compute.eems.contours(mcmcpath, dimns, longlat, plot.params)
-        
-        ## Plot filled contour of estimated effective migration rates
-        save.graphics(paste0(plotpath, '-mrates_abs'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- 10^(log10(contours$raster.m$means) + log10(oldcontour$raster.m$means)) * m.scalingfactor
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "m", plot.xy = plot.xy)
-        dev.off( )
-        
-        ## Plot filled contour of estimated effective diversity rates
-        save.graphics(paste0(plotpath, '-N_abs'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- 10^(log10(contours$raster.N$means) + log10(oldcontour$raster.N$means)) / N.scalingfactor
-        #print(mean(oldcontour$raster.N$means))
-        #print(mean(oldcontour$raster.Nm$means))
-        #print(mean(oldcontour$raster.m$means))
-        
-        #print(min(contours$raster.N$means))
-        #print(min(contours$raster.Nm$means))
-        #print(min(contours$raster.m$means))
-        
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "N", plot.xy = plot.xy)
-        dev.off( )
-        
-        save.graphics(paste0(plotpath, '-Nm_abs'), save.params)
-        par(las = 1, font.main = 1, xpd = xpd)
-        means <- 10^(log10(contours$raster.Nm$means) + log10(oldcontour$raster.Nm$means))
-        
-        plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-        plot.type = "Nm", plot.xy = plot.xy)
-        dev.off( )
-        
-        
-        oldcontour$raster.m$means <- 10^(log10(oldcontour$raster.m$means) + log10(contours$raster.m$means))
-        oldcontour$raster.N$means <- 10^(log10(oldcontour$raster.N$means) + log10(contours$raster.N$means))
-        oldcontour$raster.Nm$means <- 10^(log10(oldcontour$raster.Nm$means) + log10(contours$raster.Nm$means))
-        save(oldcontour, file = paste0(mcmcpath, "/contours.rda"))
-
-        
-    }
-    
+    save.graphics(paste0(plotpath, '-Nm'), save.params)
+    par(las = 1, font.main = 1, xpd = xpd)
+    means <- contours$raster.Nm$means
+    #probs <- contours$raster.Nm$prGTx - contours$raster.Nm$prLTx
+    plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
+    plot.type = "Nm", plot.xy = plot.xy)
+    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    #plot.type = "Nm", plot.xy = plot.xy)
+    dev.off( )
+   
     
     save.params$height <- 6
     save.params$width <- 6.5
