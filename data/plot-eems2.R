@@ -5,21 +5,20 @@ library(rEEMSplots2)
 
 
 
-
-
 ## mcmcpath is a list of three output directories; the results will be averaged
 #mcmcpath <- 'include_swiss/overall_run/r10/popressard_2_Inf/output'
 inds <- seq(1,25,1)
-inds <- c(3)
+inds <- inds[-c(3,16)]
+inds <- c(1)
 mcmcpath <- rep(NA, length(inds))
 
 for (i in 1:length(inds)){
-  mcmcpath[i] <- paste0('through-time/r', inds[i], '/2ndrun/popressard_8_Inf/output')
+  mcmcpath[i] <- paste0('through-time-2/r', inds[i], '/popressard_8_Inf/output')
 }
 
 plotpath <- rep(NA, length(inds))
 for (i in 1:length(inds)){
-  plotpath[i] <- paste0('through-time/r', inds[i], '/2ndrun/popressard_8_Inf/plot')
+  plotpath[i] <- paste0('through-time-2/r', inds[i], '/popressard_8_Inf/plot')
 }
 
 #plotpath <- 'backup/r20/popressard_2_Inf/plot'
@@ -50,18 +49,18 @@ oldcontourpath = NA
 m.scalingfactor = 115943
 N.scalingfactor = 68000
 
-#eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE, oldcontourpath = oldcontourpath,
-#                                                     add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
-#                                                     lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),
-#                                                               add.abline=TRUE, #N.colscale = c(3.5,7),
-#                                                     plot.height=8, plot.width=14, 
-#                                                     projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)
+eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE, oldcontourpath = oldcontourpath,
+                                                     add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
+                                                     lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),
+                                                               add.abline=TRUE, #N.colscale = c(3.5,7),
+                                                     plot.height=8, plot.width=14, 
+                                                     projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)
                                                       #N.colscale = c(2.5, 8), m.colscale = c(-4, 0))
 #eems.voronoi(mcmcpath, plotpath, longlat, add.seeds=FALSE, plot.height=8, plot.width=10)
 
 
 #eems.plot.difference(mcmcpath = mcmcpath, contourpath1 = "through-time/r1/popressard_2_8/output/contours.rds",  
-#                     contourpath2 = "through-time/r1/2ndrun/popressard_8_Inf/output/contours.rds", plotpath= "diff", 
+#                     contourpath2 = "through-time-2/r1/popressard_8_Inf/output/contours.rds", plotpath= "diff", 
 #                     longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE,
 #           add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
 #           lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),

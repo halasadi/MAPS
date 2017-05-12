@@ -395,17 +395,11 @@ read.voronoi <- function(mcmcpath, longlat, plot.type, scale.by.demes = FALSE) {
         tiles <- scan(paste0(mcmcpath, '/mcmcmtiles.txt'), what = numeric(), quiet = TRUE)
         xseed <- scan(paste0(mcmcpath, '/mcmcxcoord.txt'), what = numeric(), quiet = TRUE)
         yseed <- scan(paste0(mcmcpath, '/mcmcycoord.txt'), what = numeric(), quiet = TRUE)
-        if (scale.by.demes){
-            rates <- rates/nPops
-        }
     } else {
         rates <- scan(paste0(mcmcpath, '/mcmcqrates.txt'), what = numeric(), quiet = TRUE)
         tiles <- scan(paste0(mcmcpath, '/mcmcqtiles.txt'), what = numeric(), quiet = TRUE)
         xseed <- scan(paste0(mcmcpath, '/mcmcwcoord.txt'), what = numeric(), quiet = TRUE)
         yseed <- scan(paste0(mcmcpath, '/mcmczcoord.txt'), what = numeric(), quiet = TRUE)
-        if (scale.by.demes){
-            rates <- rates/nPops
-        }
         rates <- 1/(2*rates) ## N = 1/2q
     }
     if (!longlat) {
@@ -773,7 +767,11 @@ compute.eems.contours <- function(mcmcpath, dimns, longlat, plot.params) {
 voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params, post.draws = 1, plot.type = "m") {
     writeLines('Plotting Voronoi tessellation of estimated effective rates')
     voronoi <- read.voronoi(mcmcpath, longlat, plot.type)
-    rates <- voronoi$rates
+    #rates <- voronoi$rates
+    rates <- log10(voronoi$rates)
+    if (plot.type != "m"){
+        rates <- rates - mean(rates)
+    }
     tiles <- voronoi$tiles
     xseed <- voronoi$xseed
     yseed <- voronoi$yseed
@@ -793,6 +791,7 @@ voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params, post.draws = 
         main.title <- 'Effective population sizes 1/2*q'
         eems.levels <- eems.colscale(rates, num.levels)
     }
+    
     n.levels <- length(eems.levels)
     max.levels <- max(eems.levels)
     min.levels <- min(eems.levels)
@@ -805,8 +804,12 @@ voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params, post.draws = 
     ## Standardize the log-transformed rates, without taking into account
     ## the relative size of the tiles (this is hard to do without a grid)
     now.rates <- now.rates - mean(now.rates)
-    now.rates <- ifelse(now.rates > max.levels, max.levels, now.rates)
-    now.rates <- ifelse(now.rates < min.levels, min.levels, now.rates)
+    
+    if (plot.type == "m"){
+        now.rates <- ifelse(now.rates > max.levels, max.levels, now.rates)
+        now.rates <- ifelse(now.rates < min.levels, min.levels, now.rates)
+    }
+    
     par(mar = c(0, 0, 0, 0) + 0.1)
     plot(0, 0, type = "n", xlim = dimns$xlim, ylim = dimns$ylim, asp = 1,
     axes = FALSE, xlab = "", ylab = "", main = "")
@@ -1353,10 +1356,6 @@ q.plot.xy = NULL) {
     
     plot.params$eems.colors = diff.eems.colors()
     
-    #mmeans <- cp2$raster.m$means - cp1$raster.m$means
-    #Nmmeans <- cp2$raster.Nm$means - cp1$raster.Nm$means
-    #Nmeans <- cp2$raster.N$means - cp1$raster.N$means
-    
     save.graphics(paste0(plotpath, '-N'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
     plot.eems.contour(mcmcpath[1], dimns, Nmeans, longlat, plot.params,
@@ -1504,7 +1503,8 @@ q.plot.xy = NULL) {
     #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
     #plot.type = "Nm", plot.xy = plot.xy)
     dev.off( )
-   
+    
+    
     
     save.params$height <- 6
     save.params$width <- 6.5
