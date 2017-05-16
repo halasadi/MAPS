@@ -1474,24 +1474,24 @@ q.plot.xy = NULL) {
     save.graphics(paste0(plotpath, '-mrates'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
     means <- contours$raster.m$means * m.scalingfactor
-    #probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
+    probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
     ## Pass one mcmcpath (shouldn't matter which one) in case adding extra information
     ## (demes, edges, etc.) on top of the contour plot.
     plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
     plot.type = "m", plot.xy = plot.xy)
-    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-    #plot.type = "m", plot.xy = plot.xy)
+    plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    plot.type = "m", plot.xy = plot.xy)
     dev.off( )
         
     ## Plot filled contour of estimated effective diversity rates
     save.graphics(paste0(plotpath, '-N'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
     means <- contours$raster.N$means / N.scalingfactor
-    #probs <- contours$raster.N$prGTx - contours$raster.N$prLTx
+    probs <- contours$raster.N$prGTx - contours$raster.N$prLTx
     plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
     plot.type = "N", plot.xy = plot.xy)
-    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-    #plot.type = "N", plot.xy = plot.xy)
+    plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    plot.type = "N", plot.xy = plot.xy)
     dev.off( )
         
     save.graphics(paste0(plotpath, '-Nm'), save.params)

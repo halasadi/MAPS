@@ -6,7 +6,8 @@ library(rEEMSplots2)
 
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-#mcmcpath <- 'include_swiss/overall_run/r10/popressard_2_Inf/output'
+mcmcpath <- 'overall_run/r1/popressard_2_Inf/output'
+plotpath <- 'overall_run/r1/popressard_2_Inf/plot'
 inds <- seq(1,25,1)
 inds <- inds[-c(3,16)]
 inds <- c(1)
@@ -67,3 +68,7 @@ eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, m.scalingfactor = m.sca
 #           add.abline=TRUE, #N.colscale = c(3.5,7),
 #           plot.height=8, plot.width=14, 
 #           projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)
+
+# convert -delay 20 -depth 8 tiles/plot-mv* mvoronoi.gif
+# convert mvoronoi.gif -coalesce -scale 700x525 -fuzz 2% +dither -remap mvoronoi.gif[0] -layers Optimize mvoronoi1.gif
+# eems.voronoi.samples(mcmcpath, plotpath = "through-time-2/r1/popressard_8_Inf/tiles/plot", longlat, post.draws = 100)
