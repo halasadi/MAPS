@@ -110,7 +110,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
             var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
             neffective(alpha,beta) = observed_means(alpha,beta) / var;
             neffective(beta,alpha) = neffective(alpha,beta);
-            //cout << neffective(alpha, beta) << endl;
+            cout << neffective(alpha, beta) << endl;
         }
     }
     

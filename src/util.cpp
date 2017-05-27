@@ -252,10 +252,10 @@ double get_bootstrap_var(const MatrixXi &Sims, VectorXd cvec, const VectorXi &in
     for (int b = 0; b < nb; b++){
         
         for (int i = 0; i < n_alpha; i++){
-            deme1_subsamples(i) = rand() % n_alpha;
+            deme1_subsamples(i) = deme1_indices(rand() % n_alpha);
         }
         for (int i = 0; i < n_beta; i++){
-            deme2_subsamples(i) = rand() % n_beta;
+            deme2_subsamples(i) = deme2_indices(rand() % n_beta);
         }
         
         running_sum = 0;
@@ -283,7 +283,6 @@ double get_bootstrap_var(const MatrixXi &Sims, VectorXd cvec, const VectorXi &in
     
     
     double avg = myMeans.sum() / nb;
-    cout << "avg: " << avg << endl;
     double variance = 0;
     for (int i = 0; i < nb; i++){
         variance = variance + (myMeans(i) - avg) * (myMeans(i) - avg);
