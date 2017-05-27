@@ -108,8 +108,6 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
-    //nowqtiles = o;
-    //nowmtiles = o;
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     // Draw the Voronoi centers Coord uniformly within the habitat
     
@@ -133,8 +131,6 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     // Assign migration rates to the Voronoi tiles
     nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
     nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
-    //nowmrateMu = 0;
-    //nowqrateMu = 0;
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
@@ -926,38 +922,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         q(alpha) = pow(10.0,log10q_alpha);
     }
 
-
     int alpha, beta;
-
-
-    /*
-    VectorXd m = readMatrixXd("/Users/halasadi/eems2/expm.txt");
-    VectorXd qv = readMatrixXd("/Users/halasadi/eems2/expq.txt");
-    MatrixXd Mv = MatrixXd::Zero(d,d);
-    // Transform the log10 migration parameters into migration rates on the original scale
-    for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
-        graph.get_edge(edge,alpha,beta);
-        Mv(alpha,beta) = 0.5 * m(alpha) + 0.5 * m(beta);
-        Mv(beta,alpha) = Mv(alpha,beta);
-    }
-    
-    Mv.diagonal() = -1* Mv.rowwise().sum();
-    SelfAdjointEigenSolver<MatrixXd> esv;
-    esv.compute(Mv);
-    MatrixXd eigenvalsv = esv.eigenvalues();
-    MatrixXd eigenvecsv = esv.eigenvectors();
-    MatrixXd lowerExpectedIBDv = MatrixXd::Zero(o, o);
-    calculateIntegral(eigenvalsv, eigenvecsv, qv, lowerExpectedIBDv, params.lowerBound);
-    ofstream out; bool error = false;
-    out.open("fit.txt");
-    out << lowerExpectedIBDv << endl;
-    out.close( );
-    
-    double phiv = pow(10.0, -1.06);
-    double logllv = negbiln(lowerExpectedIBDv, observedIBD, cvec, cClasses, phiv);
-    cout << logllv << endl;
-     */
- 
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
@@ -967,8 +932,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu + log10_old_mMeanRates(alpha);
-            double log10m_beta = mEffcts(mColors(beta)) + mrateMu + log10_old_mMeanRates(beta);
+            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
+            double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }

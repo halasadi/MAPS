@@ -215,6 +215,109 @@ double pseudologdet(const MatrixXd &A, const int rank) {
     return (x.eigenvalues().reverse().array().head(rank).log().sum());
 }
 
+
+double get_bootstrap_var(MatrixXd &sims, VectorXd &cvec, VectorXi &indiv2deme, int nb, int alpha, int beta){
+    
+    VectorXi deme1_indices;
+    VectorXi deme2_indices;
+    
+    int n_alpha = cvec(alpha);
+    int n_beta = cvec(beta);
+    
+    int cnt_alpha = 0;
+    int cnt_beta = 0;
+    for (int i = 0; i < indiv2deme.size(); i++){
+        if (indiv2deme(i) == alpha){
+            deme1_indices(cnt_alpha) = i;
+            cnt_alpha += 1;
+        }
+        if (indiv2deme(i) == beta){
+            deme1_indices(cnt_beta) = i;
+            cnt_beta += 1;
+        }
+    }
+    
+    VectorXi deme1_subsamples = VectorXi::Zero(n_alpha);
+    VectorXi deme2_subsamples = VectorXi::Zero(n_beta);
+    double running_mean;
+    int n;
+    
+    VectorXd myMeans = VectorXd::Zero(nb);
+    
+    for (int b = 0; b < nb; b++){
+        
+        for (int i = 0; i < n_alpha; i++){
+            deme1_subsamples(i) = rand() % n_alpha;
+        }
+        
+        running_mean = 0;
+        n = 0;
+        
+        if (alpha == beta){
+            for (int i = 0; i < (n_alpha-1); i++){
+                for (int j = (i+1); j < n_alpha; j++){
+                    running_mean += sims(deme1_subsamples(i), deme1_subsamples(j));
+                    n += 1;
+                }
+            }
+        }
+        
+        if (alpha != beta){
+            
+            for (int i = 0; i < n_beta; i++){
+                deme2_subsamples(i) = rand() % n_beta;
+            }
+            
+            for (int i = 0; i < n_alpha; i++){
+                for (int j = 0; j < n_beta; j++){
+                    running_mean += sims(deme1_subsamples(i), deme2_subsamples(j));
+                    n += 1;
+                }
+            }
+        }
+        
+        myMeans(b) = running_mean / n;
+        
+    }
+    
+    double avg = myMeans.sum() / myMeans.size();
+    double variance = 0;
+    for (int i = 0; i < nb; i++){
+        variance += (myMeans(i) - avg) * (myMeans(i) - avg);
+    }
+    variance = variance / (nb - 1);
+    
+    return(variance);
+}
+
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXi &cvec){
+    double ll = 0;
+    int o = expectedIBD.rows();
+    double lamda;
+    double xbar;
+    int n;
+    double n_e;
+    for (int alpha = 0; alpha < o; alpha++){
+        for (int beta = alpha; beta < o; beta++){
+            if (alpha == beta){
+                n = cvec(alpha) * (cvec(beta)-1)/2;
+            } else{
+                n = cvec(alpha) * cvec(beta);
+            }
+            if (expectedIBD(alpha,beta) < 1e-8){
+                lamda = 1e-8;
+            } else {
+                lamda = expectedIBD(alpha,beta);
+            }
+            n_e = n * 0.2;
+            xbar = observedIBDCnt(alpha,beta) / n;
+            ll += n_e * (xbar * log(lamda) - lamda);
+        }
+    }
+    return(ll);
+}
+
+
 double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi){
     
     double lamda;

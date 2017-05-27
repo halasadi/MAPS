@@ -68,6 +68,9 @@ public:
     string distance;
 };
 
+
+double get_bootstrap_var(MatrixXd &sims, VectorXd &cvec, VectorXi &indiv2deme, int nb, int alpha, int beta);
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec);
 VectorXd split(const string &line);
 double mvgammaln(const double a, const int p);
 double max(double a, double b);
