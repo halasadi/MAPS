@@ -40,6 +40,7 @@ public:
     MatrixXd get_the_obsrv_demes() const;
     node get_node(int deme) const;
     int get_label(node n) const;
+    VectorXi get_indiv2deme() const;
     
 private:
     

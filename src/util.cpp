@@ -216,31 +216,36 @@ double pseudologdet(const MatrixXd &A, const int rank) {
 }
 
 
-double get_bootstrap_var(MatrixXd &sims, VectorXd &cvec, VectorXi &indiv2deme, int nb, int alpha, int beta){
-    
-    VectorXi deme1_indices;
-    VectorXi deme2_indices;
+double get_bootstrap_var(const MatrixXi &Sims, VectorXd cvec, const VectorXi &indiv2deme, int nb, int alpha, int beta){
     
     int n_alpha = cvec(alpha);
     int n_beta = cvec(beta);
     
+    VectorXi deme1_indices = VectorXi::Zero(n_alpha);
+    VectorXi deme2_indices = VectorXi::Zero(n_beta);
+    
     int cnt_alpha = 0;
     int cnt_beta = 0;
+
+    
     for (int i = 0; i < indiv2deme.size(); i++){
+        
         if (indiv2deme(i) == alpha){
             deme1_indices(cnt_alpha) = i;
             cnt_alpha += 1;
         }
         if (indiv2deme(i) == beta){
-            deme1_indices(cnt_beta) = i;
+            deme2_indices(cnt_beta) = i;
             cnt_beta += 1;
         }
+        
     }
+    
     
     VectorXi deme1_subsamples = VectorXi::Zero(n_alpha);
     VectorXi deme2_subsamples = VectorXi::Zero(n_beta);
-    double running_mean;
-    int n;
+    double running_sum;
+    double n;
     
     VectorXd myMeans = VectorXd::Zero(nb);
     
@@ -249,45 +254,44 @@ double get_bootstrap_var(MatrixXd &sims, VectorXd &cvec, VectorXi &indiv2deme, i
         for (int i = 0; i < n_alpha; i++){
             deme1_subsamples(i) = rand() % n_alpha;
         }
+        for (int i = 0; i < n_beta; i++){
+            deme2_subsamples(i) = rand() % n_beta;
+        }
         
-        running_mean = 0;
+        running_sum = 0;
         n = 0;
         
         if (alpha == beta){
             for (int i = 0; i < (n_alpha-1); i++){
                 for (int j = (i+1); j < n_alpha; j++){
-                    running_mean += sims(deme1_subsamples(i), deme1_subsamples(j));
+                    running_sum += Sims(deme1_subsamples(i), deme1_subsamples(j));
                     n += 1;
                 }
             }
-        }
-        
-        if (alpha != beta){
-            
-            for (int i = 0; i < n_beta; i++){
-                deme2_subsamples(i) = rand() % n_beta;
-            }
-            
+        } else {
             for (int i = 0; i < n_alpha; i++){
                 for (int j = 0; j < n_beta; j++){
-                    running_mean += sims(deme1_subsamples(i), deme2_subsamples(j));
+                    running_sum += Sims(deme1_subsamples(i), deme2_subsamples(j));
                     n += 1;
                 }
             }
         }
         
-        myMeans(b) = running_mean / n;
+        myMeans(b) = running_sum / n;
         
     }
     
-    double avg = myMeans.sum() / myMeans.size();
+    
+    double avg = myMeans.sum() / nb;
+    cout << "avg: " << avg << endl;
     double variance = 0;
     for (int i = 0; i < nb; i++){
-        variance += (myMeans(i) - avg) * (myMeans(i) - avg);
+        variance = variance + (myMeans(i) - avg) * (myMeans(i) - avg);
     }
     variance = variance / (nb - 1);
     
     return(variance);
+
 }
 
 double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXi &cvec){

@@ -128,6 +128,7 @@ private:
     
     MatrixXd mRates;
     MatrixXd qRates;
+    MatrixXi Sims;
     
     VectorXd log10_old_mMeanRates;
     VectorXd log10_old_qMeanRates;

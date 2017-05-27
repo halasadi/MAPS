@@ -46,7 +46,7 @@ void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, Vector
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
     MatrixXd sims = readMatrixXd(params.datapath + ".sims");
-    MatrixXi Sims = sims.cast <int> ();
+    Sims = sims.cast <int> ();
     if ((Sims.rows()!=n)||(Sims.cols()!=n)) {
         cerr << "  Error reading similarities matrix " << params.datapath + ".sims" << endl
         << "  Expect a " << n << "x" << n << " matrix of pairwise similarities" << endl; exit(1);
@@ -99,6 +99,21 @@ void EEMS2::initialize_sims( ) {
 
 void EEMS2::initialize_state(const MCMC &mcmc) {
     cerr << "[EEMS2::initialize_state]" << endl;
+    
+    MatrixXd observed_means = observedIBD.array() / cMatrix.array();
+    MatrixXd neffective = MatrixXd::Zero(o,o);
+    double var;
+    VectorXi indiv2deme = graph.get_indiv2deme();
+    for (int alpha = 0; alpha < o; alpha++){
+        for (int beta = alpha; beta < o; beta++){
+            cout << "on deme: " << alpha << " and deme: " << beta << endl;
+            var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
+            neffective(alpha,beta) = observed_means(alpha,beta) / var;
+            neffective(beta,alpha) = neffective(alpha,beta);
+            //cout << neffective(alpha, beta) << endl;
+        }
+    }
+    
     
     if (params.dfmin <= 2){
         nowdf = 2;

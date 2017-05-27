@@ -134,6 +134,10 @@ void Graph::map_indiv_to_deme(const string &datapath, const int nIndiv) {
     }
 }
 
+VectorXi Graph::get_indiv2deme( ) const {
+    return(indiv2deme);
+}
+
 
 /*
  Assign new indices to the demes, so that
