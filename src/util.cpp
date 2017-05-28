@@ -293,28 +293,20 @@ double get_bootstrap_var(const MatrixXi &Sims, VectorXd cvec, const VectorXi &in
 
 }
 
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXi &cvec){
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const MatrixXd &ceffective, const MatrixXd &cMatrix){
     double ll = 0;
     int o = expectedIBD.rows();
     double lamda;
     double xbar;
-    int n;
-    double n_e;
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
-            if (alpha == beta){
-                n = cvec(alpha) * (cvec(beta)-1)/2;
-            } else{
-                n = cvec(alpha) * cvec(beta);
-            }
             if (expectedIBD(alpha,beta) < 1e-8){
                 lamda = 1e-8;
             } else {
                 lamda = expectedIBD(alpha,beta);
             }
-            n_e = n * 0.2;
-            xbar = observedIBDCnt(alpha,beta) / n;
-            ll += n_e * (xbar * log(lamda) - lamda);
+            xbar = observedIBDCnt(alpha,beta) / cMatrix(alpha,beta);
+            ll += ceffective(alpha,beta) * (xbar * log(lamda) - lamda);
         }
     }
     return(ll);

@@ -70,7 +70,7 @@ public:
 
 
 double get_bootstrap_var(const MatrixXi &Sims, VectorXd cvec, const VectorXi &indiv2deme, int nb, int alpha, int beta);
-double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec);
+double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const MatrixXd &ceffective, const MatrixXd &cMatrix);
 VectorXd split(const string &line);
 double mvgammaln(const double a, const int p);
 double max(double a, double b);

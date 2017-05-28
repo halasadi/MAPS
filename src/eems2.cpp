@@ -101,16 +101,14 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     cerr << "[EEMS2::initialize_state]" << endl;
     
     MatrixXd observed_means = observedIBD.array() / cMatrix.array();
-    MatrixXd neffective = MatrixXd::Zero(o,o);
+    neffective = MatrixXd::Zero(o,o);
     double var;
     VectorXi indiv2deme = graph.get_indiv2deme();
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
-            cout << "on deme: " << alpha << " and deme: " << beta << endl;
             var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
             neffective(alpha,beta) = observed_means(alpha,beta) / var;
             neffective(beta,alpha) = neffective(alpha,beta);
-            cout << neffective(alpha, beta) << endl;
         }
     }
     
@@ -977,7 +975,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     double phi = pow(10.0, df);
     
-    double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
+    //double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
+    double logll = poisln(expectedIBD, observedIBD, neffective, cMatrix);
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;
