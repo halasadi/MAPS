@@ -104,35 +104,49 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     neffective = MatrixXd::Zero(o,o);
     double var;
     VectorXi indiv2deme = graph.get_indiv2deme();
-    double running_sum = 0;
-    int cnt = 0;
     
     
-    // NEED TO TEST THIS
-    double epsilon = 1e-8;
-    
+    if (params.usebootstrap){
+        cerr << "[EEMS2::bootstrapping the data to compute variance]" << endl;
+    }
+    vector<double> x;
+    vector<double> y;
+    double epsilon_mean = 1e-8;
+    double epsilon_var = 1e-10;
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
             var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
-            
-            if (observed_means(alpha,beta) < 1e-8 || var < 1e-10){
+            if (observed_means(alpha,beta) < epsilon_mean || var < epsilon_var){
                 neffective(alpha,alpha) = -1;
             } else{
                 neffective(alpha, beta) = observed_means(alpha,beta) / var;
-                running_sum += neffective(alpha, beta)/cMatrix(alpha,beta);
-                cnt += 1;
+                x.push_back(cMatrix(alpha,beta));
+                y.push_back(neffective(alpha,beta));
             }
          
             neffective(beta,alpha) = neffective(alpha,beta);
         }
     }
+    // now fill in missing data
+    double sx = 0.0, sy = 0.0, sxx = 0.0, sxy = 0.0;
+    int n = x.size();
+    for (int i = 0; i < n; ++i)
+    {
+        sx += x[i];
+        sy += y[i];
+        sxx += x[i]*x[i];
+        sxy += x[i]*y[i];
+    }
+    double delta = n*sxx - sx*sx;
+    double slope = (n*sxy - sx*sy)/delta;
+    // intercept is usually around zero
+    double intercept = (sxx*sy - sx*sxy)/delta;
     
-    double mean_ratio = running_sum / cnt;
     
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
             if (neffective(alpha,beta) < 0){
-                neffective(alpha,beta) = mean_ratio * cMatrix(alpha,beta);
+                neffective(alpha,beta) = slope * cMatrix(alpha,beta);
                 neffective(beta,alpha) = neffective(alpha,beta);
             }
         }
