@@ -104,11 +104,37 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     neffective = MatrixXd::Zero(o,o);
     double var;
     VectorXi indiv2deme = graph.get_indiv2deme();
+    double running_sum = 0;
+    int cnt = 0;
+    
+    
+    // NEED TO TEST THIS
+    double epsilon = 1e-8;
+    
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
             var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
-            neffective(alpha,beta) = observed_means(alpha,beta) / var;
+            
+            if (observed_means(alpha,beta) < 1e-8 || var < 1e-10){
+                neffective(alpha,alpha) = -1;
+            } else{
+                neffective(alpha, beta) = observed_means(alpha,beta) / var;
+                running_sum += neffective(alpha, beta)/cMatrix(alpha,beta);
+                cnt += 1;
+            }
+         
             neffective(beta,alpha) = neffective(alpha,beta);
+        }
+    }
+    
+    double mean_ratio = running_sum / cnt;
+    
+    for (int alpha = 0; alpha < o; alpha++){
+        for (int beta = alpha; beta < o; beta++){
+            if (neffective(alpha,beta) < 0){
+                neffective(alpha,beta) = mean_ratio * cMatrix(alpha,beta);
+                neffective(beta,alpha) = neffective(alpha,beta);
+            }
         }
     }
     
