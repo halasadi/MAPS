@@ -52,6 +52,7 @@ public:
     
     long seed;
     bool testing;
+    int usebootstrap;
     string datapath, mcmcpath, prevpath, gridpath, olderpath;
     double qEffctHalfInterval, mEffctHalfInterval;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;

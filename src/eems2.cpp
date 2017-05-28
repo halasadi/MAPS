@@ -321,7 +321,13 @@ MoveType EEMS2::choose_move_type( ) {
         
         return(move);
     }
-    if (u1 < 0.3) {
+    
+    double u4 = draw.runif( );
+    if (u4 < 0.1 && (params.usebootstrap == 0)){
+        move = DF_UPDATE;
+    }
+
+    if (u1 < 0.33) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
@@ -330,22 +336,19 @@ MoveType EEMS2::choose_move_type( ) {
         } else {
             move = M_VORONOI_BIRTH_DEATH;
         }
-    } else if (u1 < 0.6) {
+    } else if (u1 < 0.66) {
         if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
         }
-    } else if (u1 < 0.9) {
+    } else {
         if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;
         }
-    } else {
-        move = DF_UPDATE;
     }
-    
     return(move);
 }
 
@@ -975,8 +978,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     double phi = pow(10.0, df);
     
-    //double logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
-    double logll = poisln(expectedIBD, observedIBD, neffective, cMatrix);
+    double logll;
+    if (params.usebootstrap){
+        logll = poisln(expectedIBD, observedIBD, neffective, cMatrix);
+    } else{
+        logll = negbiln(expectedIBD, observedIBD, cvec, cClasses, phi);
+    }
     
     if (logll != logll){
         cerr << "trouble with ll" << endl;

@@ -9,6 +9,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     try {
         po::options_description eems_options("EEMS options from parameter file");
         eems_options.add_options()
+        ("usebootstrap", po::value<int>(&usebootstrap)->default_value(0), "Use bootstrap to estimate effective number of samples")
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
@@ -99,6 +100,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "                  dfmin = " << params.dfmin << endl
+    << "           usebootstrap = " << params.usebootstrap << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
@@ -146,6 +148,12 @@ bool Params::check_input_params( ) const {
         << "  mrateMuProposalS2 = " << mrateMuProposalS2 << ", qrateMuProposalS2 = " << qrateMuProposalS2 << endl
         << "   mSeedsProposalS2 = " << mSeedsProposalS2 << ", mEffctProposalS2 = " << mEffctProposalS2 << endl
         << "   qSeedsProposalS2 = " << qSeedsProposalS2 << ", qEffctProposalS2 = " << qEffctProposalS2 << endl;
+        error = true;
+    }
+    
+    if (usebootstrap !=0 && usebootstrap != 1){
+        cerr << "Error with usebootstrap: " << endl
+        << usebootstrap << endl;
         error = true;
     }
     
