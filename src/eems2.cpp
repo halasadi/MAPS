@@ -142,13 +142,18 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     // intercept is usually around zero
     double intercept = (sxx*sy - sx*sxy)/delta;
     
-    
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
-            if (neffective(alpha,beta) < 0){
-                neffective(alpha,beta) = slope * cMatrix(alpha,beta);
+            if (neffective(alpha,beta) <= 0){
+                neffective(alpha,beta) = slope * (float) cMatrix(alpha,beta);
                 neffective(beta,alpha) = neffective(alpha,beta);
             }
+            
+            if (neffective(alpha,beta) < 0){
+                cerr << "ERROR, effective number of samples = 0 ";
+                exit(1);
+            }
+            
         }
     }
     
