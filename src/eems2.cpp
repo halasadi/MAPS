@@ -164,7 +164,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
         nowdf = params.dfmin;
     }
     // Initialize the two Voronoi tessellations
-    nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
+    //nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
+    nowqtiles = 1;
     nowmtiles = draw.rnegbin(2*o,0.5);
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     // Draw the Voronoi centers Coord uniformly within the habitat
@@ -191,7 +192,9 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     // Assign rates to the Voronoi tiles
-    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
+    nowqEffcts = VectorXd::Zero(nowqtiles); //rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
+    nowqEffcts.setOnes(nowqtiles);
+    nowqEffcts = nowqEffcts * 0.00005;
     nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,nowmrateS2,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
@@ -358,13 +361,15 @@ MoveType EEMS2::choose_move_type( ) {
     MoveType move = UNKNOWN_MOVE_TYPE;
     
     if (u3 < 0.25 && params.olderpath.empty()){
-        if (u2 < 0.5) {
+
+      /*if (u2 < 0.5) {
             move = M_MEAN_RATE_UPDATE;
         } else  {
             move = Q_MEAN_RATE_UPDATE;
         }
-        
-        return(move);
+      */
+       move = M_MEAN_RATE_UPDATE;
+       return(move);
     }
     
     double u4 = draw.runif( );
@@ -376,23 +381,28 @@ MoveType EEMS2::choose_move_type( ) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
-        if (u2 < params.qVoronoiPr) {
+        /*if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_BIRTH_DEATH;
         } else {
             move = M_VORONOI_BIRTH_DEATH;
-        }
+	    }*/
+      move = M_VORONOI_BIRTH_DEATH;
     } else if (u1 < 0.66) {
-        if (u2 < params.qVoronoiPr) {
+      /*if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
-        }
+	    }*/
+      move = M_VORONOI_POINT_MOVE;
     } else {
-        if (u2 < params.qVoronoiPr) {
+      /*if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;
         }
+      */
+      move = M_VORONOI_RATE_UPDATE;
+      
     }
     return(move);
 }
