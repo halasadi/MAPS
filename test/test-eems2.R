@@ -12,8 +12,8 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popressard_3_6-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
-plotpath <- 'data/4x5/recent_barrier/eems_6_Inf_plot-prevpath'
-mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/spain_uk_france/eems_2_Inf_plot-prevpath'
+mcmcpath <- 'data/4x5/spain_uk_france/eems_2_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf_plot'
 #mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_4_plot'
@@ -28,8 +28,8 @@ mcmcpath <- 'data/4x5/recent_barrier/eems_6_Inf-EEMS2-test-sim'
 #N.true <- c(1e4,1e4,1e2,1e2,1e4,1e4,1e4,1e2,1e2,1e4,1e4,1e4,1e2,1e2,1e4,1e4,1e4,1e2,1e2,1e4)
 #map <- mean(abs(N-N.true)/N.true) * 100
 
-m <- 10^(read.table('data/4x5/uniform/eems_2_6-EEMS2-test-sim/log10mMeanRates.txt'))
-mean(abs(m-0.01)/0.01)
+#m <- 10^(read.table('data/4x5/uniform/eems_2_6-EEMS2-test-sim/log10mMeanRates.txt'))
+#mean(abs(m-0.01)/0.01)
 longlat=TRUE
 oldcontourpath = NA
 

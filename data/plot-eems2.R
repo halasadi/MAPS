@@ -1,26 +1,24 @@
-detach("package:rEEMSplots2", unload=TRUE)
-install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
+#detach("package:rEEMSplots2", unload=TRUE)
+#install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
 library(maps)
 library(rEEMSplots2)
 
 
 
 ## mcmcpath is a list of three output directories; the results will be averaged
-mcmcpath <- 'overall_run/r1/popressard_2_Inf/output'
-plotpath <- 'overall_run/r1/popressard_2_Inf/plot'
-inds <- seq(1,25,1)
-inds <- inds[-c(3,16)]
-inds <- c(1)
+plotpath <- 'tmp/r8/popressard_2_Inf/plot'
+#inds <- seq(1, 5, 1)
+inds <- c(8)
 mcmcpath <- rep(NA, length(inds))
 
 for (i in 1:length(inds)){
-  mcmcpath[i] <- paste0('through-time-2/r', inds[i], '/popressard_8_Inf/output')
+  mcmcpath[i] <- paste0('tmp/r', inds[i], '/popressard_2_Inf/output')
 }
 
-plotpath <- rep(NA, length(inds))
-for (i in 1:length(inds)){
-  plotpath[i] <- paste0('through-time-2/r', inds[i], '/popressard_8_Inf/plot')
-}
+#plotpath <- rep(NA, length(inds))
+#for (i in 1:length(inds)){
+#  plotpath[i] <- paste0('overall/r', inds[i], '/popressard_2_Inf/plot')
+#}
 
 #plotpath <- 'backup/r20/popressard_2_Inf/plot'
 #mcmcpath <- 'backup/r20/popressard_2_Inf/output'

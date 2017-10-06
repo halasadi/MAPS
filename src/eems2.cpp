@@ -156,7 +156,16 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
             
         }
     }
+
     
+    bool error = false;
+    if (params.seapath != ""){
+        is_sea = readMatrixXd(params.seapath);
+        if (is_sea.size() != o) { error = true; }
+        if (error){
+	    cerr << "ERROR with reading " << params.seapath << endl;
+        }
+    }
     
     if (params.dfmin <= 2){
         nowdf = 2;
@@ -981,6 +990,14 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
+    }
+    
+    if (params.seapath != ""){
+        for (int alpha = 0; alpha < d; alpha ++){
+            if (is_sea(alpha)){
+                q(alpha) = 1e-8;
+            }
+        }
     }
 
     int alpha, beta;

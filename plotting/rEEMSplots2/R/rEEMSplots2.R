@@ -390,6 +390,7 @@ read.voronoi <- function(mcmcpath, longlat, plot.type, scale.by.demes = FALSE) {
     oDemes <- scan(paste(mcmcpath[1],'/rdistoDemes.txt',sep=''),quiet=TRUE)
     oDemes <- matrix(oDemes,ncol=3,byrow=TRUE)
     nPops <- nrow(oDemes)
+    
     if (plot.type == "m") {
         rates <- scan(paste0(mcmcpath, '/mcmcmrates.txt'), what = numeric(), quiet = TRUE)
         tiles <- scan(paste0(mcmcpath, '/mcmcmtiles.txt'), what = numeric(), quiet = TRUE)
@@ -1350,7 +1351,7 @@ q.plot.xy = NULL) {
     cp1 <- readRDS(contourpath1)
     cp2 <- readRDS(contourpath2)
     
-    mmeans <- log10(cp2$raster.m$means) - log10(cp1$raster.m$means)
+    mmeans <- log10(sqrt(cp2$raster.m$means)) - log10(sqrt(cp1$raster.m$means))
     Nmmeans <- log10(cp2$raster.Nm$means) - log10(cp1$raster.Nm$means)
     Nmeans <- log10(cp2$raster.N$means) - log10(cp1$raster.N$means)
     
@@ -1473,7 +1474,9 @@ q.plot.xy = NULL) {
     ## Plot filled contour of estimated effective migration rates
     save.graphics(paste0(plotpath, '-mrates'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
-    means <- contours$raster.m$means * m.scalingfactor
+    
+    # maybe change definition of m.scalingfactor so you don't have to square it?
+    means <- sqrt(contours$raster.m$means * m.scalingfactor)
     probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
     ## Pass one mcmcpath (shouldn't matter which one) in case adding extra information
     ## (demes, edges, etc.) on top of the contour plot.
@@ -1497,11 +1500,11 @@ q.plot.xy = NULL) {
     save.graphics(paste0(plotpath, '-Nm'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
     means <- contours$raster.Nm$means
-    #probs <- contours$raster.Nm$prGTx - contours$raster.Nm$prLTx
+    probs <- contours$raster.Nm$prGTx - contours$raster.Nm$prLTx
     plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
     plot.type = "Nm", plot.xy = plot.xy)
-    #plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-    #plot.type = "Nm", plot.xy = plot.xy)
+    plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
+    plot.type = "Nm", plot.xy = plot.xy)
     dev.off( )
     
     
