@@ -1,15 +1,27 @@
 Migration and Population Surface estimation (MAPS)
 =====================================
 
-The MAPs software is adapted from the eems software and the software usage is very similar. **Here, we only highlight the differences between the usage of MAPs and EEMS**. Please see https://github.com/dipetkov/eems for the usage in EEMS.
+The MAPs software is built from the eems software and the software usage is very similar. **Here, we only highlight the differences between the usage of MAPs and EEMS**. Please see https://github.com/dipetkov/eems for the usage in EEMS.
+
+## installing MAPS
+
+I recommend using *conda* to install MAPS
+
+*  install conda, see: https://conda.io/docs/
+* ```conda create -n MAPS``` (this creates a conda enviornment for MAPS)
+* ```source activate MAPS```
+* ```conda install boost=1.5.7``` (MAPS only works with this version of boost)
+* ```conda install eigen```
+* clone the repository and in the ```src``` directory, type ```make linux``` (or ```make darwin``` depending on your system)
+
 
 ## data input
 
-Maps requires the
+MAPS requires for input
 
-* IBD sharing matrix (ends in .sims) such
-* coordinate file (ends in .coord). See EEMS documentation for more information
-* outer file (ends in .outer). See EEMS documentation for more information.
+* IBD sharing matrix (ends in .sims) (see below)
+* coordinate file (ends in .coord). see eems documentation
+* outer file (ends in .outer). see eems documentation
 
 An IBD sharing matrix is required for MAPs (instead of an disssimilarity matrix as in eems). The IBD sharing matrix ${X}$ is defined such that $X_{i,j}$ is the number of IBD segments shared in a length bin R between haploid $i$ and haploid $j$, the length bin or range R is described below. In the MAPs paper we use the software refinedIBD to call and phase diploid data. The sharing matrix must end with with the prefix .sims, e.g. `popressard_2_Inf.sims`. 
 
@@ -29,7 +41,7 @@ upperBound = 8
 ```
 ## parameter configuration
 
-As mentioned above, the parameters in MAPs are nearly identical. The differences are
+As mentioned above, the parameters in MAPs are nearly identical. However, there are a few additional arguments in the `params.ini` file, 
 
 * `genomeSize` (optional defaults to 3000cM)
 
@@ -43,17 +55,32 @@ As mentioned above, the parameters in MAPs are nearly identical. The differences
 
 * `usebootstrap` (optional, with options = 0 or 1, defaults to 1. MAPS uses the bootstrap to estimate the effective sample size in the data. For very long segments >10cM, the bootstrap is not accurate and we suggest setting the option to 0)
 
+
+Finally, you can run MAPS with the command such as this
+
 ```
-./runeems2 --params params-test.ini --seed 123
+./runeems2 --params params.ini --seed 123
 ```
 
 ## plotting
 
-Finally, the MAPs results can be visualized with the function `eems.plots` defined in the R package `rEEMSplot2`. The instructions are the same as in eems. However in MAPs, one can specify constants for the inferred migration rates and population sizes to be approximately independent of the grid-density. (see plot-MAPS.R for instructions and an example)
+Finally, the MAPs results can be visualized with the function `eems.plots` defined in the R package `rEEMSplot2`. The MAPS R plotting scripts are built upon the eems plotting scripts and therfore the usage is very similar. You must install the R plotting scripts from source, 
 
-## comparing MAPS runs for different IBD length bins
+```
+## Part 1: Install rEEMSplots2
+## Check that the current directory contains the rEEMSplots source directory
+if (file.exists("./rEEMSplots2")) {
+  install.packages("rEEMSplots2", repos = NULL, type = "source")
+} else {
+  stop("Move to the directory that contains the rEEMSplots source to install the package.")
+}
+```
 
-Somtimes, it can be difficult to interpret differences of MAPS runs between two IBD lengths bins. For example, 2-6cM versus >6cM. There is an option in MAPS to allow users to more easily interpret differences. For example, if I want to visualize the differences in migration surfaces between 2-6cM and >6cM.
+See `examples` on how to plot.
+
+### comparing MAPS runs for different IBD length bins
+
+Sometimes, it can be difficult to interpret differences of MAPS runs between two IBD lengths bins. For example, 2-6cM versus >6cM. There is an option in MAPS to plot the differences between MAPS runs. For example, if I want to visualize the differences in migration surfaces between 2-6cM and >6cM.
 
 The procedure is as follow.
 
@@ -64,8 +91,8 @@ The procedure is as follow.
 
 ## examples
 
-Please see the `data` folder for an example.
+Please see the `examples` folder for examples data-input, how to run MAPS, and how to plot the results.
 
 ## confused?
 
-The MAPS software is still being tested. I will appreciate any bugs/comments with the documentation and improve the software.
+The MAPS software is still being tested. I will appreciate any bugs/comments with the code/documentation

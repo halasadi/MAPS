@@ -156,16 +156,6 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
             
         }
     }
-
-    
-    bool error = false;
-    if (params.seapath != ""){
-        is_sea = readMatrixXd(params.seapath);
-        if (is_sea.size() != o) { error = true; }
-        if (error){
-	    cerr << "ERROR with reading " << params.seapath << endl;
-        }
-    }
     
     if (params.dfmin <= 2){
         nowdf = 2;
@@ -745,11 +735,10 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
 void EEMS2::print_iteration(const MCMC &mcmc) const {
     cerr << " Ending iteration " << mcmc.currIter
     << " with acceptance proportions:" << endl << mcmc
-    << " and over-dispersion parameter = " << pow(10, nowdf) << setprecision(4) << endl
     << "         number of qVoronoi tiles = " << nowqtiles << endl
     << "         number of mVoronoi tiles = " << nowmtiles << endl
-    << "          Log prior = " << nowpi << setprecision(4) << endl
-    << "          Log llike = " << nowll << setprecision(4) << endl;
+    << "          Log prior = " << nowpi << setprecision(8) << endl
+    << "          Log llike = " << nowll << setprecision(8) << endl;
 }
 void EEMS2::save_iteration(const MCMC &mcmc) {
     int iter = mcmc.to_save_iteration( );
@@ -992,13 +981,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
-    if (params.seapath != ""){
-        for (int alpha = 0; alpha < d; alpha ++){
-            if (is_sea(alpha)){
-                q(alpha) = 1e-8;
-            }
-        }
-    }
 
     int alpha, beta;
     

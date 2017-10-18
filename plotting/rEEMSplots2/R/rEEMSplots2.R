@@ -643,7 +643,7 @@ plot.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, plot
     ## now becomes positive
     Props <- (Props + 1) / 2
     
-    ## this should not occur because we made them lie in [0, 1].
+    ## this should not occur because we made them lie in [0, 1] above
     Props[Props < 0] <- 0
     Props[Props > 1] <- 1
     
@@ -1176,7 +1176,6 @@ load.required.package <- function(package, required.by) {
 #' @param col.grid The color of the population grid. Defaults to \code{gray80}.
 #' @param lwd.grid The line width of the population grid. Defaults to 1.
 #' @param add.outline A logical value indicating whether to add the habitat outline or not.
-#' @param oldcontourpath The full path to a MAPS output directory
 #' @param col.outline The color of the habitat outline. Defaults to \code{white}.
 #' @param lwd.outline The line width of the habitat outline. Defaults to 2.
 #' @param add.demes A logical value indicating whether to add the observed demes or not.
@@ -1336,9 +1335,7 @@ remove.singletons = TRUE,
 add.abline = FALSE,
 add.r.squared = FALSE,
 
-is.scaled = FALSE,
-
-oldcontourpath = NA,
+scale.by.area = FALSE,
 
 ## Extra options
 add.title = TRUE,
@@ -1434,9 +1431,7 @@ remove.singletons = TRUE,
 add.abline = FALSE,
 add.r.squared = FALSE,
 
-is.scaled = FALSE,
-
-oldcontourpath = NA,
+scale.by.area = FALSE,
 
 ## Extra options
 add.title = TRUE,
@@ -1475,9 +1470,9 @@ q.plot.xy = NULL) {
     
     
     m.scalingfactor = 1
-    N.scalingfacgtor = 1
+    N.scalingfactor = 1
     
-    if (is.scaled){
+    if (scale.by.area){
         ll = compute.scalingfactors(mcmcpath)
         m.scalingfactor = ll$m.scalingfactor
         N.scalingfactor = ll$N.scalingfactor

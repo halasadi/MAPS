@@ -1,0 +1,27 @@
+---
+title: "README"
+author: "Hussein Al-Asadi"
+date: "October 18, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here, we consider analyzing a barrier through time.
+
+First, we run MAPS on PSC segments 2-6cM to look at older population structure
+
+```
+../src/runeems2 --params params-test-2_6.ini
+```
+
+Secondly, we run MAPS on PSC segments > 6cM to look at more recent population structure
+
+```
+ ../src/runeems2 --params params-test-6_Inf.ini
+```
+ 
+Finally, we plot the results. See `plot-maps.example.R`.
+
