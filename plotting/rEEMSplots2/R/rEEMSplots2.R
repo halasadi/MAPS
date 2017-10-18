@@ -26,6 +26,18 @@ default.eems.colors <- function( ) {
 }
 
 
+compute.scalingfactors <- function(mcmcpath){
+    demes = read.table(paste0(mcmcpath, "/demes.txt"))
+    odemes = nrow(read.table(paste0(mcmcpath, "/rdistoDemes.txt")))
+    ndemes = nrow(demes)
+    p1 = as.numeric(demes[(odemes + 1),])
+    p2 = as.numeric(demes[(odemes + 2),])
+    m.scalingfactor = (distHaversine(p1 = p1, p2 = p2)/1000)^2
+    totalarea = areaPolygon(read.table(paste0(mcmcpath, "/outer.txt")))/1e6
+    N.scalingfactor = totalarea / ndemes
+    return(list(m.scalingfactor = m.scalingfactor, N.scalingfactor = N.scalingfactor))
+}
+
 diff.eems.colors <- function( ) {
     eems.colors <- c("#8565c4", "#9477cb",  "#a28ad2", "#b19cd9", "#c0aee0", "#cec1e7", "#ddd3ee",     # purple sequence
     "#FBFBFB", # white
@@ -386,7 +398,7 @@ read.graph <- function(path, longlat) {
     sizes <- as.numeric(sizes)
     return(list(ipmap = ipmap, demes = demes, edges = edges, alpha = alpha, sizes = sizes, outer = outer))
 }
-read.voronoi <- function(mcmcpath, longlat, plot.type, scale.by.demes = FALSE) {
+read.voronoi <- function(mcmcpath, longlat, plot.type) {
     oDemes <- scan(paste(mcmcpath[1],'/rdistoDemes.txt',sep=''),quiet=TRUE)
     oDemes <- matrix(oDemes,ncol=3,byrow=TRUE)
     nPops <- nrow(oDemes)
@@ -628,7 +640,10 @@ plot.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, plot
 }
 plot.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, plot.type, plot.xy = NULL) {
     
+    ## now becomes positive
     Props <- (Props + 1) / 2
+    
+    ## this should not occur because we made them lie in [0, 1].
     Props[Props < 0] <- 0
     Props[Props > 1] <- 1
     
@@ -646,6 +661,7 @@ plot.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, plot
     alpha <- plot.params$prob.levels
     alpha <- alpha[alpha > 0.5 & alpha < 1]
     alpha <- sort(unique(alpha))
+    
     prob.labels <- c("", as.character(rev(alpha)), as.character(alpha), "")
     prob.levels <- c(0, 1 - rev(alpha), alpha, 1)
     prob.colors <- default.eems.colors()
@@ -705,13 +721,13 @@ compute.eems.contours <- function(mcmcpath, dimns, longlat, plot.params) {
     weight  <- 1/niters
     for (path in mcmcpath) {
         writeLines(path)
-        mvoronoi <- read.voronoi(path, longlat, plot.type = "m", plot.params$scale.by.demes)
+        mvoronoi <- read.voronoi(path, longlat, plot.type = "m")
         mtiles <- mvoronoi$tiles
         mrates <- mvoronoi$rates
         mxseed <- mvoronoi$xseed
         myseed <- mvoronoi$yseed
         ## Question? Average the q values or average the the N = 1/2*q values?
-        qvoronoi <- read.voronoi(path, longlat, plot.type = "q", plot.params$scale.by.demes)
+        qvoronoi <- read.voronoi(path, longlat, plot.type = "q")
         qtiles <- qvoronoi$tiles
         qrates <- qvoronoi$rates
         qxseed <- qvoronoi$xseed
@@ -736,13 +752,13 @@ compute.eems.contours <- function(mcmcpath, dimns, longlat, plot.params) {
     ## significantly higher or lower than the average
     for (path in mcmcpath) {
         writeLines(path)
-        mvoronoi <- read.voronoi(path, longlat, plot.type = "m", plot.params$scale.by.demes)
+        mvoronoi <- read.voronoi(path, longlat, plot.type = "m")
         mtiles <- mvoronoi$tiles
         mrates <- mvoronoi$rates
         mxseed <- mvoronoi$xseed
         myseed <- mvoronoi$yseed
         ## Question? Average the q values or average the the N = 1/2*q values?
-        qvoronoi <- read.voronoi(path, longlat, plot.type = "q", plot.params$scale.by.demes)
+        qvoronoi <- read.voronoi(path, longlat, plot.type = "q")
         qtiles <- qvoronoi$tiles
         qrates <- qvoronoi$rates
         qxseed <- qvoronoi$xseed
@@ -1320,12 +1336,7 @@ remove.singletons = TRUE,
 add.abline = FALSE,
 add.r.squared = FALSE,
 
-m.scalingfactor = 1,
-
-N.scalingfactor = 1,
-
-## scale by number of demes?
-scale.by.demes = FALSE,
+is.scaled = FALSE,
 
 oldcontourpath = NA,
 
@@ -1340,7 +1351,7 @@ q.plot.xy = NULL) {
     col.map = col.map, col.grid = col.grid, col.outline = col.outline, col.demes = col.demes,
     lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
     min.cex.demes = min.cex.demes, proj.in = projection.in, add.colbar = add.colbar,
-    max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title, scale.by.demes = scale.by.demes, add.scale = TRUE)
+    max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title, add.scale = TRUE)
     plot.params <- check.plot.params(plot.params)
     plot.params$add.scale = FALSE
     
@@ -1352,7 +1363,6 @@ q.plot.xy = NULL) {
     cp2 <- readRDS(contourpath2)
     
     mmeans <- log10(sqrt(cp2$raster.m$means)) - log10(sqrt(cp1$raster.m$means))
-    Nmmeans <- log10(cp2$raster.Nm$means) - log10(cp1$raster.Nm$means)
     Nmeans <- log10(cp2$raster.N$means) - log10(cp1$raster.N$means)
     
     plot.params$eems.colors = diff.eems.colors()
@@ -1367,13 +1377,6 @@ q.plot.xy = NULL) {
     par(las = 1, font.main = 1, xpd = xpd)
     plot.eems.contour(mcmcpath[1], dimns, mmeans, longlat, plot.params,
     plot.type = "m", plot.xy = plot.xy, plot.diff = TRUE)
-    dev.off( )
-    
-    save.graphics(paste0(plotpath, '-Nm'), save.params)
-    par(las = 1, font.main = 1, xpd = xpd)
-    plot.eems.contour(mcmcpath[1], dimns, Nmmeans, longlat, plot.params,
-    plot.type = "Nm", plot.xy = plot.xy, plot.diff = TRUE)
-
     dev.off( )
 
 }
@@ -1431,12 +1434,7 @@ remove.singletons = TRUE,
 add.abline = FALSE,
 add.r.squared = FALSE,
 
-m.scalingfactor = 1,
-
-N.scalingfactor = 1,
-
-## scale by number of demes?
-scale.by.demes = FALSE,
+is.scaled = FALSE,
 
 oldcontourpath = NA,
 
@@ -1451,7 +1449,7 @@ q.plot.xy = NULL) {
     lwd.map = lwd.map, lwd.grid = lwd.grid, lwd.outline = lwd.outline, pch.demes = pch.demes,
     min.cex.demes = min.cex.demes, proj.in = projection.in, add.colbar = add.colbar,
     max.cex.demes = max.cex.demes, proj.out = projection.out, add.title = add.title,
-    prob.levels = prob.levels, scale.by.demes = scale.by.demes, add.scale = TRUE)
+    prob.levels = prob.levels, add.scale = TRUE)
     plot.params <- check.plot.params(plot.params)
     
     ## A vector of EEMS output directories, for the same dataset.
@@ -1475,7 +1473,17 @@ q.plot.xy = NULL) {
     save.graphics(paste0(plotpath, '-mrates'), save.params)
     par(las = 1, font.main = 1, xpd = xpd)
     
-    # maybe change definition of m.scalingfactor so you don't have to square it?
+    
+    m.scalingfactor = 1
+    N.scalingfacgtor = 1
+    
+    if (is.scaled){
+        ll = compute.scalingfactors(mcmcpath)
+        m.scalingfactor = ll$m.scalingfactor
+        N.scalingfactor = ll$N.scalingfactor
+    }
+    
+    
     means <- sqrt(contours$raster.m$means * m.scalingfactor)
     probs <- contours$raster.m$prGTx - contours$raster.m$prLTx
     ## Pass one mcmcpath (shouldn't matter which one) in case adding extra information
@@ -1496,18 +1504,6 @@ q.plot.xy = NULL) {
     plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
     plot.type = "N", plot.xy = plot.xy)
     dev.off( )
-        
-    save.graphics(paste0(plotpath, '-Nm'), save.params)
-    par(las = 1, font.main = 1, xpd = xpd)
-    means <- contours$raster.Nm$means
-    probs <- contours$raster.Nm$prGTx - contours$raster.Nm$prLTx
-    plot.eems.contour(mcmcpath[1], dimns, means, longlat, plot.params,
-    plot.type = "Nm", plot.xy = plot.xy)
-    plot.prob.contour(mcmcpath[1], dimns, probs, longlat, plot.params,
-    plot.type = "Nm", plot.xy = plot.xy)
-    dev.off( )
-    
-    
     
     save.params$height <- 6
     save.params$width <- 6.5

@@ -1,5 +1,5 @@
-#detach("package:rEEMSplots2", unload=TRUE)
-#install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
+detach("package:rEEMSplots2", unload=TRUE)
+install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
 #setwd("~/eems2/test/")
 library(rEEMSplots2)
 
@@ -12,8 +12,8 @@ library(rEEMSplots2)
 #mcmcpath <- 'data/popres/popressard_3_6-EEMS2-test-sim' 
 #plotpath <- 'data/12x8/uniform/plot'
 #mcmcpath <- 'data/12x8/uniform/eems_4_Inf-EEMS2-test-sim' 
-plotpath <- 'data/4x5/spain_uk_france/eems_2_Inf_plot-prevpath'
-mcmcpath <- 'data/4x5/spain_uk_france/eems_2_Inf-EEMS2-test-sim' 
+plotpath <- 'data/4x5/circle_barrier_highpopsize/eems_2_Inf_plot-prevpath'
+mcmcpath <- 'data/4x5/circle_barrier_highpopsize/eems_2_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf_plot'
 #mcmcpath <- 'data/4x5/heter_popsizes_unevensampling2/eems_4_Inf-EEMS2-test-sim' 
 #plotpath <- 'data/4x5/past_barrier/eems_2_4_plot'
@@ -40,3 +40,4 @@ mapply(eems.plots, mcmcpath, plotpath, MoreArgs=list(longlat,
                                                      add.abline=TRUE, scale.by.demes = FALSE,
                                                      plot.height=8, plot.width=14,
                                                      projection.in = "+proj=longlat +datum=WGS84"))
+

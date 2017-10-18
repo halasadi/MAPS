@@ -17,3 +17,5 @@ test/data
 *png
 *.txt
 .Rproj.user
+data/*
+test/*

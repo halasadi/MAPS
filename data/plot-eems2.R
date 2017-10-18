@@ -1,19 +1,17 @@
-#detach("package:rEEMSplots2", unload=TRUE)
-#install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
+detach("package:rEEMSplots2", unload=TRUE)
+install.packages("../plotting/rEEMSplots2", repos=NULL, type="source")
 library(maps)
 library(rEEMSplots2)
+library(geosphere)
 
 
-
-## mcmcpath is a list of three output directories; the results will be averaged
-plotpath <- 'tmp/r8/popressard_2_Inf/plot'
 #inds <- seq(1, 5, 1)
-inds <- c(8)
-mcmcpath <- rep(NA, length(inds))
+#inds <- c(1)
+#mcmcpath <- rep(NA, length(inds))
 
-for (i in 1:length(inds)){
-  mcmcpath[i] <- paste0('tmp/r', inds[i], '/popressard_2_Inf/output')
-}
+#for (i in 1:length(inds)){
+#  mcmcpath[i] <- paste0('overall_with_sea/r', inds[i], '/popressard_2_Inf/output')
+#}
 
 #plotpath <- rep(NA, length(inds))
 #for (i in 1:length(inds)){
@@ -45,28 +43,42 @@ oldcontourpath = NA
 #oldcontourpath = 'include_swiss/chain3-3/popressard_2_8/output/contours.rda'
 
 # 117 demes
-m.scalingfactor = 115943
-N.scalingfactor = 68000
 
-eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE, oldcontourpath = oldcontourpath,
+#m.scalingfactor = 115943
+#N.scalingfactor = 68000
+
+## mcmcpath is a list of three output directories; the results will be averaged
+plotpath <- 'vary-grid/200d/popressard_2_Inf/plot'
+mcmcpath <- 'vary-grid/200d/popressard_2_Inf/output'
+
+#plotpath <- 'qnebprob/r7/popressard_2_Inf/plot'
+#mcmcpath <- 'qnebprob/r7/popressard_2_Inf/output/'
+
+#d = read.table("~/eems2/data/vary-grid/200d/popressard_2_Inf/output/demes.txt")
+#m.scalingfactor = (distHaversine(p1 = c(35, -10), p2 = c(37.4762, -10))/1000)^2
+#ndemes = 187
+#N.scalingfactor = 7955710 / ndemes
+
+eems.plots(mcmcpath, plotpath[1], longlat, add.map=TRUE, is.scaled = TRUE, add.demes=TRUE, oldcontourpath = oldcontourpath,
                                                      add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
                                                      lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),
                                                                add.abline=TRUE, #N.colscale = c(3.5,7),
                                                      plot.height=8, plot.width=14, 
-                                                     projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)
+                                                     projection.in = "+proj=longlat +datum=WGS84")
                                                       #N.colscale = c(2.5, 8), m.colscale = c(-4, 0))
 #eems.voronoi(mcmcpath, plotpath, longlat, add.seeds=FALSE, plot.height=8, plot.width=10)
 
 
 #eems.plot.difference(mcmcpath = mcmcpath, contourpath1 = "through-time/r1/popressard_2_8/output/contours.rds",  
 #                     contourpath2 = "through-time-2/r1/popressard_8_Inf/output/contours.rds", plotpath= "diff", 
-#                     longlat, add.map=TRUE, m.scalingfactor = m.scalingfactor, N.scalingfactor=N.scalingfactor, add.demes=TRUE,
+#                     longlat, add.map=TRUE, add.demes=TRUE,
 #           add.grid=FALSE, add.outline=FALSE, lwd.grid=0.5, col.grid="black",
 #           lwd.map=1, col.map = "black", # m.colscale = c(-4, 0),
 #           add.abline=TRUE, #N.colscale = c(3.5,7),
 #           plot.height=8, plot.width=14, 
-#           projection.in = "+proj=longlat +datum=WGS84", scale.by.demes=FALSE)
+#           projection.in = "+proj=longlat +datum=WGS84")
 
 # convert -delay 20 -depth 8 tiles/plot-mv* mvoronoi.gif
 # convert mvoronoi.gif -coalesce -scale 700x525 -fuzz 2% +dither -remap mvoronoi.gif[0] -layers Optimize mvoronoi1.gif
 # eems.voronoi.samples(mcmcpath, plotpath = "through-time-2/r1/popressard_8_Inf/tiles/plot", longlat, post.draws = 100)
+
