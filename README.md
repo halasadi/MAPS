@@ -12,10 +12,10 @@ I recommend using *conda* to install MAPS
 * ```source activate MAPS```
 * ```conda install boost=1.5.7``` (MAPS only works with this version of boost)
 * ```conda install eigen```
-* clone the repository and in the ```src``` directory, type ```make linux``` (or ```make darwin``` depending on your system)
+* clone the repository and in the ```src``` directory, type ```make``` 
 
 
-## data input
+## preparing data for MAPS
 
 MAPS requires for input
 
@@ -25,7 +25,7 @@ MAPS requires for input
 
 An IBD sharing matrix is required for MAPs (instead of an disssimilarity matrix as in eems). The IBD sharing matrix ${X}$ is defined such that $X_{i,j}$ is the number of IBD segments shared in a length bin R between haploid $i$ and haploid $j$, the length bin or range R is described below. In the MAPs paper we use the software refinedIBD to call and phase diploid data. The sharing matrix must end with with the prefix .sims, e.g. `popressard_2_Inf.sims`. 
 
-The length bin R is defined by a lowerbound and an upperbound on the **cM** scale, and can be specified in the params file withe the parameter `lowerBound` and `upperBound`. If `upperBound` entry is blank, it is assumed to be infinity. 
+The length bin R is defined by a lowerbound and an upperbound on the **cM** scale, and can be specified in the `params` file withe the parameter `lowerBound` and `upperBound`. If `upperBound` entry is blank, it is assumed to be infinity. 
 
 For example,
 ```
@@ -35,13 +35,13 @@ lowerBound = 2
 
 We also allow the capability to visualize IBD segments in a length region, for example betweem 2cM and 8cM.
 ```
-datapath = popressard_2_Inf.sims
-lowerBound = 4
+datapath = popressard_2_8.sims
+lowerBound = 2
 upperBound = 8
 ```
 ## parameter configuration
 
-As mentioned above, the parameters in MAPs are nearly identical. However, there are a few additional arguments in the `params.ini` file, 
+As mentioned above, the parameters in MAPs are nearly identical. However, there are a few additional arguments in the `params` file, 
 
 * `genomeSize` (optional defaults to 3000cM)
 
@@ -55,8 +55,9 @@ As mentioned above, the parameters in MAPs are nearly identical. However, there 
 
 * `usebootstrap` (optional, with options = 0 or 1, defaults to 1. MAPS uses the bootstrap to estimate the effective sample size in the data. For very long segments >10cM, the bootstrap is not accurate and we suggest setting the option to 0)
 
+## running MAPS
 
-Finally, you can run MAPS with the command such as this
+You can run MAPS with the command such as this
 
 ```
 ./runeems2 --params params.ini --seed 123

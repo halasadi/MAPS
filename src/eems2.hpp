@@ -133,7 +133,6 @@ private:
     
     VectorXd log10_old_mMeanRates;
     VectorXd log10_old_qMeanRates;
-    VectorXd is_sea;
     
     MatrixXd JtDhatJ;
     mutable MatrixXd expectedIBD;
