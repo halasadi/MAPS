@@ -62,7 +62,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     mrateMuUpperBound = 10; 
-    qrateMuUpperBound =  1;
+    qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     

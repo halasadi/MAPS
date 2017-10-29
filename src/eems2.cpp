@@ -187,7 +187,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     // Assign migration rates to the Voronoi tiles
     nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
-    nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
+    //nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
+    nowqrateMu = 0;
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
@@ -915,6 +916,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
+    
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
@@ -929,10 +931,12 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     for (int i = 0 ; i < mtiles ; i++) {
         logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
     }
+
+    
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
+void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, double rho, MatrixXd &integral, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd weights(50);
@@ -942,8 +946,8 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     getWeights(weights, x);
     
     // change of variable ("u substitution")
-    weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
-    x = x/(2*bnd/100);
+    weights = weights*(params.genomeSize/bnd)*(100/(rho*bnd));
+    x = x/(rho*bnd/100);
     
     MatrixXd coalp = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
@@ -952,8 +956,9 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
-        P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
-        coalp = P * q.asDiagonal() * P.transpose();
+        coalp = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
+        //P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
+        //coalp = P * q.asDiagonal() * P.transpose();
         integral += coalp*weights(t);
     }
     
@@ -984,6 +989,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
 
     int alpha, beta;
     
+    double rho = pow(10.0, qrateMu);
+
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
@@ -1008,12 +1015,11 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
-    calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
-    
+    calculateIntegral(eigenvals, eigenvecs, rho, lowerExpectedIBD, params.lowerBound);
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
-        calculateIntegral(eigenvals, eigenvecs, q, upperExpectedIBD, params.upperBound);
+        calculateIntegral(eigenvals, eigenvecs, rho, upperExpectedIBD, params.upperBound);
         expectedIBD = lowerExpectedIBD - upperExpectedIBD;
     }
     else{
