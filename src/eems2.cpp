@@ -149,7 +149,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
                 neffective(beta,alpha) = neffective(alpha,beta);
             }
             
-            if (neffective(alpha,beta) < 0){
+            if (neffective(alpha,beta) <= 0){
                 cerr << "ERROR, effective number of samples = 0 ";
                 exit(1);
             }
@@ -162,6 +162,9 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     } else{
         nowdf = params.dfmin;
     }
+    
+    nowrho = 0;
+    
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -210,7 +213,6 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     graph.index_closest_to_deme(nowmSeeds,mColors);
     
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        
         // coalescent rates
         double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu + log10_old_qMeanRates(alpha);
         qRates(iter, alpha) = pow(10.0, log10q_alpha);
@@ -336,8 +338,8 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmczCoord.clear();
     nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                       nowdf);
-    nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
+                       nowrho, nowdf);
+    nowll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true);
     cerr << "Input parameters: " << endl << params << endl
     << "Initial log prior: " << nowpi << endl
     << "Initial log llike: " << nowll << endl << endl;
@@ -357,10 +359,10 @@ MoveType EEMS2::choose_move_type( ) {
     MoveType move = UNKNOWN_MOVE_TYPE;
     
     if (u3 < 0.25 && params.olderpath.empty()){
-        if (u2 < 0.5) {
-            move = M_MEAN_RATE_UPDATE;
-        } else  {
+        if (u2 < 0.5 && (params.useEffectiveMigration == 0)) {
             move = Q_MEAN_RATE_UPDATE;
+        } else  {
+            move = M_MEAN_RATE_UPDATE;
         }
         
         return(move);
@@ -369,25 +371,32 @@ MoveType EEMS2::choose_move_type( ) {
     double u4 = draw.runif( );
     if (u4 < 0.1 && (params.usebootstrap == 0)){
         move = DF_UPDATE;
+        return(move);
+    }
+    
+    double u5 = draw.runif( );
+    if (u5 < 0.1 && (params.useEffectiveMigration == 1)){
+        move = RHO_UPDATE;
+        return(move);
     }
 
     if (u1 < 0.33) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr && (params.useEffectiveMigration == 0)) {
             move = Q_VORONOI_BIRTH_DEATH;
         } else {
             move = M_VORONOI_BIRTH_DEATH;
         }
     } else if (u1 < 0.66) {
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr && (params.useEffectiveMigration == 0)) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
         }
     } else {
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr && (params.useEffectiveMigration == 0)) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;
@@ -396,31 +405,35 @@ MoveType EEMS2::choose_move_type( ) {
     return(move);
 }
 
+double EEMS2::eval_proposal_rho(Proposal &proposal) const {
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, proposal.newrho, nowdf, false));
+}
+
 double EEMS2::eval_proposal_rate_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, proposal.newqEffcts, nowqrateMu, nowrho, nowdf, false));
 }
 double EEMS2::eval_proposal_move_one_qtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, nowqEffcts, nowqrateMu, nowdf, false));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, false));
 }
 double EEMS2::eval_birthdeath_qVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu, nowdf, false));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, proposal.newqSeeds, proposal.newqEffcts, nowqrateMu, nowrho, nowdf, false));
 }
 double EEMS2::eval_proposal_rate_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
+    return(eems2_likelihood(nowmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true));
     
 }
 double EEMS2::eval_proposal_overall_mrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, proposal.newmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, proposal.newmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true));
 }
 double EEMS2::eval_proposal_overall_qrate(Proposal &proposal) const {
-    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, proposal.newqrateMu, nowdf, false));
+    return(eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, proposal.newqrateMu, nowrho, nowdf, false));
 }
 // Propose to move one tile in the migration Voronoi tessellation
 double EEMS2::eval_proposal_move_one_mtile(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
+    return(eems2_likelihood(proposal.newmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true));
 }
 double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
-    return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
+    return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true));
 }
 
 void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
@@ -433,11 +446,12 @@ void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
             proposal.newdf = newdf;
             proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                                         nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                        newdf);
-            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
+                                        nowrho, newdf);
+            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, newdf, true);
         }
     }
 }
+
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // Choose a tile at random to update
@@ -453,7 +467,7 @@ void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
     // Then update the prior and evaluate the new likelihood
     if ( abs(newqEffct) < params.qEffctHalfInterval ) {
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
+                                    nowqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf);
         proposal.newll = eval_proposal_rate_one_qtile(proposal);
     } else {
@@ -475,7 +489,7 @@ void EEMS2::propose_rate_one_mtile(Proposal &proposal) {
     // Then update the prior and evaluate the new likelihood
     if ( abs(newmEffct) < params.mEffctHalfInterval ) {
         proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf);
         proposal.newll = eval_proposal_rate_one_mtile(proposal);
     } else {
@@ -499,6 +513,23 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
         proposal.newll = -Inf;
     }
 }
+
+
+void EEMS2::propose_rho(Proposal &proposal) {
+    // Make a random-walk Metropolis-Hastings proposal
+    double newrho = draw.rnorm(nowrho, 0.001);
+    proposal.move = RHO_UPDATE;
+    proposal.newrho = newrho;
+    if (newrho > -10 && newrho < 10){
+        proposal.newpi = nowpi;
+        proposal.newll = eval_proposal_rho(proposal);
+    } else {
+        proposal.newpi = -Inf;
+        proposal.newll = -Inf;
+    }
+    
+}
+
 
 void EEMS2::propose_overall_qrate(Proposal &proposal) {
     // Make a random-walk Metropolis-Hastings proposal
@@ -578,7 +609,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         - dtrnormln(newqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
+                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf)
         + log((nowqtiles+params.qnegBiSize)/(newqtiles/params.qnegBiProb));
     } else {                      // Propose death
@@ -596,7 +627,7 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         + dtrnormln(oldqEffct,nowqEffct,params.qEffctProposalS2,params.qEffctHalfInterval);
         
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2,
+                                    proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf)
         + log((nowqtiles/params.qnegBiProb)/(newqtiles+params.qnegBiSize));
     }
@@ -626,7 +657,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         - dtrnormln(newmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf)
         + log((nowmtiles+params.mnegBiSize)/(newmtiles/params.mnegBiProb));
     } else {                      // Propose death
@@ -644,7 +675,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         + dtrnormln(oldmEffct,nowmEffct,params.mEffctProposalS2,params.mEffctHalfInterval);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS2,
-                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2, nowrho,
                                     nowdf)
         + log((nowmtiles/params.mnegBiProb)/(newmtiles+params.mnegBiSize));
     }
@@ -659,7 +690,7 @@ void EEMS2::update_hyperparams( ) {
     nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
     nowmrateS2 = draw.rinvgam(params.mrateShape_2 + 0.5 * nowmtiles, params.mrateScale_2 + 0.5 * SSm);
     nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                       nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                       nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2, nowrho,
                        nowdf);
 }
 bool EEMS2::accept_proposal(Proposal &proposal) {
@@ -717,6 +748,9 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
                 break;
             case DF_UPDATE:
                 nowdf = proposal.newdf;
+                break;
+            case RHO_UPDATE:
+                nowrho = proposal.newrho;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;
@@ -885,9 +919,9 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
 
 void EEMS2::check_ll_computation( ) const {
     double pi0 = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                            nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
+                            nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2, nowrho,
                             nowdf);
-    double ll0 = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true);
+    double ll0 = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowrho, nowdf, true);
     if ((abs(nowpi-pi0)/abs(pi0)>1e-12)||
         (abs(nowll-ll0)/abs(ll0)>1e-12)) {
         cerr << "[EEMS2::testing]   |ll0-ll|/|ll0| = " << abs(nowll - ll0)/abs(ll0) << endl;
@@ -897,7 +931,7 @@ void EEMS2::check_ll_computation( ) const {
 }
 double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                          const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                         const double df) const {
+                         double rho, const double df) const {
     // Important: Do not use any of the current parameter values in this function,
     // i.e., those that start with nowXXX
     
@@ -915,6 +949,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
+    if (nowrho > 10 || nowrho < -10) { inrange = false;}
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
@@ -932,7 +967,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
+void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double rho, MatrixXd &integral, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd weights(50);
@@ -941,9 +976,18 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     getWeights(weights, x);
     
-    // change of variable ("u substitution")
-    weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
-    x = x/(2*bnd/100);
+    if (params.useEffectiveMigration){
+        weights = weights*(params.genomeSize/bnd)*(100/(rho*bnd));
+        x = x/(rho*bnd/100);
+    } else{
+        weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
+        x = x/(2*bnd/100);
+    }
+    
+    //double genomeSize = params.genomeSize / 100;
+    //double bnd_cm = bnd / 100;
+    //weights = weights * (params.genomeSize) * (1/2) * (1/bnd_cm)^2
+    //x = x / (2*bnd_cm);
     
     MatrixXd coalp = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
@@ -953,7 +997,11 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
-        coalp = P * q.asDiagonal() * P.transpose();
+        if (params.useEffectiveMigration){
+            coalp = P * P.transpose();
+        } else {
+            coalp = P * q.asDiagonal() * P.transpose();
+        }
         integral += coalp*weights(t);
     }
     
@@ -961,7 +1009,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
 
 double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                                const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu,
-                               const double df, const bool ismUpdate) const {
+                               double rho, const double df, const bool ismUpdate) const {
     
     // Important: Do not use any of the current parameter values in this function,
     // i.e., those that start with nowXXX
@@ -981,6 +1029,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
+    rho = pow(10.0, rho);
 
     int alpha, beta;
     
@@ -1008,12 +1057,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
-    calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
+    calculateIntegral(eigenvals, eigenvecs, q, rho, lowerExpectedIBD, params.lowerBound);
     
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
-        calculateIntegral(eigenvals, eigenvecs, q, upperExpectedIBD, params.upperBound);
+        calculateIntegral(eigenvals, eigenvecs, q, rho, upperExpectedIBD, params.upperBound);
         expectedIBD = lowerExpectedIBD - upperExpectedIBD;
     }
     else{

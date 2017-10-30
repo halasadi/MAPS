@@ -88,6 +88,9 @@ int main(int argc, char** argv)
                 case DF_UPDATE:
                     eems2.propose_df(proposal,mcmc);
                     break;
+                case RHO_UPDATE:
+                    eems2.propose_rho(proposal);
+                    break;
                 default:
                     cerr << "[RunEEMS2] Unknown move type" << endl;
                     return(EXIT_FAILURE);
