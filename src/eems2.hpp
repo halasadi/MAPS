@@ -36,7 +36,7 @@ struct Proposal {
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
-    double newrho;
+    double newN;
     
     VectorXd newqEffcts; // the diversity rate of each q tile
     VectorXd newmEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
@@ -58,11 +58,11 @@ public:
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                      const double df, double rho) const;
+                      const double df) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf, double rho, bool ismUpdate) const;
+                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
     
-    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double rho, MatrixXd &integral, double bnd) const;
+    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -75,7 +75,7 @@ public:
     double eval_proposal_overall_qrate(Proposal &proposal) const;
     double eval_proposal_move_one_mtile(Proposal &proposal) const;
     double eval_birthdeath_mVoronoi(Proposal &proposal) const;
-    double eval_proposal_rho(Proposal &proposal) const;
+    double eval_proposal_N(Proposal &proposal) const;
     
     // Gibbs updates:
     // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0
@@ -92,7 +92,7 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    void propose_rho(Proposal &proposal);
+    void propose_N(Proposal &proposal);
     bool accept_proposal(Proposal &proposal);
     
     void print_iteration(const MCMC &mcmc) const;
@@ -147,7 +147,7 @@ private:
     MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
     MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
     double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
-    double nowrho;
+    double nowN;
     //double nowsigma2, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
     double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
     
@@ -177,7 +177,7 @@ private:
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu, double rho, const bool ismUpdate) const;
+                            const double df, const double qrateMu, const bool ismUpdate) const;
 };
 
 #endif

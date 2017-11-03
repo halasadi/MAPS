@@ -17,6 +17,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
         ("useEffectiveMigration", po::value<int>(&useEffectiveMigration)->default_value(0), "Parameterize the model with effective migration rates")
+        ("fixM", po::value<int>(&fixM)->default_value(0), "fix a universal migration rate")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
         ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
@@ -103,6 +104,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "                  dfmin = " << params.dfmin << endl
     << "           usebootstrap = " << params.usebootstrap << endl
     << "  useEffectiveMigration = " << params.useEffectiveMigration << endl
+    << "                   fixM = " << params.fixM << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }

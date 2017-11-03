@@ -15,7 +15,6 @@ enum MoveType {
     M_VORONOI_BIRTH_DEATH,
     M_MEAN_RATE_UPDATE,
     DF_UPDATE,
-    RHO_UPDATE,
     UNKNOWN_MOVE_TYPE
 };
 

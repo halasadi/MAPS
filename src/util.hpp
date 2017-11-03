@@ -54,6 +54,7 @@ public:
     bool testing;
     int usebootstrap;
     int useEffectiveMigration;
+    int fixM;
     string datapath, mcmcpath, prevpath, gridpath, olderpath;
     double qEffctHalfInterval, mEffctHalfInterval;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
