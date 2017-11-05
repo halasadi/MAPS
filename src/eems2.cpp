@@ -932,7 +932,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     return (logpi);
 }
 
-void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
+void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd weights(50);
@@ -947,13 +947,20 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     MatrixXd coalp = MatrixXd::Zero(o,o);
     MatrixXd P(d,d);
+    VectorXd qp = qMeanRate * VectorXd::Ones(d);
     integral.setZero();
     
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
-        coalp = P * q.asDiagonal() * P.transpose();
+        /*temp = P * P.transpose();
+        coalp = qMeanRate * temp;
+        coalp.diagonal() = temp.diagonal() * q.head(o);
+         */
+        coalp = P * qp.asDiagonal() * P.transpose();
+        MatrixXd temp = P * q.asDiagonal() * P.transpose();
+        coalp.diagonal() = temp.diagonal();
         integral += coalp*weights(t);
     }
     
@@ -980,9 +987,9 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
-    
 
     int alpha, beta;
+    double qMeanRate = pow(10.0, qrateMu);
     
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
@@ -1008,12 +1015,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
-    calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
+    calculateIntegral(eigenvals, eigenvecs, q, qMeanRate, lowerExpectedIBD, params.lowerBound);
     
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
-        calculateIntegral(eigenvals, eigenvecs, q, upperExpectedIBD, params.upperBound);
+        calculateIntegral(eigenvals, eigenvecs, q, qMeanRate, upperExpectedIBD, params.upperBound);
         expectedIBD = lowerExpectedIBD - upperExpectedIBD;
     }
     else{
