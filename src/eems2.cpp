@@ -945,8 +945,8 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     weights = weights*(params.genomeSize/bnd)*(100/(2*bnd));
     x = x/(2*bnd/100);
     
-    MatrixXd coalp = MatrixXd::Zero(o,o);
-    MatrixXd P(d,d);
+    MatrixXd coalp;
+    MatrixXd P;
     VectorXd qp = qMeanRate * VectorXd::Ones(d);
     integral.setZero();
     
@@ -960,7 +960,7 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
          */
         coalp = P * qp.asDiagonal() * P.transpose();
         MatrixXd temp = P * q.asDiagonal() * P.transpose();
-        coalp.diagonal() = temp.diagonal();
+        coalp.diagonal() = temp.diagonal().head(o);
         integral += coalp*weights(t);
     }
     
