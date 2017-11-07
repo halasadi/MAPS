@@ -168,7 +168,11 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     cerr << "  EEMS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     // Draw the Voronoi centers Coord uniformly within the habitat
     
-    nowqSeeds = MatrixXd::Zero(nowqtiles,2); randpoint_in_habitat(nowqSeeds);
+    
+    nowqtiles = o;
+    nowqSeeds = MatrixXd::Zero(nowqtiles,2); //randpoint_in_habitat(nowqSeeds);
+    nowqSeeds = graph.get_the_obsrv_demes();
+    
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     nowmrateS2 = draw.rinvgam(0.5,0.5);
     nowqrateS2 = draw.rinvgam(0.5,0.5);
@@ -947,20 +951,17 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     MatrixXd coalp;
     MatrixXd P;
-    VectorXd qp = qMeanRate * VectorXd::Ones(d);
+    //VectorXd qp = qMeanRate * VectorXd::Ones(d);
     integral.setZero();
     
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
     // magnnitude of the remaining 25 weights are neglible.
     for (int t = 0; t < 25; t++){
         P = eigenvecs.topRows(o) * ( ((VectorXd)((eigenvals.array() * x[t]).exp())).asDiagonal() * eigenvecs.transpose());
-        /*temp = P * P.transpose();
-        coalp = qMeanRate * temp;
-        coalp.diagonal() = temp.diagonal() * q.head(o);
-         */
-        coalp = P * qp.asDiagonal() * P.transpose();
-        MatrixXd temp = P * q.asDiagonal() * P.transpose();
-        coalp.diagonal() = temp.diagonal().head(o);
+        coalp = P * q.asDiagonal() * P.transpose();
+        //MatrixXd temp = P * q.asDiagonal() * P.transpose();
+        //coalp.diagonal() = q.asDiagonal();
+        //coalp = P * q.asDiagonal() * P.transpose();
         integral += coalp*weights(t);
     }
     

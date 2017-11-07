@@ -314,6 +314,7 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const
                 lamda = expectedIBD(alpha,beta);
             }
             xbar = observedIBDCnt(alpha,beta) / cMatrix(alpha,beta);
+            
             ll += ceffective(alpha,beta) * (xbar * log(lamda) - lamda);
         }
     }
