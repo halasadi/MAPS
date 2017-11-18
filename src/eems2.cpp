@@ -179,7 +179,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmrateS2 = draw.rinvgam(0.5,0.5);
     
     //nowqrateS2 = draw.rinvgam(0.5,0.5);
-    nowqrateS2 = 1;
+    nowqrateS2 = params.qrateShape_2;
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
