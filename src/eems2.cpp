@@ -174,8 +174,12 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowqSeeds = graph.get_the_obsrv_demes();
     
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
+    
+    
     nowmrateS2 = draw.rinvgam(0.5,0.5);
-    nowqrateS2 = draw.rinvgam(0.5,0.5);
+    
+    //nowqrateS2 = draw.rinvgam(0.5,0.5);
+    nowqrateS2 = 1;
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
@@ -660,7 +664,7 @@ void EEMS2::update_hyperparams( ) {
     double SSq = nowqEffcts.squaredNorm();
     double SSm = nowmEffcts.squaredNorm();
     
-    nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
+    //nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
     nowmrateS2 = draw.rinvgam(params.mrateShape_2 + 0.5 * nowmtiles, params.mrateScale_2 + 0.5 * SSm);
     nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,

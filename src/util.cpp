@@ -9,7 +9,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     try {
         po::options_description eems_options("EEMS options from parameter file");
         eems_options.add_options()
-        ("usebootstrap", po::value<int>(&usebootstrap)->default_value(0), "Use bootstrap to estimate effective number of samples")
+        ("usebootstrap", po::value<int>(&usebootstrap)->default_value(1), "Use bootstrap to estimate effective number of samples")
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
@@ -62,13 +62,13 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     
     mrateMuUpperBound = 10; 
-    qrateMuUpperBound =  1;
+    qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
     
-    mEffctHalfInterval = 3.0;
-    qEffctHalfInterval = 3.0;
+    mEffctHalfInterval = 3.5;
+    qEffctHalfInterval = 3;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
