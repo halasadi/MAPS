@@ -157,11 +157,13 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
         }
     }
     
+    /*
     if (params.dfmin <= 2){
         nowdf = 2;
     } else{
         nowdf = params.dfmin;
     }
+     */
     // Initialize the two Voronoi tessellations
     nowqtiles = draw.rnegbin(2*o,0.5); // o is the number of observed demes
     nowmtiles = draw.rnegbin(2*o,0.5);
@@ -177,9 +179,10 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     
     nowmrateS2 = draw.rinvgam(0.5,0.5);
+    nowqrateS2 = draw.rinvgam(0.5,0.5);
+    //nowqrateS2 = params.qrateShape_2;
+    //nowmrateS2 = params.mrateShape_2;
     
-    //nowqrateS2 = draw.rinvgam(0.5,0.5);
-    nowqrateS2 = params.qrateShape_2;
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
@@ -664,7 +667,7 @@ void EEMS2::update_hyperparams( ) {
     double SSq = nowqEffcts.squaredNorm();
     double SSm = nowmEffcts.squaredNorm();
     
-    //nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
+    nowqrateS2 = draw.rinvgam(params.qrateShape_2 + 0.5 * nowqtiles, params.qrateScale_2 + 0.5 * SSq);
     nowmrateS2 = draw.rinvgam(params.mrateShape_2 + 0.5 * nowmtiles, params.mrateScale_2 + 0.5 * SSm);
     nowpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
