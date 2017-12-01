@@ -178,11 +178,9 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
     
+    // CHANGE THESE
     nowmrateS2 = draw.rinvgam(0.5,0.5);
     nowqrateS2 = draw.rinvgam(0.5,0.5);
-    //nowqrateS2 = params.qrateShape_2;
-    //nowmrateS2 = params.mrateShape_2;
-    
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
@@ -927,13 +925,19 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
+    // THIS IS ACTUALLY log(qrate)
+    //if (qrateS2 < -6.9077 || qrateS2 > 0) { inrange = false;}
+    //if (mrateS2 < -6.9077 || mrateS2 > 1) { inrange = false;}
     if (!inrange) { return (-Inf); }
+    
+    //double realqrateS2 = exp(qrateS2) * exp(qrateS2);
+    //double realmrateS2 = exp(mrateS2) * exp(mrateS2);
     
     double logpi =
     + dnegbinln(mtiles,params.mnegBiSize,params.mnegBiProb)
-    + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb)
-    + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
-    + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
+    + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb);
+    //+ dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
+    //+ dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
     for (int i = 0 ; i < qtiles ; i++) {
         logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
     }

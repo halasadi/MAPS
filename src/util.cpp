@@ -58,17 +58,15 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     dfmax = 10;
     testing = false;
-    
-    
-    
+
     mrateMuUpperBound = 10; 
     qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
-    
-    mEffctHalfInterval = 3.5;
-    qEffctHalfInterval = 3;
+    // make the bounds big at first
+    mEffctHalfInterval = 100;
+    qEffctHalfInterval = 100;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
