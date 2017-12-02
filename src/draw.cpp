@@ -38,6 +38,13 @@ double Draw::rinvgam(const double shape, const double scale) {
     rgamma(randgen, boost::gamma_distribution<>(shape,1.0/scale));
     return (1.0/randraw(rgamma));
 }
+
+double Draw::rtrinvgam(const double shape, const double scale, const double lowerbnd, const double upperbnd) {
+    double x = upperbnd + 1.0;
+    while ((x <lowerbnd) || (x>upperbnd)) { x = rinvgam(shape, scale);}
+    return(x);
+}
+
 int Draw::rnegbin(const int r, const double p) {
     boost::variate_generator<boost::mt19937&, boost::random::negative_binomial_distribution<> >
     rnegbin(randgen, boost::random::negative_binomial_distribution<>(r,1.0-p));

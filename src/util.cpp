@@ -63,10 +63,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
-    
-    // make the bounds big at first
-    mEffctHalfInterval = 100;
-    qEffctHalfInterval = 100;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -518,6 +514,17 @@ double dmvnormln(const VectorXd &x, const VectorXd &mu, const MatrixXd &sigma) {
     }
     return (pln);
 }
+
+
+double dnormln(const double x, const double mu, const double sigma2){
+    double pln = -Inf;
+    double pi = 3.1415926535;
+    if (sigma2>0) {
+        pln = - 0.5 * (log(sigma2) + log(2*pi)) - 0.5 * (x-mu) * (x-mu) / sigma2;
+    }
+    return (pln);
+}
+
 /*
  Truncated normal probability density function, on the log scale,
  with support [0,bnd], including the normalizing constant
@@ -531,6 +538,8 @@ double dtrnormln(const double x, const double mu, const double sigma2, const dou
     }
     return (pln);
 }
+
+
 VectorXd slice(const VectorXd &A, const VectorXi &I) {
     int elems = I.size();
     VectorXd B(elems);

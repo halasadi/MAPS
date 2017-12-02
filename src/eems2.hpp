@@ -29,10 +29,8 @@ struct Proposal {
     MoveType move; // the type of proposal/update
     int newqtiles; // number of m and q tiles, respectively
     int newmtiles;
-    double newdf; // degrees of freedom
     double newpi; // log prior
     double newll; // log likelihood
-    //double newsigma2; // variance scale
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
@@ -55,13 +53,12 @@ public:
     void load_older_rates( );
 
     bool start_eems(const MCMC &mcmc);
-    double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
-                      const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                      const double df) const;
+    double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS,
+                      const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
+                            VectorXd newqEffcts, double newmrateMu, bool ismUpdate) const;
     
-    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const;
+    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:
@@ -80,7 +77,7 @@ public:
     //void update_sigma2( );
     void update_hyperparams( );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal,const MCMC &mcmc);
+    //void propose_df(Proposal &proposal,const MCMC &mcmc);
     //void propose_sigma2(Proposal &proposal);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
@@ -143,7 +140,7 @@ private:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
     MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
     MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
-    double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
+    double nowqrateS, nowmrateS; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
     //double nowsigma2, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
     double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
     
@@ -169,11 +166,11 @@ private:
     
     void initialize_sims();
     void randpoint_in_habitat(MatrixXd &Seeds);
-    void rnorm_effects(const double HalfInterval, const double rateS2, VectorXd &Effcts);
+    void rnorm_effects(const double rateS2, VectorXd &Effcts);
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu, const bool ismUpdate) const;
+                            const double qrateMu, const bool ismUpdate) const;
 };
 
 #endif
