@@ -120,8 +120,6 @@ private:
     MatrixXd observedIBD; // observed means (for number of IBD blocks)
     MatrixXd cMatrix; // number of pairwise observations between observed populations
     VectorXd cvec; // c is the vector of counts
-    VectorXd cClasses; // cClasses is a vector of count of the number of 0's, number of 1's, etc. For likelihood;
-    double maxCnt; // the maximum number of IBD segments shared (over all pairs)
     MatrixXd neffective;
     
     MatrixXd mRates;

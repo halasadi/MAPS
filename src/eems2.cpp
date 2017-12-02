@@ -59,11 +59,6 @@ void EEMS2::initialize_sims( ) {
     cMatrix = MatrixXd::Zero(o,o);
     cvec = VectorXd::Zero(o);
     observedIBD = MatrixXd::Zero(o, o);
-    maxCnt = Sims.maxCoeff();
-    
-    // counts the number of IBD segments that are 0, 1, 2, etc.
-    // pre-computation
-    cClasses = VectorXd::Zero(maxCnt+1);
     
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
@@ -82,8 +77,6 @@ void EEMS2::initialize_sims( ) {
             
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
-            
-            cClasses(Sims(i,j)) += 1;
         }
     }
     
