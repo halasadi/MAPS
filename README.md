@@ -10,7 +10,7 @@ I recommend using *conda* to install MAPS
 *  install conda, see: https://conda.io/docs/
 * ```conda create -n MAPS``` (this creates a conda enviornment for MAPS)
 * ```source activate MAPS```
-* ```conda install boost=1.5.7``` (MAPS only works with this version of boost)
+* ```conda install boost=1.57.0``` (MAPS only works with this version of boost)
 * ```conda install eigen```
 * clone the repository and in the ```src``` directory, type ```make``` 
 
