@@ -3,9 +3,11 @@
 #BOOST_LIB = /opt/local/lib
 #BOOST_INC = /opt/local/include
 
+
 EIGEN_INC = /usr/local/include/eigen3
-BOOST_LIB = /usr/local/lib
-BOOST_INC = /usr/local/include
+BOOST_LIB = /usr/local/opt/boost@1.57/lib
+BOOST_INC = /usr/local/opt/boost@1.57/include
+
 
 
 EXE = runeems2
