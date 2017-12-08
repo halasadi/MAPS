@@ -36,6 +36,7 @@ struct Proposal {
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
+    double newmrateS2, newqrateS2;
     
     VectorXd newqEffcts; // the diversity rate of each q tile
     VectorXd newmEffcts; // the migration rate of each m tile, relative to the ovarall mrateMu
@@ -78,9 +79,9 @@ public:
     // Gibbs updates:
     // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0
     //void update_sigma2( );
-    void update_hyperparams( );
+    //void update_hyperparams( );
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal,const MCMC &mcmc);
+    void propose_omega(Proposal &proposal,const MCMC &mcmc);
     //void propose_sigma2(Proposal &proposal);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
@@ -161,7 +162,9 @@ private:
     VectorXd mcmcqtiles;
     // Variable length:
     vector<double> mcmcmRates;
+    vector<double> mcmcmRates2;
     vector<double> mcmcqRates;
+    vector<double> mcmcqRates2;
     vector<double> mcmcxCoord;
     vector<double> mcmcyCoord;
     vector<double> mcmcwCoord;

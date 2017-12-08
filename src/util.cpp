@@ -67,8 +67,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuLowerBound = -10.0;
     
     
-    mEffctHalfInterval = 3.5;
-    qEffctHalfInterval = 3;
+    mEffctHalfInterval = 20;
+    qEffctHalfInterval = 20;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl

@@ -178,8 +178,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
     
-    nowmrateS2 = draw.rinvgam(0.5,0.5);
-    nowqrateS2 = draw.rinvgam(0.5,0.5);
+    nowmrateS2 = -1;
+    nowqrateS2 = -1;
     //nowqrateS2 = params.qrateShape_2;
     //nowmrateS2 = params.mrateShape_2;
     
@@ -201,8 +201,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     // Assign rates to the Voronoi tiles
-    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,nowqrateS2,nowqEffcts);
-    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,nowmrateS2,nowmEffcts);
+    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,1,nowqEffcts);
+    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,1,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -340,7 +340,9 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     mcmcqtiles = VectorXd::Zero(niters);
     mcmcthetas = VectorXd::Zero(niters);
     mcmcmRates.clear();
+    mcmcmRates2.clear();
     mcmcqRates.clear();
+    mcmcqRates2.clear();
     mcmcxCoord.clear();
     mcmcyCoord.clear();
     mcmcwCoord.clear();
@@ -378,8 +380,9 @@ MoveType EEMS2::choose_move_type( ) {
     }
     
     double u4 = draw.runif( );
-    if (u4 < 0.1 && (params.usebootstrap == 0)){
-        move = DF_UPDATE;
+    if (u4 < 0.1){
+        move = OMEGA_UPDATE;
+        return(move);
     }
 
     if (u1 < 0.33) {
@@ -434,20 +437,18 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, nowdf, true));
 }
 
-void EEMS2::propose_df(Proposal &proposal,const MCMC &mcmc) {
-    proposal.move = DF_UPDATE;
+void EEMS2::propose_omega(Proposal &proposal,const MCMC &mcmc) {
+    proposal.move = OMEGA_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
-    double newdf = draw.rnorm(nowdf,params.dfProposalS2);
-    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        if ( (newdf>params.dfmin) && (newdf<params.dfmax) ) {
-            proposal.newdf = newdf;
-            proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS2,
-                                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
-                                        newdf);
-            proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, newdf, true);
-        }
-    }
+    double newmrateS2 = draw.rnorm(nowmrateS2,0.1);
+    double newqrateS2 = draw.rnorm(nowqrateS2,0.1);
+    proposal.newmrateS2 = newmrateS2;
+    proposal.newqrateS2 = newqrateS2;
+    proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,newmrateS2,
+                                        nowqSeeds,nowqEffcts,nowqrateMu,newqrateS2,
+                                        nowdf);
+    proposal.newll = nowll;
 }
 
 void EEMS2::propose_rate_one_qtile(Proposal &proposal) {
@@ -663,6 +664,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
     proposal.newmtiles = newmtiles;
     proposal.newll = eval_birthdeath_mVoronoi(proposal);
 }
+/*
 void EEMS2::update_hyperparams( ) {
     double SSq = nowqEffcts.squaredNorm();
     double SSm = nowmEffcts.squaredNorm();
@@ -673,6 +675,7 @@ void EEMS2::update_hyperparams( ) {
                        nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS2,
                        nowdf);
 }
+ */
 bool EEMS2::accept_proposal(Proposal &proposal) {
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
@@ -726,8 +729,9 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
             case Q_MEAN_RATE_UPDATE:
                 nowqrateMu = proposal.newqrateMu;
                 break;
-            case DF_UPDATE:
-                nowdf = proposal.newdf;
+            case OMEGA_UPDATE:
+                nowmrateS2 = proposal.newmrateS2;
+                nowqrateS2 = proposal.newqrateS2;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;
@@ -767,6 +771,9 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmcqRates.push_back(pow(10.0,nowqEffcts(t) + nowqrateMu));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
+        mcmcqRates2.push_back(nowqEffcts(t));
+    }
+    for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
@@ -774,6 +781,9 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcmRates.push_back(pow(10.0,nowmEffcts(t) + nowmrateMu));
+    }
+    for ( int t = 0 ; t < nowmtiles ; t++ ) {
+        mcmcmRates2.push_back(nowmEffcts(t));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -876,9 +886,11 @@ bool EEMS2::output_results(const MCMC &mcmc) const {
     out << fixed << setprecision(14) << mcmcpilogl << endl;
     out.close( );
     error = dlmcell(params.mcmcpath + "/mcmcmrates.txt",mcmcmtiles,mcmcmRates); if (error) { return(error); }
+    error = dlmcell(params.mcmcpath + "/mcmcmrates2.txt",mcmcmtiles,mcmcmRates2); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcxcoord.txt",mcmcmtiles,mcmcxCoord); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcycoord.txt",mcmcmtiles,mcmcyCoord); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcqrates.txt",mcmcqtiles,mcmcqRates); if (error) { return(error); }
+    error = dlmcell(params.mcmcpath + "/mcmcqrates2.txt",mcmcqtiles,mcmcqRates2); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmcwcoord.txt",mcmcqtiles,mcmcwCoord); if (error) { return(error); }
     error = dlmcell(params.mcmcpath + "/mcmczcoord.txt",mcmcqtiles,mcmczCoord); if (error) { return(error); }
     error = output_current_state( ); if (error) { return(error); }
@@ -926,20 +938,28 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
+    if (mrateS2 < -6.9077 || mrateS2 > 1) { inrange = false;}
+    if (qrateS2 < -6.9077 || qrateS2 > 1) { inrange = false;}
     if (df<params.dfmin || df>params.dfmax) { inrange = false; }
     if (!inrange) { return (-Inf); }
     
     double logpi =
     + dnegbinln(mtiles,params.mnegBiSize,params.mnegBiProb)
-    + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb)
-    + dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
-    + dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
+    + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb);
+    //+ dinvgamln(mrateS2,params.mrateShape_2,params.mrateScale_2)
+    //+ dinvgamln(qrateS2,params.qrateShape_2,params.qrateScale_2);
+    
+    //double abs_qrateS2 = exp(2 * qrateS2);
+    //double abs_mrateS2 = exp(2 * mrateS2);
+    
     for (int i = 0 ; i < qtiles ; i++) {
-        logpi += dtrnormln(qEffcts(i),0.0,qrateS2,params.qEffctHalfInterval);
+        logpi += dtrnormln(qEffcts(i),0.0,1,params.qEffctHalfInterval);
     }
     for (int i = 0 ; i < mtiles ; i++) {
-        logpi += dtrnormln(mEffcts(i),0.0,mrateS2,params.mEffctHalfInterval);
+        logpi += dtrnormln(mEffcts(i),0.0,1,params.mEffctHalfInterval);
     }
+    
+    
     return (logpi);
 }
 
@@ -991,14 +1011,16 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
+    double t_q;
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = qEffcts(qColors(alpha)) + qrateMu + log10_old_qMeanRates(alpha);
+        t_q = qEffcts(qColors(alpha)) * exp(2 * nowqrateS2);
+        double log10q_alpha = t_q + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
 
     int alpha, beta;
     double qMeanRate = pow(10.0, qrateMu);
-    
+    double t_m;
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
@@ -1007,8 +1029,10 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) + mrateMu;
-            double log10m_beta = mEffcts(mColors(beta)) + mrateMu;
+            t_m = mEffcts(mColors(alpha)) * exp(2 * nowmrateS2);
+            double log10m_alpha = t_m + mrateMu;
+            t_m = mEffcts(mColors(beta)) * exp(2 * nowmrateS2);
+            double log10m_beta = t_m + mrateMu;
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }
@@ -1037,7 +1061,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     double phi = pow(10.0, df);
     
-    double logll;
+    double logll = 1;
     if (params.usebootstrap){
         logll = poisln(expectedIBD, observedIBD, neffective, cMatrix);
     } else{
