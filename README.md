@@ -65,30 +65,7 @@ You can run MAPS with the command such as this
 
 ## plotting
 
-Finally, the MAPs results can be visualized with the function `eems.plots` defined in the R package `rEEMSplot2`. The MAPS R plotting scripts are built upon the eems plotting scripts and therfore the usage is very similar. You must install the R plotting scripts from source, 
-
-```
-## Part 1: Install rEEMSplots2
-## Check that the current directory contains the rEEMSplots source directory
-if (file.exists("./rEEMSplots2")) {
-  install.packages("rEEMSplots2", repos = NULL, type = "source")
-} else {
-  stop("Move to the directory that contains the rEEMSplots source to install the package.")
-}
-```
-
-See `examples` on how to plot.
-
-### comparing MAPS runs for different IBD length bins
-
-Sometimes, it can be difficult to interpret differences of MAPS runs between two IBD lengths bins. For example, 2-6cM versus >6cM. There is an option in MAPS to plot the differences between MAPS runs. For example, if I want to visualize the differences in migration surfaces between 2-6cM and >6cM.
-
-The procedure is as follow.
-
-1. Run MAPS on 2-6cM and plot using `eems.plots` function in R
-2. Run MAPS on >6cM and plot using `eems.plots` function in R
-3. Use the `eems.plot.difference` function in R to visualize difference between surfaces
-
+Please use the plotmaps package, https://github.com/halasadi/plotmaps
 
 ## examples
 
