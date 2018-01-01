@@ -32,6 +32,7 @@ compute.scalingfactors <- function(mcmcpath){
     ndemes = nrow(demes)
     p1 = as.numeric(demes[(odemes + 1),])
     p2 = as.numeric(demes[(odemes + 2),])
+    ## this seems very inaccurate.. better to hand-calculate it?
     m.scalingfactor = (distHaversine(p1 = p1, p2 = p2)/1000)^2
     totalarea = areaPolygon(read.table(paste0(mcmcpath, "/outer.txt")))/1e6
     N.scalingfactor = totalarea / ndemes
@@ -266,6 +267,8 @@ which.dist.metric <- function(mcmcpath) {
     }
     return (dist.metric)
 }
+
+## lays down a grid of interpolation points.
 read.dimns <- function(path, longlat, nxmrks = NULL, nymrks = NULL) {
     eems.output <- NULL
     datapath.outer <- paste0(path, '.outer')
@@ -727,6 +730,7 @@ compute.eems.contours <- function(mcmcpath, dimns, longlat, plot.params) {
         mxseed <- mvoronoi$xseed
         myseed <- mvoronoi$yseed
         ## Question? Average the q values or average the the N = 1/2*q values?
+        ## I currently average the N = 1/2*q values
         qvoronoi <- read.voronoi(path, longlat, plot.type = "q")
         qtiles <- qvoronoi$tiles
         qrates <- qvoronoi$rates

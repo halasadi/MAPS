@@ -60,7 +60,8 @@ public:
                       const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
                       const double df) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
+                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate,
+                            double nowmrateS2, double nowqrateS2) const;
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const;
     
@@ -176,7 +177,8 @@ private:
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu, const bool ismUpdate) const;
+                            const double df, const double qrateMu, const bool ismUpdate,
+                            const double nowmrateS2, const double nowqrateS2) const;
 };
 
 #endif
