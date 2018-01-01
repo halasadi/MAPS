@@ -29,10 +29,10 @@ struct Proposal {
     MoveType move; // the type of proposal/update
     int newqtiles; // number of m and q tiles, respectively
     int newmtiles;
-    double newdf; // degrees of freedom
+    
+    double newmrateS, newqrateS;
     double newpi; // log prior
     double newll; // log likelihood
-    //double newsigma2; // variance scale
     double newratioln; // RJ-MCMC proposal ratio, on the log scale
     double newmrateMu; // overall (mean) migration rate,
     double newqrateMu;
@@ -55,11 +55,11 @@ public:
     void load_older_rates( );
 
     bool start_eems(const MCMC &mcmc);
-    double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS2,
-                      const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS2,
-                      const double df) const;
+    double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS,
+                      const MatrixXd &qSeeds, const VectorXd &qEffcts, const double qrateMu, const double qrateS) const;
     double eems2_likelihood(MatrixXd newmSeeds, MatrixXd newqSeeds, VectorXd newmEffcts,
-                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate) const;
+                            VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate,
+                            double nowmrateS, double nowqrateS) const;
     
     void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const;
     
@@ -77,8 +77,7 @@ public:
     
     // Gibbs updates:
     // Too complex and maybe unnecessary. For now -- keep sigma2 fixed and equal to 1.0
-    //void update_sigma2( );
-    void update_hyperparams( );
+    void propose_omega(Proposal &proposal, const MCMC &mcmc);
     // Random-walk Metropolis-Hastings proposals:
     void propose_df(Proposal &proposal,const MCMC &mcmc);
     //void propose_sigma2(Proposal &proposal);
@@ -143,9 +142,9 @@ private:
     int nowmtiles, nowqtiles; // number of m and q tiles, respectively
     MatrixXd nowmSeeds; VectorXd nowmEffcts; double nowmrateMu; // parameters to describe the m Voronoi tessellation
     MatrixXd nowqSeeds; VectorXd nowqEffcts;                    // parameters to describe the q Voronoi tessellation
-    double nowqrateS2, nowmrateS2; // two hyperparameters -- the variance of nowqEffcts and nowmEffcts, respectively
+    double nowqrateS, nowmrateS; // two hyperparameters -- the standard deviation of nowqEffcts and nowmEffcts, respectively
     //double nowsigma2, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
-    double nowqrateMu, nowpi, nowll, nowdf; // variance scale, log prior, log likelihood, degrees of freedom
+    double nowqrateMu, nowpi, nowll; // variance scale, log prior, log likelihood, degrees of freedom
     
     VectorXi nowqColors; // mapping that indicates which q tiles each vertex/deme falls into
     VectorXi nowmColors; // mapping that indicates which m tiles each vertex/deme falls into
@@ -173,7 +172,8 @@ private:
     
     double eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu,
                             const MatrixXd &qSeeds, const VectorXd &qEffcts,
-                            const double df, const double qrateMu, const bool ismUpdate) const;
+                            const double qrateMu, const bool ismUpdate,
+                            const double nowmrateS, const double nowqrateS) const;
 };
 
 #endif

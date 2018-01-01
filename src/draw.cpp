@@ -33,6 +33,17 @@ double Draw::rtrnorm(const double mu, const double var, const double bnd) {
     while ((x< -bnd) || (x>bnd)) { x = randraw(rnorm); }
     return (x);
 }
+
+double Draw::rtrnorm_asym(const double mu, const double var, const double a, const double b) {
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
+    rnorm(randgen, boost::normal_distribution<>(mu,sqrt(var)));
+    //  forces the x to be initialized outside the range. So it will have to enter the loop and call
+    //  randraw(rnorm) at least once.
+    double x = a - 1.0;
+    while ((x< a) || (x>b)) { x = randraw(rnorm); }
+    return (x);
+}
+
 double Draw::rinvgam(const double shape, const double scale) {
     boost::variate_generator<boost::mt19937&, boost::gamma_distribution<> >
     rgamma(randgen, boost::gamma_distribution<>(shape,1.0/scale));

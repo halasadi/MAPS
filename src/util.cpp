@@ -67,8 +67,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuLowerBound = -10.0;
     
     
-    mEffctHalfInterval = 3.5;
-    qEffctHalfInterval = 3;
+    mEffctHalfInterval = 20;
+    qEffctHalfInterval = 20;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -320,40 +320,6 @@ double poisln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const
     }
     return(ll);
 }
-
-
-double negbiln(const MatrixXd &expectedIBD, const MatrixXd &observedIBDCnt, const VectorXd &cvec, const VectorXd &cClasses, double phi){
-    
-    double lamda;
-    int odemes = observedIBDCnt.rows();
-    int n_i;
-    double ll = 0;
-    for (int i = 0; i < odemes; i++){
-        for (int j = i; j < odemes; j++){
-            
-            if (i == j){
-                n_i = (cvec(i)*(cvec(i)-1))/2;
-            } else{
-                n_i = cvec(i)*cvec(j);
-            }
-            
-            if (expectedIBD(i,j) < 1e-8){
-                lamda = 1e-8;
-            } else {
-                lamda = expectedIBD(i,j);
-            }
-            
-            ll +=  (n_i/phi) * log(1.0/ (1.0 + lamda*phi)) + observedIBDCnt(i,j)*log( (phi * lamda) / (1.0 + phi * lamda));
-            
-        }
-    }
-    
-    for (int i = 1; i < cClasses.size(); i++){
-        ll += cClasses(i) * (lgamma(i+(1/phi)) - lgamma(1/phi));
-    }
-    return(ll);
-}
-
 
 double mvgammaln(const double a, const int p) {
     double val = 0.25*log_pi*p*(p-1);

@@ -29,6 +29,7 @@ public:
     double rnorm(const double mu, const double var);
     double rtrnorm(const double mu, const double var, const double bnd);
     double rinvgam(const double shape, const double scale);
+    double rtrnorm_asym(const double mu, const double var, const double a, const double b);
     
 private:
     

@@ -85,8 +85,8 @@ int main(int argc, char** argv)
                 case Q_MEAN_RATE_UPDATE:
                     eems2.propose_overall_qrate(proposal);
                     break;
-                case DF_UPDATE:
-                    eems2.propose_df(proposal,mcmc);
+                case OMEGA_UPDATE:
+                    eems2.propose_omega(proposal,mcmc);
                     break;
                 default:
                     cerr << "[RunEEMS2] Unknown move type" << endl;
@@ -96,8 +96,6 @@ int main(int argc, char** argv)
             mcmc.add_to_total_moves(proposal.move);
             if (eems2.accept_proposal(proposal)) { mcmc.add_to_okay_moves(proposal.move); }
             if (params.testing) { eems2.check_ll_computation( ); }
-            
-            eems2.update_hyperparams( );
             mcmc.end_iteration( );
             
             // Check whether to save the current parameter state,
