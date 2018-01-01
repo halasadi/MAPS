@@ -106,9 +106,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     VectorXi indiv2deme = graph.get_indiv2deme();
     
     
-    if (params.usebootstrap){
-        cerr << "[EEMS2::bootstrapping the data to compute variance]" << endl;
-    }
+    cerr << "[EEMS2::bootstrapping the data to compute variance]" << endl;
     vector<double> x;
     vector<double> y;
     double epsilon_mean = 1e-8;
@@ -424,11 +422,10 @@ void EEMS2::propose_omega(Proposal &proposal,const MCMC &mcmc) {
     double newmrateS = nowmrateS;
     double newqrateS = nowqrateS;
     double u1 = draw.runif( );
-    // need a proposal_omega_s2 parameter in utils
     if (u1 < 0.5){
-        newmrateS = draw.rtrnorm_asym(nowmrateS, 0.1, -6.9077, 0.6937);
+        newmrateS = draw.rtrnorm_asym(nowmrateS, params.omegaProposalS2, params.min_omegam, params.max_omegam);
     } else{
-        newqrateS = draw.rtrnorm_asym(nowqrateS, 0.1, -6.9077, 0);
+        newqrateS = draw.rtrnorm_asym(nowqrateS, params.omegaProposalS2, params.min_omegaq, params.max_omegaq);
     }
     proposal.newmrateS = newmrateS;
     proposal.newqrateS = newqrateS;
@@ -884,8 +881,8 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     if (mEffcts.cwiseAbs().minCoeff()>params.mEffctHalfInterval) { inrange = false; }
     if (mrateMu>params.mrateMuUpperBound || mrateMu < params.qrateMuLowerBound) { inrange = false; }
     if (qrateMu>params.qrateMuUpperBound || qrateMu < params.qrateMuLowerBound ) { inrange = false; }
-    if (mrateS < -6.9077 || mrateS > 0.6937) { inrange = false;}
-    if (qrateS < -6.9077 || qrateS > 0) { inrange = false;}
+    if (mrateS < params.min_omegam || mrateS > params.max_omegam) { inrange = false;}
+    if (qrateS < params.min_omegaq || qrateS > params.max_omegaq) { inrange = false;}
     if (!inrange) { return (-Inf); }
     
     double logpi =

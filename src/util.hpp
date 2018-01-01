@@ -52,7 +52,6 @@ public:
     
     long seed;
     bool testing;
-    int usebootstrap;
     string datapath, mcmcpath, prevpath, gridpath, olderpath;
     double qEffctHalfInterval, mEffctHalfInterval;
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
@@ -61,8 +60,10 @@ public:
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
     double mrateShape_2, mrateScale_2;
     double qrateShape_2, qrateScale_2;
-    double dfProposalS2, mnegBiProb, qnegBiProb;
-    double dfmin, dfmax, qVoronoiPr;
+    double omegaProposalS2, mnegBiProb, qnegBiProb;
+    double qVoronoiPr;
+    double min_omegam, max_omegam;
+    double min_omegaq, max_omegaq;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, mnegBiSize, qnegBiSize;

@@ -9,7 +9,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     try {
         po::options_description eems_options("EEMS options from parameter file");
         eems_options.add_options()
-        ("usebootstrap", po::value<int>(&usebootstrap)->default_value(1), "Use bootstrap to estimate effective number of samples")
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
@@ -30,7 +29,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.001), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("dfProposalS2", po::value<double>(&dfProposalS2)->default_value(0.01), "dfProposalS2")
+        ("omegaProposalS2", po::value<double>(&omegaProposalS2)->default_value(0.1), "omegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
@@ -39,7 +38,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
-        ("dfmin", po::value<double>(&dfmin)->default_value(-10), "dfmin")
         ("olderpath", po::value<string>(&olderpath)->default_value(""), "Path to a run with a older time period")
         ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
         ifstream instrm(params_file.c_str());
@@ -56,19 +54,20 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateScale_2 /= 2.0;
     qrateScale_2 /= 2.0;
     
-    dfmax = 10;
     testing = false;
-    
-    
     
     mrateMuUpperBound = 10; 
     qrateMuUpperBound = 10;
     mrateMuLowerBound = -10.0;
     qrateMuLowerBound = -10.0;
     
-    
     mEffctHalfInterval = 20;
     qEffctHalfInterval = 20;
+    
+    min_omegaq = -6.9077;
+    max_omegaq = 0;
+    min_omegam = -6.9077;
+    max_omegam = 0.6937;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -99,8 +98,6 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
-    << "                  dfmin = " << params.dfmin << endl
-    << "           usebootstrap = " << params.usebootstrap << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
     return out;
 }
@@ -148,12 +145,6 @@ bool Params::check_input_params( ) const {
         << "  mrateMuProposalS2 = " << mrateMuProposalS2 << ", qrateMuProposalS2 = " << qrateMuProposalS2 << endl
         << "   mSeedsProposalS2 = " << mSeedsProposalS2 << ", mEffctProposalS2 = " << mEffctProposalS2 << endl
         << "   qSeedsProposalS2 = " << qSeedsProposalS2 << ", qEffctProposalS2 = " << qEffctProposalS2 << endl;
-        error = true;
-    }
-    
-    if (usebootstrap !=0 && usebootstrap != 1){
-        cerr << "Error with usebootstrap: " << endl
-        << usebootstrap << endl;
         error = true;
     }
     
