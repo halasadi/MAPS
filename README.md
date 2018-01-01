@@ -65,19 +65,7 @@ You can run MAPS with the command such as this
 
 ## plotting
 
-Finally, the MAPs results can be visualized with the function `eems.plots` defined in the R package `rEEMSplot2`. The MAPS R plotting scripts are built upon the eems plotting scripts and therfore the usage is very similar. You must install the R plotting scripts from source, 
-
-```
-## Part 1: Install rEEMSplots2
-## Check that the current directory contains the rEEMSplots source directory
-if (file.exists("./rEEMSplots2")) {
-  install.packages("rEEMSplots2", repos = NULL, type = "source")
-} else {
-  stop("Move to the directory that contains the rEEMSplots source to install the package.")
-}
-```
-
-See `examples` on how to plot.
+Please use the plotmaps package, https://github.com/halasadi/plotmaps
 
 ### comparing MAPS runs for different IBD length bins
 
