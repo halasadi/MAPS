@@ -211,12 +211,12 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         
         // coalescent rates
-        double log10q_alpha = nowqEffcts(qColors(alpha)) + nowqrateMu + log10_old_qMeanRates(alpha);
-        qRates(iter, alpha) = pow(10.0, log10q_alpha);
+        double log10q_alpha = nowqEffcts(qColors(alpha)) * exp(nowqrateS) + nowqrateMu + log10_old_qMeanRates(alpha);
+        qRates(iter, alpha) = log10q_alpha;
         
         // migration rates
-        double log10m_alpha = nowmEffcts(mColors(alpha)) + nowmrateMu + log10_old_mMeanRates(alpha);
-        mRates(iter, alpha) = pow(10.0, log10m_alpha);
+        double log10m_alpha = nowmEffcts(mColors(alpha)) * exp(nowmrateS) + nowmrateMu + log10_old_mMeanRates(alpha);
+        mRates(iter, alpha) = log10m_alpha;
     }
    
 }
@@ -245,15 +245,18 @@ void EEMS2::load_older_rates( ){
     
     older_rates = readMatrixXd(params.olderpath + "/mRates.txt");
     if ((older_rates.rows()<1) || (older_rates.cols()<1)) { error = true; }
-    for (int i = 0; i < older_rates.cols(); i++){
-        log10_old_mMeanRates(i) = log10(older_rates.col(i).sum()/older_rates.col(i).size());
-    }
     
+    for (int i = 0; i < older_rates.cols(); i++){
+        // cast to std::vector
+        vector<double> vec(older_rates.col(i).data(), older_rates.col(i).data() + older_rates.col(i).size());
+        log10_old_mMeanRates(i) = median(vec);
+    }
     
     older_rates = readMatrixXd(params.olderpath + "/qRates.txt");
     if ((older_rates.rows()<1) || (older_rates.cols()<1)) { error = true; }
     for (int i = 0; i < older_rates.cols(); i++){
-        log10_old_qMeanRates(i) = log10(older_rates.col(i).sum()/older_rates.col(i).size());
+        vector<double> vec(older_rates.col(i).data(), older_rates.col(i).data() + older_rates.col(i).size());
+        log10_old_qMeanRates(i) = median(vec);
     }
     
     
@@ -899,7 +902,7 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     
     return (logpi);
 }
-void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const {
+void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, MatrixXd &integral, double bnd) const {
     
     // weights for the gaussian quadrature
     VectorXd weights(50);
@@ -914,7 +917,6 @@ void EEMS2::calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const Ve
     
     MatrixXd coalp;
     MatrixXd P;
-    //VectorXd qp = qMeanRate * VectorXd::Ones(d);
     integral.setZero();
     
     // x.size() is 50 but we're going to 25 to speed up the algorithm as the
@@ -944,17 +946,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
-    double t_q;
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        t_q = qEffcts(qColors(alpha)) * exp(qrateS);
-        double log10q_alpha = t_q + qrateMu; //+ log10_old_qMeanRates(alpha);
+        double log10q_alpha = qEffcts(qColors(alpha)) * exp(qrateS) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
     int alpha, beta;
-    double qMeanRate = pow(10.0, qrateMu);
-    double t_m;
-    
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
@@ -963,10 +960,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            t_m = mEffcts(mColors(alpha)) * exp(mrateS);
-            double log10m_alpha = t_m + mrateMu;
-            t_m = mEffcts(mColors(beta)) * exp(mrateS);
-            double log10m_beta = t_m + mrateMu;
+            double log10m_alpha = mEffcts(mColors(alpha)) * exp(mrateS) + mrateMu + log10_old_mMeanRates(alpha);
+            double log10m_beta =  mEffcts(mColors(beta)) * exp(mrateS) + mrateMu + log10_old_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }
@@ -981,12 +976,12 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     MatrixXd lowerExpectedIBD = MatrixXd::Zero(o, o);
-    calculateIntegral(eigenvals, eigenvecs, q, qMeanRate, lowerExpectedIBD, params.lowerBound);
+    calculateIntegral(eigenvals, eigenvecs, q, lowerExpectedIBD, params.lowerBound);
     
     
     if (isfinite(params.upperBound)){
         MatrixXd upperExpectedIBD = MatrixXd::Zero(o, o);
-        calculateIntegral(eigenvals, eigenvecs, q, qMeanRate, upperExpectedIBD, params.upperBound);
+        calculateIntegral(eigenvals, eigenvecs, q, upperExpectedIBD, params.upperBound);
         expectedIBD = lowerExpectedIBD - upperExpectedIBD;
     }
     else{

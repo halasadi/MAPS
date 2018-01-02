@@ -55,7 +55,7 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
                 out << "\"qMeanRate\"" << endl;
                 break;
             case OMEGA_UPDATE:
-                out << "\"OMEGA\"" << endl;
+                out << "\"omegaS\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

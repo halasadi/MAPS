@@ -61,7 +61,8 @@ public:
                             VectorXd newqEffcts, double newmrateMu, double newdf, bool ismUpdate,
                             double nowmrateS, double nowqrateS) const;
     
-    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q, double qMeanRate, MatrixXd &integral, double bnd) const;
+    void calculateIntegral(MatrixXd &eigenvals, MatrixXd &eigenvecs, const VectorXd &q,
+                           MatrixXd &integral, double bnd) const;
     
     MoveType choose_move_type( );
     // These functions change the within demes component:

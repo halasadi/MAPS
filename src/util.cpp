@@ -200,6 +200,14 @@ VectorXd split(const string &line) {
     // and then typecast it to Eigen::VectorXd
     return (VectorXd::Map(&numbers[0],numbers.size()));
 }
+
+
+double median(vector<double> &v) {
+    int n = (v.size() + 1) / 2;
+    sort(v.begin(), v.end());
+    return (v[n]);
+}
+
 bool isposdef(const MatrixXd &A) {
     SelfAdjointEigenSolver<MatrixXd> eig(A,EigenvaluesOnly);
     double minval = eig.eigenvalues().minCoeff();
