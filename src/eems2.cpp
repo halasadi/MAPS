@@ -163,30 +163,27 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     
     nowqtiles = o;
-    nowqSeeds = MatrixXd::Zero(nowqtiles,2); //randpoint_in_habitat(nowqSeeds);
+    nowqSeeds = MatrixXd::Zero(nowqtiles,2);
     nowqSeeds = graph.get_the_obsrv_demes();
-    
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
     
-    nowmrateS = -2;
-    nowqrateS = -2;
+    nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
+    nowqrateS = params.min_omegaq + draw.runif() * (params.max_omegaq - params.min_omegaq);
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
     qRates = MatrixXd::Zero(niters, d);
+    nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
+    nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     log10_old_mMeanRates = VectorXd::Zero(d);
     log10_old_qMeanRates = VectorXd::Zero(d);
-    
     if (!params.olderpath.empty()){
-        cout << "Previous Run " << params.olderpath << endl;
-        load_older_rates();
+        load_rates();
+        nowmrateMu = 0;
+        nowqrateMu = 0;
     }
-    
-    // Assign migration rates to the Voronoi tiles
-    nowmrateMu = params.mrateMuLowerBound + draw.runif() * (params.mrateMuUpperBound - params.mrateMuLowerBound);
-    nowqrateMu = params.qrateMuLowerBound + draw.runif() * (params.qrateMuUpperBound - params.qrateMuLowerBound);
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,1,nowqEffcts);
@@ -238,32 +235,31 @@ bool EEMS2::write_rates() {
     
 }
 
-void EEMS2::load_older_rates( ){
+void EEMS2::load_rates( ){
     
-    cerr << "[EEMS2::load_older_rates]" << endl;
-    MatrixXd older_rates; bool error = false;
+    cerr << "[EEMS2::load_rates]" << endl;
+    MatrixXd rates; bool error = false;
     
-    older_rates = readMatrixXd(params.olderpath + "/mRates.txt");
-    if ((older_rates.rows()<1) || (older_rates.cols()<1)) { error = true; }
-    
-    for (int i = 0; i < older_rates.cols(); i++){
+    rates = readMatrixXd(params.olderpath + "/mRates.txt");
+    if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
+    for (int i = 0; i < rates.cols(); i++){
         // cast to std::vector
-        vector<double> vec(older_rates.col(i).data(), older_rates.col(i).data() + older_rates.col(i).size());
+        vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
         log10_old_mMeanRates(i) = median(vec);
     }
     
-    older_rates = readMatrixXd(params.olderpath + "/qRates.txt");
-    if ((older_rates.rows()<1) || (older_rates.cols()<1)) { error = true; }
-    for (int i = 0; i < older_rates.cols(); i++){
-        vector<double> vec(older_rates.col(i).data(), older_rates.col(i).data() + older_rates.col(i).size());
+    rates = readMatrixXd(params.olderpath + "/qRates.txt");
+    if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
+    for (int i = 0; i < rates.cols(); i++){
+        vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
         log10_old_qMeanRates(i) = median(vec);
     }
     
     
     if (error) {
-        cerr << "  Error loading older means from " << params.olderpath << endl; exit(1);
+        cerr << "  Error loading rates from " << params.olderpath << endl; exit(1);
     }
-    cerr << "[EEMS::load_older_rates] Done." << endl << endl;
+    cerr << "[EEMS::load_rates] Done." << endl << endl;
     
 }
 

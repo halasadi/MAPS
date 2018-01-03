@@ -52,7 +52,7 @@ public:
     
     void initialize_state(const MCMC &mcmc);
     void load_final_state( );
-    void load_older_rates( );
+    void load_rates( );
 
     bool start_eems(const MCMC &mcmc);
     double eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const double mrateMu, const double mrateS,

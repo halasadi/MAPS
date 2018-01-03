@@ -24,3 +24,4 @@ src/*.ini
 plotting/
 examples/2_6/2_6-MAPS-test-sim/
 examples/6_Inf/6_Inf-MAPS-test-sim/
+*pdf
