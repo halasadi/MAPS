@@ -16,5 +16,5 @@ outpath  <- '/Users/halasadi/eems2/examples/6_Inf/'
 
 plot_all(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
          longlat = TRUE, mcmcpath = mcmcpath, 
-         outpath = outpath, width = 10, height = 6)
+         outpath = outpath, width = 10, height = 6, plot.difference=TRUE)
 
