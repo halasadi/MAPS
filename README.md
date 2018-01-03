@@ -53,7 +53,8 @@ As mentioned above, the parameters in MAPs are nearly identical. However, there 
 
 * `qrateMuProposalS2` (optional, acts in the same was as in mrateMuProposalS2 except for the coalescent rates)
 
-* `usebootstrap` (optional, with options = 0 or 1, defaults to 1. MAPS uses the bootstrap to estimate the effective sample size in the data. For very long segments >10cM, the bootstrap is not accurate and we suggest setting the option to 0)
+* `olderpath` (optional, path to a run with a older time period, MAPS will only estimate the difference between rates
+               from the older time period)
 
 ## running MAPS
 
