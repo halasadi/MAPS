@@ -24,12 +24,12 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("numBurnIter", po::value<int>(&numBurnIter)->default_value(0), "numBurnIter")
         ("numThinIter", po::value<int>(&numThinIter)->default_value(0), "numThinIter")
         ("mSeedsProposalS2", po::value<double>(&mSeedsProposalS2)->default_value(0.01), "mSeedsProposalS2")
-        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.1), "qSeedsProposalS2")
+        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.01), "qSeedsProposalS2")
         ("mEffctProposalS2", po::value<double>(&mEffctProposalS2)->default_value(0.1), "mEffctProposalS2")
-        ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.001), "qEffctProposalS2")
+        ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.1), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("omegaProposalS2", po::value<double>(&omegaProposalS2)->default_value(0.1), "omegaProposalS2")
+        ("omegaProposalS2", po::value<double>(&omegaProposalS2)->default_value(100), "omegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
@@ -38,8 +38,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
-        ("olderpath", po::value<string>(&olderpath)->default_value(""), "Path to a run with a older time period")
-        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize");
+        ("qnegBiSize", po::value<int>(&qnegBiSize)->default_value(10), "qnegBiSize")
+        ("olderpath", po::value<string>(&olderpath)->default_value(""), "Path to a run with a older time period");
         ifstream instrm(params_file.c_str());
         po::variables_map vm;
         po::store(po::parse_config_file(instrm,eems_options,true),vm);
@@ -67,7 +67,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     min_omegaq = -6.9077;
     max_omegaq = 0;
     min_omegam = -6.9077;
-    max_omegam = 0.6937;
+    max_omegam = 0;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
