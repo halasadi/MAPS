@@ -85,8 +85,11 @@ int main(int argc, char** argv)
                 case Q_MEAN_RATE_UPDATE:
                     eems2.propose_overall_qrate(proposal);
                     break;
-                case OMEGA_UPDATE:
-                    eems2.propose_omega(proposal,mcmc);
+                case OMEGAM_UPDATE:
+                    eems2.propose_omegam(proposal,mcmc);
+                    break;
+                case OMEGAQ_UPDATE:
+                    eems2.propose_omegaq(proposal,mcmc);
                     break;
                 default:
                     cerr << "[RunEEMS2] Unknown move type" << endl;

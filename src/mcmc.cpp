@@ -6,7 +6,7 @@ MCMC::MCMC(const Params &params) {
     numBurnIter = params.numBurnIter;
     numThinIter = params.numThinIter;
     currIter = 0;
-    numTypes = 9;
+    numTypes = 10;
     finished = false;
     okayMoves = vector<double>(numTypes,0);
     totalMoves = vector<double>(numTypes,0);
@@ -54,8 +54,11 @@ ostream& operator<<(ostream& out, const MCMC& mcmc) {
             case Q_MEAN_RATE_UPDATE:
                 out << "\"qMeanRate\"" << endl;
                 break;
-            case OMEGA_UPDATE:
-                out << "\"omegaS\"" << endl;
+            case OMEGAM_UPDATE:
+                out << "\"omegaM\"" << endl;
+                break;
+            case OMEGAQ_UPDATE:
+                out << "\"omegaQ\"" << endl;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;

@@ -360,7 +360,12 @@ MoveType EEMS2::choose_move_type( ) {
     
     double u4 = draw.runif( );
     if (u4 < 0.1){
-        move = OMEGA_UPDATE;
+        
+        if (u2 < 0.5){
+            move = OMEGAM_UPDATE;
+        } else {
+            move = OMEGAQ_UPDATE;
+        }
         return(move);
     }
     
@@ -416,30 +421,38 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, true, nowmrateS, nowqrateS));
 }
 
-void EEMS2::propose_omega(Proposal &proposal,const MCMC &mcmc) {
-    proposal.move = OMEGA_UPDATE;
+void EEMS2::propose_omegam(Proposal &proposal,const MCMC &mcmc) {
+    proposal.move = OMEGAM_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newmrateS = nowmrateS;
-    double newqrateS = nowqrateS;
     double u1 = draw.runif( );
     // need to write a rnorm function (not truncated)
-    if (u1 < 0.5){
-        newmrateS = draw.rtrnorm(nowmrateS, params.omegaProposalS2, 10000);
-    } else{
-        newqrateS = draw.rtrnorm(nowqrateS, params.omegaProposalS2, 10000);
-    }
+    newmrateS = draw.rtrnorm(nowmrateS, params.momegaProposalS2, 10000);
     proposal.newmrateS = newmrateS;
+    bool inrange = true;
+    if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
+    if (inrange){
+        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,newmrateS,
+                                    nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS);
+        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, true, newmrateS, nowqrateS);
+    }
+}
+
+void EEMS2::propose_omegaq(Proposal &proposal,const MCMC &mcmc) {
+    proposal.move = OMEGAQ_UPDATE;
+    proposal.newpi = -Inf;
+    proposal.newll = -Inf;
+    double newqrateS = nowqrateS;
+    newqrateS = draw.rtrnorm(nowqrateS, params.qomegaProposalS2, 10000);
     proposal.newqrateS = newqrateS;
     
     bool inrange = true;
-    if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
     if ( newqrateS < params.min_omegaq || newqrateS > params.max_omegaq) { inrange = false;}
-    
     if (inrange){
-        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,newmrateS,
+        proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS,
                                     nowqSeeds,nowqEffcts,nowqrateMu,newqrateS);
-        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, true, newmrateS, newqrateS);
+        proposal.newll = eems2_likelihood(nowmSeeds, nowmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, true, nowmrateS, newqrateS);
     }
 }
 
@@ -703,8 +716,10 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
             case Q_MEAN_RATE_UPDATE:
                 nowqrateMu = proposal.newqrateMu;
                 break;
-            case OMEGA_UPDATE:
+            case OMEGAM_UPDATE:
                 nowmrateS = proposal.newmrateS;
+                break;
+            case OMEGAQ_UPDATE:
                 nowqrateS = proposal.newqrateS;
                 break;
             default:
@@ -1002,7 +1017,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     if (logll != logll){
         cerr << "Error with likelihood computation" << endl;
-        throw std::exception();
+        logll = -Inf;
     }
     return (logll);
 }

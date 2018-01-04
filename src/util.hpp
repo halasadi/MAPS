@@ -60,7 +60,8 @@ public:
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
     double mrateShape_2, mrateScale_2;
     double qrateShape_2, qrateScale_2;
-    double omegaProposalS2, mnegBiProb, qnegBiProb;
+    double momegaProposalS2, qomegaProposalS2;
+    double mnegBiProb, qnegBiProb;
     double qVoronoiPr;
     double min_omegam, max_omegam;
     double min_omegaq, max_omegaq;
