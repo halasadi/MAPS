@@ -29,7 +29,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.1), "qEffctProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("omegaProposalS2", po::value<double>(&omegaProposalS2)->default_value(100), "omegaProposalS2")
+        ("omegaProposalS2", po::value<double>(&omegaProposalS2)->default_value(0.1), "omegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
         ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
@@ -56,18 +56,18 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     testing = false;
     
-    mrateMuUpperBound = 10; 
+    mrateMuUpperBound = 10;
     qrateMuUpperBound = 10;
-    mrateMuLowerBound = -10.0;
+    mrateMuLowerBound = -10;
     qrateMuLowerBound = -10.0;
     
-    mEffctHalfInterval = 20;
-    qEffctHalfInterval = 20;
+    mEffctHalfInterval = 10;
+    qEffctHalfInterval = 10;
     
-    min_omegaq = -6.9077;
+    min_omegaq = -10;
+    min_omegam = -10;
     max_omegaq = 0;
-    min_omegam = -6.9077;
-    max_omegam = 0.3;
+    max_omegam = 3;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl

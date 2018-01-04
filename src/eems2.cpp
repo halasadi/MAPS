@@ -208,11 +208,11 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         
         // coalescent rates
-        double log10q_alpha = nowqEffcts(qColors(alpha)) * exp(nowqrateS) + nowqrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = nowqEffcts(qColors(alpha)) * pow(2.0, nowqrateS) + nowqrateMu + log10_old_qMeanRates(alpha);
         qRates(iter, alpha) = log10q_alpha;
         
         // migration rates
-        double log10m_alpha = nowmEffcts(mColors(alpha)) * exp(nowmrateS) + nowmrateMu + log10_old_mMeanRates(alpha);
+        double log10m_alpha = nowmEffcts(mColors(alpha)) * pow(2.0, nowmrateS) + nowmrateMu + log10_old_mMeanRates(alpha);
         mRates(iter, alpha) = log10m_alpha;
     }
    
@@ -344,6 +344,7 @@ MoveType EEMS2::choose_move_type( ) {
     // * move a tile (chosen uniformly at random)
     // * update the rate of a tile (chosen uniformly at random)
     // * update the mean migration rate or the mean coalescent rate (with equal probability)
+    // * update the variance of the migration or coalescent rates (with equal probability)
     
     MoveType move = UNKNOWN_MOVE_TYPE;
     
@@ -422,6 +423,7 @@ void EEMS2::propose_omega(Proposal &proposal,const MCMC &mcmc) {
     double newmrateS = nowmrateS;
     double newqrateS = nowqrateS;
     double u1 = draw.runif( );
+    // need to write a rnorm function (not truncated)
     if (u1 < 0.5){
         newmrateS = draw.rtrnorm(nowmrateS, params.omegaProposalS2, 10000);
     } else{
@@ -739,7 +741,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0, exp(nowqrateS) * nowqEffcts(t) + nowqrateMu));
+        mcmcqRates.push_back(pow(10.0, pow(2.0, nowqrateS) * nowqEffcts(t) + nowqrateMu));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -748,7 +750,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0, exp(nowmrateS) * nowmEffcts(t) + nowmrateMu));
+        mcmcmRates.push_back(pow(10.0, pow(2.0, nowmrateS) * nowmEffcts(t) + nowmrateMu));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -899,6 +901,8 @@ double EEMS2::eval_prior(const MatrixXd &mSeeds, const VectorXd &mEffcts, const 
     + dnegbinln(mtiles,params.mnegBiSize,params.mnegBiProb)
     + dnegbinln(qtiles,params.qnegBiSize,params.qnegBiProb);
     
+    // there is a qtiles! and mtiles! terms here, but they
+    // cancel out with terms in the ratio of proposal densities
     for (int i = 0 ; i < qtiles ; i++) {
         logpi += dtrnormln(qEffcts(i),0.0,1,params.qEffctHalfInterval);
     }
@@ -954,7 +958,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = qEffcts(qColors(alpha)) * exp(qrateS) + qrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = qEffcts(qColors(alpha)) * pow(2.0, qrateS) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
@@ -967,14 +971,14 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) * exp(mrateS) + mrateMu + log10_old_mMeanRates(alpha);
-            double log10m_beta =  mEffcts(mColors(beta)) * exp(mrateS) + mrateMu + log10_old_mMeanRates(beta);
+            double log10m_alpha = mEffcts(mColors(alpha)) * pow(2.0, mrateS) + mrateMu + log10_old_mMeanRates(alpha);
+            double log10m_beta =  mEffcts(mColors(beta))  * pow(2.0, mrateS) + mrateMu + log10_old_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }
         
         // Make M into a rate matrix
-        M.diagonal() = -1* M.rowwise().sum();
+        M.diagonal() = -1 * M.rowwise().sum();
         
         SelfAdjointEigenSolver<MatrixXd> es;
         es.compute(M);
