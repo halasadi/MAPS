@@ -67,7 +67,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     min_omegaq = -6.9077;
     max_omegaq = 0;
     min_omegam = -6.9077;
-    max_omegam = 0;
+    max_omegam = 0.3;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
