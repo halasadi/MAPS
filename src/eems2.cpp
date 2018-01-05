@@ -168,7 +168,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
     
-    nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
+    //nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
+    nowmrateS = 1;
     nowqrateS = params.min_omegaq + draw.runif() * (params.max_omegaq - params.min_omegaq);
     
     int niters = mcmc.num_iters_to_save();
@@ -186,8 +187,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     }
     
     // Assign rates to the Voronoi tiles
-    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(params.qEffctHalfInterval,1,nowqEffcts);
-    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(params.mEffctHalfInterval,1,nowmEffcts);
+    nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(1,1,nowqEffcts);
+    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(1,1,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -208,11 +209,11 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         
         // coalescent rates
-        double log10q_alpha = nowqEffcts(qColors(alpha)) * pow(2.0, nowqrateS) + nowqrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = (nowqEffcts(qColors(alpha)) * pow(2.0, nowqrateS)) + nowqrateMu + log10_old_qMeanRates(alpha);
         qRates(iter, alpha) = log10q_alpha;
         
         // migration rates
-        double log10m_alpha = nowmEffcts(mColors(alpha)) * pow(2.0, nowmrateS) + nowmrateMu + log10_old_mMeanRates(alpha);
+        double log10m_alpha = (nowmEffcts(mColors(alpha)) * pow(2.0, nowmrateS)) + nowmrateMu + log10_old_mMeanRates(alpha);
         mRates(iter, alpha) = log10m_alpha;
     }
    
@@ -339,6 +340,8 @@ MoveType EEMS2::choose_move_type( ) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
     double u3 = draw.runif( );
+    double u4 = draw.runif( );
+
     // There are 4 types of proposals:
     // * birth/death (with equal probability)
     // * move a tile (chosen uniformly at random)
@@ -358,9 +361,8 @@ MoveType EEMS2::choose_move_type( ) {
         return(move);
     }
     
-    double u4 = draw.runif( );
-    if (u4 < 0.1){
-        
+    if (u4 < 0.05){
+        //move = OMEGAQ_UPDATE;
         if (u2 < 0.5){
             move = OMEGAM_UPDATE;
         } else {
@@ -427,8 +429,7 @@ void EEMS2::propose_omegam(Proposal &proposal,const MCMC &mcmc) {
     proposal.newll = -Inf;
     double newmrateS = nowmrateS;
     double u1 = draw.runif( );
-    // need to write a rnorm function (not truncated)
-    newmrateS = draw.rtrnorm(nowmrateS, params.momegaProposalS2, 10000);
+    newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
     proposal.newmrateS = newmrateS;
     bool inrange = true;
     if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
@@ -444,7 +445,7 @@ void EEMS2::propose_omegaq(Proposal &proposal,const MCMC &mcmc) {
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newqrateS = nowqrateS;
-    newqrateS = draw.rtrnorm(nowqrateS, params.qomegaProposalS2, 10000);
+    newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
     proposal.newqrateS = newqrateS;
     
     bool inrange = true;
@@ -756,7 +757,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0, pow(2.0, nowqrateS) * nowqEffcts(t) + nowqrateMu));
+        mcmcqRates.push_back(pow(10.0, (pow(2.0, nowqrateS) * nowqEffcts(t)) + nowqrateMu));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -765,7 +766,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0, pow(2.0, nowmrateS) * nowmEffcts(t) + nowmrateMu));
+        mcmcmRates.push_back(pow(10.0, (pow(2.0, nowmrateS) * nowmEffcts(t)) + nowmrateMu));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -973,11 +974,13 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     VectorXd q = VectorXd::Zero(d);
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = qEffcts(qColors(alpha)) * pow(2.0, qrateS) + qrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = (qEffcts(qColors(alpha)) * pow(2.0, qrateS)) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
     int alpha, beta;
+    MatrixXd Mo = MatrixXd::Zero(d,d);
+
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
@@ -986,15 +989,16 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = mEffcts(mColors(alpha)) * pow(2.0, mrateS) + mrateMu + log10_old_mMeanRates(alpha);
-            double log10m_beta =  mEffcts(mColors(beta))  * pow(2.0, mrateS) + mrateMu + log10_old_mMeanRates(beta);
+            double log10m_alpha = (mEffcts(mColors(alpha)) * pow(2.0, mrateS)) + mrateMu + log10_old_mMeanRates(alpha);
+            double log10m_beta =  (mEffcts(mColors(beta))  * pow(2.0, mrateS)) + mrateMu + log10_old_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }
         
         // Make M into a rate matrix
         M.diagonal() = -1 * M.rowwise().sum();
-        
+        Mo = M;
+
         SelfAdjointEigenSolver<MatrixXd> es;
         es.compute(M);
         eigenvals = es.eigenvalues();
@@ -1017,59 +1021,14 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     if (logll != logll){
         cerr << "Error with likelihood computation" << endl;
-        logll = -Inf;
+        cout << "mrateS: " << mrateS << endl;
+        cout << "mrateMu: " << mrateMu << endl;
+        cout << Mo << endl;
+        cout << "qrateS: " << mrateS << endl;
+        cout << "qrateMu: " << mrateMu << endl;
+        throw std::exception();
     }
     return (logll);
 }
 
-double EEMS2::getMigrationRate(const int edge) const {
-    int nEdges = graph.get_num_edges();
-    assert((edge>=0) && (edge<nEdges));
-    int alpha, beta;
-    graph.get_edge(edge,alpha,beta);
-    /*
-     It will be highly inefficient to compute the mapping mColors every time we want to
-     look up the migration rate of an edge (Therefore, nowmColors is updated after any
-     update that can change the mapping of vertices/demes to mVoronoi tiles)
-     VectorXi mColors;
-     graph.index_closest_to_deme(nowmSeeds,mColors);
-     */
-    double m_alpha = pow(10, nowmEffcts(nowmColors(alpha)) + nowmrateMu);
-    double m_beta = pow(10, nowmEffcts(nowmColors(beta)) + nowmrateMu);
-    return (0.5 * m_alpha + 0.5 * m_beta);
-    
-}
-double EEMS2::getCoalescenceRate(const int alpha) const {
-    int nDemes = graph.get_num_total_demes();
-    assert((alpha>=0) && (alpha<nDemes));
-    /*
-     It will be highly inefficient to compute the mapping qColors every time we want to
-     look up the coalescence rate of a deme (Therefore, nowqColors is updated after any
-     update that can change the mapping of vertices/demes to qVoronoi tiles)
-     VectorXi qColors;
-     graph.index_closest_to_deme(nowqSeeds,qColors);
-     */
-    double q_alpha = pow(10, nowqEffcts(nowqColors(alpha)) + nowqrateMu);
-    return (q_alpha);
-}
 
-void EEMS2::printMigrationAndCoalescenceRates( ) const {
-    
-    int nDemes = graph.get_num_total_demes();
-    cout << "Here is the coalescence (actually, diversity) rate of each deme" << endl;
-    for ( int alpha = 0 ; alpha<nDemes ; alpha++ ) {
-        cout << "  deme = " << alpha << ", q rate = " << getCoalescenceRate(alpha) << endl;
-    }
-    int nEdges = graph.get_num_edges();
-    cout << "Here is the migration rate of each edge" << endl;
-    for ( int edge = 0 ; edge<nEdges ; edge++ ) {
-        cout << "  edge = " << edge << ", m rate = " << getMigrationRate(edge) << endl;
-    }
-    int alpha, beta;
-    cout << "Here is the migration rate of each edge, this time edges as pairs of demes" << endl;
-    for ( int edge = 0 ; edge<nEdges ; edge++ ) {
-        graph.get_edge(edge,alpha,beta);
-        cout << "  edge = (" << alpha << "," << beta << "), m rate = " << getMigrationRate(edge) << endl;
-    }
-    
-}

@@ -104,11 +104,6 @@ public:
     string gridpath() const;
     void store_rates(const MCMC &mcmc);
     bool write_rates();
-
-    double getMigrationRate(const int edge) const;
-    double getCoalescenceRate(const int deme) const;
-    void printMigrationAndCoalescenceRates( ) const;
-
     
 private:
     
