@@ -362,7 +362,6 @@ MoveType EEMS2::choose_move_type( ) {
     }
     
     if (u4 < 0.05){
-        //move = OMEGAQ_UPDATE;
         if (u2 < 0.5){
             move = OMEGAM_UPDATE;
         } else {
@@ -979,7 +978,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     int alpha, beta;
-    MatrixXd Mo = MatrixXd::Zero(d,d);
 
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
@@ -997,7 +995,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         
         // Make M into a rate matrix
         M.diagonal() = -1 * M.rowwise().sum();
-        Mo = M;
 
         SelfAdjointEigenSolver<MatrixXd> es;
         es.compute(M);
@@ -1021,11 +1018,6 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     
     if (logll != logll){
         cerr << "Error with likelihood computation" << endl;
-        cout << "mrateS: " << mrateS << endl;
-        cout << "mrateMu: " << mrateMu << endl;
-        cout << Mo << endl;
-        cout << "qrateS: " << mrateS << endl;
-        cout << "qrateMu: " << mrateMu << endl;
         throw std::exception();
     }
     return (logll);

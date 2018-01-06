@@ -62,8 +62,10 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateMuLowerBound = -10;
     qrateMuLowerBound = -10.0;
     
-    mEffctHalfInterval = 3;
-    qEffctHalfInterval = 3;
+    // prevent ei to be too large and might cause overflow error
+    mEffctHalfInterval = 4;
+    // want rates 2sigma away from the mean
+    qEffctHalfInterval = 2;
     
     min_omegaq = -10;
     min_omegam = -10;
