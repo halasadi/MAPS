@@ -12,6 +12,13 @@ I recommend using *conda* to install MAPS
 * ```source activate MAPS```
 * ```conda install boost=1.57.0``` (MAPS only works with this version of boost)
 * ```conda install eigen```
+* change the paths accordingly the Makefile
+   For example, the paths to Eigen and Boost in my Makefile are
+   ```
+   EIGEN_INC = /Users/halasadi/anaconda/envs/MAPS/include/eigen3
+   BOOST_LIB = /Users/halasadi/anaconda/envs/MAPS/lib
+   BOOST_INC = /Users/halasadi/anaconda/envs/MAPS/include/boost
+   ```
 * clone the repository and in the ```src``` directory, type ```make``` 
 
 
