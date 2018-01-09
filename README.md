@@ -1,7 +1,10 @@
 Migration and Population Surface estimation (MAPS)
 =====================================
 
-The MAPs software is built from the eems software and the software usage is very similar. **Here, we only highlight the differences between the usage of MAPs and EEMS**. Please see https://github.com/dipetkov/eems for the usage in EEMS.
+The MAPs software is built from the eems software and the software
+usage is very similar. **Here, we only highlight the differences
+between the usage of MAPs and EEMS**. Please see
+https://github.com/dipetkov/eems for the usage in EEMS.
 
 ## installing MAPS
 
