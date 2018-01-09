@@ -168,8 +168,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
     
-    //nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
-    nowmrateS = 1;
+    nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
     nowqrateS = params.min_omegaq + draw.runif() * (params.max_omegaq - params.min_omegaq);
     
     int niters = mcmc.num_iters_to_save();
