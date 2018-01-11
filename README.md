@@ -1,9 +1,16 @@
 # Migration and Population Surface estimation (MAPS)
 
+*Add brief (1--3 sentence) description of MAPS here. Even better,
+include a cool plot generated using your software; see
+[here](https://github.com/genetics-statistics/GEMMA) for an example.*
+
 The MAPs software is built from the eems software and the software
 usage is very similar. **Here, we only highlight the differences
 between the usage of MAPs and EEMS**. Please see
 https://github.com/dipetkov/eems for the usage in EEMS.
+
+Please post bugs, questions and feature requests or suspected bugs to
+[Github issues](https://github.com/halasadi/MAPS/issues).
 
 ## License
 
@@ -13,6 +20,10 @@ The software and example programs in this repository are made
 available under the terms of the
 [MIT license](https://opensource.org/licenses/mit-license.html).
 See file [LICENSE](LICENSE) for the full text of the license.
+
+## Quick Start
+
+*Instructions will go here.*
 
 ## installing MAPS
 
