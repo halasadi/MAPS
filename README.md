@@ -86,7 +86,3 @@ Please see the `examples` folder for examples data-input, how to run MAPS, and h
 ## confused?
 
 The MAPS software is still being tested. I will appreciate any bugs/comments with the code/documentation. Please post an issue and I will get to it.
-
-## credits
-
-The MAPS software was developed by Hussein Al-Asadi with Desislava Petkova at the University of Chicago.  
