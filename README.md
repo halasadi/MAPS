@@ -1,10 +1,18 @@
-Migration and Population Surface estimation (MAPS)
-=====================================
+# Migration and Population Surface estimation (MAPS)
 
 The MAPs software is built from the eems software and the software
 usage is very similar. **Here, we only highlight the differences
 between the usage of MAPs and EEMS**. Please see
 https://github.com/dipetkov/eems for the usage in EEMS.
+
+## License
+
+Copyright (c) 2017-2018, Hussein Al-Asadi.
+
+The software and example programs in this repository are made
+available under the terms of the
+[MIT license](https://opensource.org/licenses/mit-license.html).
+See file [LICENSE](LICENSE) for the full text of the license.
 
 ## installing MAPS
 
@@ -24,7 +32,6 @@ I recommend using *conda* to install MAPS
    BOOST_INC = /Users/halasadi/anaconda/envs/MAPS/include/boost
    ```
 * in the ```src``` directory, type ```make``` 
-
 
 ## preparing data for MAPS
 
