@@ -9,6 +9,8 @@ usage is very similar. **Here, we only highlight the differences
 between the usage of MAPs and EEMS**. Please see
 https://github.com/dipetkov/eems for the usage in EEMS.
 
+The MAPS program has been tested extensively with ...
+
 Please post bugs, questions and feature requests or suspected bugs to
 [Github issues](https://github.com/halasadi/MAPS/issues).
 
@@ -19,11 +21,15 @@ Copyright (c) 2017-2018, Hussein Al-Asadi.
 The software and example programs in this repository are made
 available under the terms of the
 [MIT license](https://opensource.org/licenses/mit-license.html).
-See file [LICENSE](LICENSE) for the full text of the license.
+See [LICENSE](LICENSE) for the full text of the license.
 
 ## Quick Start
 
-*Instructions will go here.*
+1. Install Boost.
+
+2. Install Eigen.
+
+*More instructions will go here.*
 
 ## installing MAPS
 
@@ -44,7 +50,7 @@ I recommend using *conda* to install MAPS
    ```
 * in the ```src``` directory, type ```make``` 
 
-## preparing data for MAPS
+## Preparing data for MAPS
 
 MAPS requires for input
 
@@ -54,7 +60,7 @@ MAPS requires for input
 
 An IBD sharing matrix is required for MAPs (instead of an disssimilarity matrix as in eems). The IBD sharing matrix ${X}$ is defined such that $X_{i,j}$ is the number of IBD segments shared in a length bin R between haploid $i$ and haploid $j$, the length bin or range R is described below. In the MAPs paper we use the software refinedIBD to call and phase diploid data. The sharing matrix must end with with the prefix .sims, e.g. `popressard_2_Inf.sims`. 
 
-The length bin R is defined by a lowerbound and an upperbound on the **cM** scale, and can be specified in the `params` file withe the parameter `lowerBound` and `upperBound`. If `upperBound` entry is blank, it is assumed to be infinity. 
+The length bin R is defined by a lowerbound and an upperbound on the **cM** scale, and can be specified in the `params` file withe the parameter `lowerBound` and `upperBound`. If `upperBound` entry is blank, it is assumed to be infinity.
 
 For example,
 ```
