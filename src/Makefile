@@ -18,14 +18,14 @@ CXXFLAGS = -O3 -DNDEBUG
 # Boost in the "MAPS" conda environment (following the instructions in
 # the README), LDFLAGS would probably look like this:
 #  
-#   LDFLAGS = -L/Users/halasadi/anaconda/envs/MAPS/lib \
+#   LDFLAGS = -L$(HOME)/anaconda/envs/MAPS/lib \
 #             -lboost_system -lboost_program_options \
 #             -lboost_filesystem
 #
 LDFLAGS = -lboost_system -lboost_program_options -lboost_filesystem
 
-# DO NOT EDIT ANYTHING BELOW THIS LINE
-# ------------------------------------
+# AVOID EDITING ANYTHING BELOW THIS LINE
+# --------------------------------------
 # These two variables define the targets: the executable, and the
 # object files.
 OUTPUT = runeems2
@@ -35,9 +35,9 @@ OBJS = runeems2.o eems2.o util.o mcmc.o draw.o habitat.o graph.o
 all: $(OUTPUT)
 
 $(OUTPUT): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(OUTPUT) $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(OBJ): %.o: %.cpp
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
