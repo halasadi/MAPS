@@ -33,8 +33,8 @@ I recommend using *conda* to install MAPS
    For example, the paths to Eigen and Boost in my Makefile are
    ```
    EIGEN_INC = /Users/halasadi/anaconda/envs/MAPS/include/eigen3
-   BOOST_LIB = /Users/halasadi/anaconda/envs/MAPS/lib
-   BOOST_INC = /Users/halasadi/anaconda/envs/MAPS/include/boost
+   BOOST_LIB = /Users/halasadi/anaconda/envs/MAPS/include
+   BOOST_INC = /Users/halasadi/anaconda/envs/MAPS/include
    ```
 * in the ```src``` directory, type ```make``` 
 
