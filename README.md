@@ -78,7 +78,8 @@ Mac).
 7. Run `make` in the [src](src) subdirectory to build the `runeems2`
    binary executable.
 
-8. *Additional instructions go here.*
+8. *Explain that the Boost library needs to be in the library search
+   path.*
 
 *Please see the `examples` folder for examples data-input, how to run
 MAPS, and how to plot the results.*
