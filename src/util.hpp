@@ -9,9 +9,9 @@
 #include <iostream>
 using namespace std;
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 using namespace Eigen;
 
 #include <boost/version.hpp>

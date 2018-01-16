@@ -1,28 +1,45 @@
+# ADJUST THESE VARIABLES AS NEEDED TO SUIT YOUR COMPUTING ENVIRONMENT
+# -------------------------------------------------------------------
+# This specifies the C++ compiler used.
+CXX = g++
 
-#EIGEN_INC = /opt/local/include/eigen3
-#BOOST_LIB = /opt/local/lib
-#BOOST_INC = /opt/local/include
+# If the Boost and Eigen C++ include files are in non-standard
+# locations, their locations should be declared here. For example, if
+# you installed Boost and Eigen in the "MAPS" conda environment
+# (following the instructions in the README), CXXFLAGS would most
+# likely look like this:
+#
+#   CXXFLAGS = -I$(HOME)/anaconda/envs/MAPS/include -O3 -DNDEBUG
+# 
+CXXFLAGS = -O3 -DNDEBUG
 
+# If the Boost C++ library is installed in a non-standard location,
+# the location should be declared here. For example, if you installed
+# Boost in the "MAPS" conda environment (following the instructions in
+# the README), LDFLAGS would probably look like this:
+#  
+#   LDFLAGS = -L$(HOME)/anaconda/envs/MAPS/lib \
+#             -lboost_system -lboost_program_options \
+#             -lboost_filesystem
+#
+LDFLAGS = -lboost_system -lboost_program_options -lboost_filesystem
 
-EIGEN_INC = /usr/local/include/eigen3
-BOOST_LIB = /usr/local/opt/boost@1.57/lib
-BOOST_INC = /usr/local/opt/boost@1.57/include
+# AVOID EDITING ANYTHING BELOW THIS LINE
+# --------------------------------------
+# These two variables define the targets: the executable, and the
+# object files.
+OUTPUT = runeems2
+OBJS = runeems2.o eems2.o util.o mcmc.o draw.o habitat.o graph.o
 
-EXE = runeems2
-OBJ = runeems2.o eems2.o util.o mcmc.o draw.o habitat.o graph.o
+# These lines below define the rules for generating the targets.
+all: $(OUTPUT)
 
-CXXFLAGS = -I${BOOST_INC} -I${EIGEN_INC} -O3 -DNDEBUG -O3
-LDFLAGS = -L${BOOST_LIB} \
-	-lboost_system \
-	-lboost_program_options \
-	-lboost_filesystem
+$(OUTPUT): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(EXE): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $(EXE) $^ $(LDFLAGS)
-
-$(OBJ): %.o: %.cpp
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean
 clean:
-	rm -f $(OBJ) $(EXE) *~
+	rm -f $(OUTPUT) $(OBJS)
+

@@ -8,10 +8,7 @@ help(plot_maps)
 
 plot_maps(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
          longlat = TRUE, mcmcpath = mcmcpath, 
-         outpath = outpath, width = 10, height = 6)
-
-
-
+          outpath = outpath, width = 10, height = 6)
 
 mcmcpath <- '/Users/halasadi/eems2/examples/6_Inf/6_Inf-MAPS-test-sim/'
 outpath  <- '/Users/halasadi/eems2/examples/6_Inf/'
