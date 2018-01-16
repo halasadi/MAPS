@@ -101,7 +101,9 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
-    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl;
+    << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
+    << "       momegaProposalS2 = " << params.momegaProposalS2 << endl
+    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
