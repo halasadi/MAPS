@@ -1,8 +1,6 @@
 # Migration and Population Surface estimation (MAPS)
 
-*Add brief (1--3 sentence) description of MAPS here. Even better,
-include a cool plot generated using your software; see
-[here](https://github.com/genetics-statistics/GEMMA) for an example.*
+![Overview of the MAPS software](fig1-github.png) 
 
 The MAPs software is built from the eems software and the software
 usage is very similar. **Here, we only highlight the differences
@@ -54,7 +52,6 @@ Mac).
    conda create -n MAPS
    source activate MAPS
    ```
-
 3. Install the [Boost](http://www.boost.org) C++ source libraries
    version 1.57.0. If using conda, run `conda install boost=1.57.0`.
 

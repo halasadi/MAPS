@@ -57,6 +57,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     testing = false;
     
+    // set upper bound 4 to prevent overflow error
     mrateMuUpperBound = 4;
     qrateMuUpperBound = 4;
     mrateMuLowerBound = -10;
@@ -66,8 +67,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mEffctHalfInterval = 4;
     qEffctHalfInterval = 4;
     
-    min_omegaq = -10;
-    min_omegam = -10;
+    min_omegaq = -15;
+    min_omegam = -15;
     max_omegaq = 0;
     max_omegam = 1;
 }
