@@ -43,4 +43,3 @@ $(OUTPUT): $(OBJS)
 clean:
 	rm -f $(OUTPUT) $(OBJS)
 
-

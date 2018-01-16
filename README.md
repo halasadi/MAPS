@@ -19,7 +19,7 @@ Please post bugs, questions and feature requests or suspected bugs to
 If you find the MAPS program, or any source code contained in this
 repository, useful for your work, please cite:
 
-> Add citation here.
+> Add paper to cite here.
 
 ## License
 
@@ -80,6 +80,9 @@ Mac).
 
 8. *Additional instructions go here.*
 
+*Please see the `examples` folder for examples data-input, how to run
+MAPS, and how to plot the results.*
+
 ## Preparing data for MAPS
 
 MAPS requires for input
@@ -88,9 +91,18 @@ MAPS requires for input
 * coordinate file (ends in .coord). see eems documentation
 * outer file (ends in .outer). see eems documentation
 
-An IBD sharing matrix is required for MAPs (instead of an disssimilarity matrix as in eems). The IBD sharing matrix ${X}$ is defined such that $X_{i,j}$ is the number of IBD segments shared in a length bin R between haploid $i$ and haploid $j$, the length bin or range R is described below. In the MAPs paper we use the software refinedIBD to call and phase diploid data. The sharing matrix must end with with the prefix .sims, e.g. `popressard_2_Inf.sims`. 
+An IBD sharing matrix is required for MAPs (instead of an
+disssimilarity matrix as in eems). The IBD sharing matrix ${X}$ is
+defined such that $X_{i,j}$ is the number of IBD segments shared in a
+length bin R between haploid $i$ and haploid $j$, the length bin or
+range R is described below. In the MAPs paper we use the software
+refinedIBD to call and phase diploid data. The sharing matrix must end
+with with the prefix .sims, e.g. `popressard_2_Inf.sims`.
 
-The length bin R is defined by a lowerbound and an upperbound on the **cM** scale, and can be specified in the `params` file withe the parameter `lowerBound` and `upperBound`. If `upperBound` entry is blank, it is assumed to be infinity.
+The length bin R is defined by a lowerbound and an upperbound on the
+**cM** scale, and can be specified in the `params` file withe the
+parameter `lowerBound` and `upperBound`. If `upperBound` entry is
+blank, it is assumed to be infinity.
 
 For example,
 ```
@@ -98,15 +110,14 @@ datapath = popressard_2_Inf.sims
 lowerBound = 2
 ```
 
-We also allow the capability to visualize IBD segments in a length region, for example betweem 2cM and 8cM.
-```
-datapath = popressard_2_8.sims
-lowerBound = 2
-upperBound = 8
-```
-## parameter configuration
+We also allow the capability to visualize IBD segments in a length
+region, for example betweem 2cM and 8cM.  ``` datapath =
+popressard_2_8.sims lowerBound = 2 upperBound = 8 ``` ## parameter
+configuration
 
-As mentioned above, the parameters in MAPs are nearly identical. However, there are a few additional arguments in the `params` file, 
+As mentioned above, the parameters in MAPs are nearly
+identical. However, there are a few additional arguments in the
+`params` file,
 
 * `genomeSize` (optional defaults to 3000cM)
 
@@ -118,10 +129,11 @@ As mentioned above, the parameters in MAPs are nearly identical. However, there 
 
 * `qrateMuProposalS2` (optional, acts in the same was as in mrateMuProposalS2 except for the coalescent rates)
 
-* `olderpath` (optional, path to a run with a older time period, MAPS will only estimate the difference between rates
-               from the older time period)
+* `olderpath` (optional, path to a run with a older time period, MAPS
+               will only estimate the difference between rates from
+               the older time period)
 
-## running MAPS
+## Running MAPS
 
 You can run MAPS with the command such as this
 
@@ -129,17 +141,9 @@ You can run MAPS with the command such as this
 ./runeems2 --params params.ini --seed 123
 ```
 
-## plotting
+## Plotting MAPS output
 
 Please use the plotmaps package, https://github.com/halasadi/plotmaps
-
-## examples
-
-Please see the `examples` folder for examples data-input, how to run MAPS, and how to plot the results.
-
-## confused?
-
-The MAPS software is still being tested. I will appreciate any bugs/comments with the code/documentation. Please post an issue and I will get to it.
 
 ## Credits
 
