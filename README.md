@@ -61,23 +61,24 @@ Mac).
 4. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
    library. If using conda, run `conda install eigen`.
 
-*More instructions will go here.*
+5. Clone or download this repository.
 
-## installing MAPS
+6. Adjust the Makefile variables as needed to suit your computing
+   environment. See the instructions in the [Makefile](src/Makefile)
+   for details. For example, if you installed the Boost and Eigen
+   libraries with conda, then you would add the following flags to the
+   `CXXFLAGS` and `LDFLAGS` settings, respectively (again, see the
+   Makefile for full details):
 
-I recommend using *conda* to install MAPS
-
-* ```conda install boost=1.57.0``` (MAPS only works with this version of boost)
-* ```conda install eigen```
-* clone the repository 
-* change the paths accordingly the Makefile
-   For example, the paths to Eigen and Boost in my Makefile are
    ```
-   EIGEN_INC = /Users/halasadi/anaconda/envs/MAPS/include/eigen3
-   BOOST_LIB = /Users/halasadi/anaconda/envs/MAPS/lib
-   BOOST_INC = /Users/halasadi/anaconda/envs/MAPS/include/boost
+   -I$(HOME)/anaconda/envs/MAPS/include
+   -L$(HOME)/anaconda/envs/MAPS/lib
    ```
-* in the ```src``` directory, type ```make``` 
+
+7. Run `make` in the [src](src) subdirectory to build the `runeems2`
+   binary executable.
+
+8. *Additional instructions go here.*
 
 ## Preparing data for MAPS
 
