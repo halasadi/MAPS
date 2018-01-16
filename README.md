@@ -146,7 +146,7 @@ Please use the plotmaps package, https://github.com/halasadi/plotmaps
 ## Credits
 
 This project was developed by
-[Hussein Al-Hasadi](https://github.com/halasadi) at the University of
+[Hussein Al-Asadi](https://github.com/halasadi) at the University of
 Chicago.
 
 Thanks to [Matthew Stephens](stephenslab.uchicago.edu) for his support
