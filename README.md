@@ -9,10 +9,17 @@ usage is very similar. **Here, we only highlight the differences
 between the usage of MAPs and EEMS**. Please see
 https://github.com/dipetkov/eems for the usage in EEMS.
 
-The MAPS program has been tested extensively with ...
+*The MAPS program has been tested with ...*
 
 Please post bugs, questions and feature requests or suspected bugs to
 [Github issues](https://github.com/halasadi/MAPS/issues).
+
+## Citing this work
+
+If you find the MAPS program, or any source code contained in this
+repository, useful for your work, please cite:
+
+> Add citation here.
 
 ## License
 
@@ -25,9 +32,34 @@ See [LICENSE](LICENSE) for the full text of the license.
 
 ## Quick Start
 
-1. Install Boost.
+Follow these steps to quickly get started using MAPS.
 
-2. Install Eigen.
+For installing the software dependencies, we provide detailed
+instructions using the
+[conda package manager](https://conda.io/docs). This is only a
+recommended aproach---conda is not required to use MAPS, and other
+approaches can be taken to install the dependencies (e.g., by directly
+downloading the source code, or by using [Homebrew](http://brew.sh) for
+Mac).
+
+1. Install [GNU Make](https://www.gnu.org/software/make).
+
+2. Install a [Conda](https://conda.io/docs) distribution such as
+   [Anaconda](https://www.anaconda.com/download) or
+   [Miniconda](https://conda.io/miniconda.html) (*optional*).
+
+3. Create a new conda environment for MAPS (*optional*).
+
+   ```bash
+   conda create -n MAPS
+   source activate MAPS
+   ```
+
+3. Install the [Boost](http://www.boost.org) C++ source libraries
+   version 1.57.0. If using conda, run `conda install boost=1.57.0`.
+
+4. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
+   library. If using conda, run `conda install eigen`.
 
 *More instructions will go here.*
 
@@ -35,9 +67,6 @@ See [LICENSE](LICENSE) for the full text of the license.
 
 I recommend using *conda* to install MAPS
 
-*  install conda, see: https://conda.io/docs/
-* ```conda create -n MAPS``` (this creates a conda enviornment for MAPS)
-* ```source activate MAPS```
 * ```conda install boost=1.57.0``` (MAPS only works with this version of boost)
 * ```conda install eigen```
 * clone the repository 
@@ -110,3 +139,12 @@ Please see the `examples` folder for examples data-input, how to run MAPS, and h
 ## confused?
 
 The MAPS software is still being tested. I will appreciate any bugs/comments with the code/documentation. Please post an issue and I will get to it.
+
+## Credits
+
+This project was developed by
+[Hussein Al-Hasadi](https://github.com/halasadi) at the University of
+Chicago.
+
+Thanks to [Matthew Stephens](stephenslab.uchicago.edu) for his support
+and mentorship.

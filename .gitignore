@@ -15,7 +15,6 @@ src/runeems2
 test/check_priors.R
 test/data
 *png
-*.txt
 .Rproj.user
 data/*
 sims/*
