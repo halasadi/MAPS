@@ -75,8 +75,13 @@ Mac).
 8. Run `make` in the [src](src) subdirectory to build the `runeems2`
    binary executable.
 
-9. *Explain that the Boost library needs to be in the library search
-   path.*
+9. Make sure that the Boost library is in the library search
+   path. Typically this will involve updating the `LD_LIBRARY_PATH`
+   (Linux) or `DYLD_LIBRARY_PATH` (macOS) environment variable; e.g.,
+
+   ```bash
+   export LD_LIBRARY_PATH=$HOME/anaconda3/envs/MAPS/lib
+   ```
 
 10. Try running MAPS on the 2-6 cM PSC segments provided in the
     examples/2_6 subdirectory.
