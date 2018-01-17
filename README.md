@@ -86,7 +86,7 @@ Mac).
    ../src/runeems2 --params params-test-2_6.ini
    ```
 
-    This should take X minutes to complete.
+    It may take 10--30 minutes for the MCMC simulation to complete.
 
 10. Next, try running MAPS on larger PSC segments (>6 cM) to
     investigate at more recent population structure.
@@ -97,17 +97,19 @@ Mac).
 
 11. Optionally, install the
     [plotmaps](https://github.com/halasadi/plotmaps) package in R, and
-    run the following code in the R programming environment to
-    generate visual summaries from the analyses of the shorter and
-    longer PSC segments.
+    run the following code in R. This will generate plots for
+    diagnosing and interprting the MAPS analyses of the shorter and
+    longer PSC segments. The plots are saved as PDFs.
 
     ```R
+    library(plotmaps)
+    plot_maps(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
+         longlat = TRUE, mcmcpath = "2_6/2_6-MAPS-test-sim", 
+         outpath = "2_6", width = 10, height = 6)
+    plot_maps(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
+         longlat = TRUE, mcmcpath = "6_Inf/6_Inf-MAPS-test-sim", 
+         outpath = "6_Inf", width = 10, height = 6, plot.difference=TRUE)
     ```
-
-    Finally, we plot the results. See `plot-maps.example.R`.
-
-12. See the [examples](folder) for more illustrations of how to use
-    the MAPS program.
 
 ## Preparing data for MAPS
 
