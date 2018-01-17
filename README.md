@@ -78,8 +78,36 @@ Mac).
 8. *Explain that the Boost library needs to be in the library search
    path.*
 
-*Please see the `examples` folder for examples data-input, how to run
-MAPS, and how to plot the results.*
+9. Try running MAPS on the 2-6 cM PSC segments provided in the
+   examples/2_6 subdirectory.
+
+   ```bash
+   cd examples
+   ../src/runeems2 --params params-test-2_6.ini
+   ```
+
+    This should take X minutes to complete.
+
+10. Next, try running MAPS on larger PSC segments (>6 cM) to
+    investigate at more recent population structure.
+
+    ```bash
+    ../src/runeems2 --params params-test-6_Inf.ini
+    ```
+
+11. Optionally, install the
+    [plotmaps](https://github.com/halasadi/plotmaps) package in R, and
+    run the following code in the R programming environment to
+    generate visual summaries from the analyses of the shorter and
+    longer PSC segments.
+
+    ```R
+    ```
+
+    Finally, we plot the results. See `plot-maps.example.R`.
+
+12. See the [examples](folder) for more illustrations of how to use
+    the MAPS program.
 
 ## Preparing data for MAPS
 
@@ -130,14 +158,6 @@ identical. However, there are a few additional arguments in the
 * `olderpath` (optional, path to a run with a older time period, MAPS
                will only estimate the difference between rates from
                the older time period)
-
-## Running MAPS
-
-You can run MAPS with the command such as this
-
-```
-./runeems2 --params params.ini --seed 123
-```
 
 ## Plotting MAPS output
 
