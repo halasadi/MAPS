@@ -169,5 +169,5 @@ This project was developed by
 [Hussein Al-Asadi](https://github.com/halasadi) at the University of
 Chicago.
 
-Thanks to [Matthew Stephens](stephenslab.uchicago.edu) for his support
-and mentorship.
+Thanks to [Matthew Stephens](http://stephenslab.uchicago.edu) and
+[John Novembre](http://jnpopgen.org) for their support and mentorship.
