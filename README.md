@@ -86,10 +86,10 @@ Mac).
 10. Try running MAPS on the 2-6 cM PSC segments provided in the
     examples/2_6 subdirectory.
 
-   ```bash
-   cd examples
-   ../src/runeems2 --params params-test-2_6.ini
-   ```
+    ```bash
+    cd examples
+    ../src/runeems2 --params params-test-2_6.ini
+    ```
 
     It may take 10--30 minutes for the MCMC simulation to complete.
 
