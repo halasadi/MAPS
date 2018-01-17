@@ -52,15 +52,15 @@ Mac).
    conda create -n MAPS
    source activate MAPS
    ```
-3. Install the [Boost](http://www.boost.org) C++ source libraries
+4. Install the [Boost](http://www.boost.org) C++ source libraries
    version 1.57.0. If using conda, run `conda install boost=1.57.0`.
 
-4. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
+5. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
    library. If using conda, run `conda install eigen`.
 
-5. Clone or download this repository.
+6. Clone or download this repository.
 
-6. Adjust the Makefile variables as needed to suit your computing
+7. Adjust the Makefile variables as needed to suit your computing
    environment. See the instructions in the [Makefile](src/Makefile)
    for details. For example, if you installed the Boost and Eigen
    libraries with conda, then you would add the following flags to the
@@ -72,14 +72,14 @@ Mac).
    -L$(HOME)/anaconda/envs/MAPS/lib
    ```
 
-7. Run `make` in the [src](src) subdirectory to build the `runeems2`
+8. Run `make` in the [src](src) subdirectory to build the `runeems2`
    binary executable.
 
-8. *Explain that the Boost library needs to be in the library search
+9. *Explain that the Boost library needs to be in the library search
    path.*
 
-9. Try running MAPS on the 2-6 cM PSC segments provided in the
-   examples/2_6 subdirectory.
+10. Try running MAPS on the 2-6 cM PSC segments provided in the
+    examples/2_6 subdirectory.
 
    ```bash
    cd examples
@@ -88,14 +88,14 @@ Mac).
 
     It may take 10--30 minutes for the MCMC simulation to complete.
 
-10. Next, try running MAPS on larger PSC segments (>6 cM) to
+11. Next, try running MAPS on larger PSC segments (>6 cM) to
     investigate at more recent population structure.
 
     ```bash
     ../src/runeems2 --params params-test-6_Inf.ini
     ```
 
-11. Optionally, install the
+12. *Optionally*, install the
     [plotmaps](https://github.com/halasadi/plotmaps) package in R, and
     run the following code in R. This will generate plots for
     diagnosing and interprting the MAPS analyses of the shorter and
@@ -110,6 +110,8 @@ Mac).
          longlat = TRUE, mcmcpath = "6_Inf/6_Inf-MAPS-test-sim", 
          outpath = "6_Inf", width = 10, height = 6, plot.difference=TRUE)
     ```
+
+Continue reading for more detailed documentation on MAPS.
 
 ## Preparing data for MAPS
 
@@ -160,10 +162,6 @@ identical. However, there are a few additional arguments in the
 * `olderpath` (optional, path to a run with a older time period, MAPS
                will only estimate the difference between rates from
                the older time period)
-
-## Plotting MAPS output
-
-Please use the plotmaps package, https://github.com/halasadi/plotmaps
 
 ## Credits
 
