@@ -52,15 +52,15 @@ Mac).
    conda create -n MAPS
    source activate MAPS
    ```
-3. Install the [Boost](http://www.boost.org) C++ source libraries
+4. Install the [Boost](http://www.boost.org) C++ source libraries
    version 1.57.0. If using conda, run `conda install boost=1.57.0`.
 
-4. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
+5. Install the [Eigen](http://eigen.tuxfamily.org) C++ matrix algebra
    library. If using conda, run `conda install eigen`.
 
-5. Clone or download this repository.
+6. Clone or download this repository.
 
-6. Adjust the Makefile variables as needed to suit your computing
+7. Adjust the Makefile variables as needed to suit your computing
    environment. See the instructions in the [Makefile](src/Makefile)
    for details. For example, if you installed the Boost and Eigen
    libraries with conda, then you would add the following flags to the
@@ -72,14 +72,51 @@ Mac).
    -L$(HOME)/anaconda/envs/MAPS/lib
    ```
 
-7. Run `make` in the [src](src) subdirectory to build the `runeems2`
+8. Run `make` in the [src](src) subdirectory to build the `runeems2`
    binary executable.
 
-8. *Explain that the Boost library needs to be in the library search
-   path.*
+9. Make sure that the Boost library is in the library search
+   path. Typically this will involve updating the `LD_LIBRARY_PATH`
+   (Linux) or `DYLD_LIBRARY_PATH` (macOS) environment variable; e.g.,
 
-*Please see the `examples` folder for examples data-input, how to run
-MAPS, and how to plot the results.*
+   ```bash
+   export LD_LIBRARY_PATH=$HOME/anaconda3/envs/MAPS/lib
+   ```
+
+10. Try running MAPS on the 2-6 cM PSC segments provided in the
+    examples/2_6 subdirectory.
+
+    ```bash
+    cd examples
+    ../src/runeems2 --params params-test-2_6.ini
+    ```
+
+    It may take 10--30 minutes for the MCMC simulation to complete.
+
+11. Next, try running MAPS on larger PSC segments (>6 cM) to
+    investigate at more recent population structure.
+
+    ```bash
+    ../src/runeems2 --params params-test-6_Inf.ini
+    ```
+
+12. *Optionally*, install the
+    [plotmaps](https://github.com/halasadi/plotmaps) package in R, and
+    run the following code in R. This will generate plots for
+    diagnosing and interprting the MAPS analyses of the shorter and
+    longer PSC segments. The plots are saved as PDFs.
+
+    ```R
+    library(plotmaps)
+    plot_maps(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
+         longlat = TRUE, mcmcpath = "2_6/2_6-MAPS-test-sim", 
+         outpath = "2_6", width = 10, height = 6)
+    plot_maps(add.pts = TRUE, add.graph = TRUE, add.countries = FALSE,
+         longlat = TRUE, mcmcpath = "6_Inf/6_Inf-MAPS-test-sim", 
+         outpath = "6_Inf", width = 10, height = 6, plot.difference=TRUE)
+    ```
+
+Continue reading for more detailed documentation on MAPS.
 
 ## Preparing data for MAPS
 
@@ -131,23 +168,11 @@ identical. However, there are a few additional arguments in the
                will only estimate the difference between rates from
                the older time period)
 
-## Running MAPS
-
-You can run MAPS with the command such as this
-
-```
-./runeems2 --params params.ini --seed 123
-```
-
-## Plotting MAPS output
-
-Please use the plotmaps package, https://github.com/halasadi/plotmaps
-
 ## Credits
 
 This project was developed by
 [Hussein Al-Asadi](https://github.com/halasadi) at the University of
 Chicago.
 
-Thanks to [Matthew Stephens](stephenslab.uchicago.edu) for his support
-and mentorship.
+Thanks to [Matthew Stephens](http://stephenslab.uchicago.edu) and
+[John Novembre](http://jnpopgen.org) for their support and mentorship.
