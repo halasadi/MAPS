@@ -373,7 +373,7 @@ MoveType EEMS2::choose_move_type( ) {
         return(move);
     }
     
-    if (u4 < 0.05){
+    if (u4 < 0.25){
         if (u2 < 0.5){
             move = OMEGAM_UPDATE;
         } else {
@@ -439,8 +439,16 @@ void EEMS2::propose_omegam(Proposal &proposal,const MCMC &mcmc) {
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newmrateS = nowmrateS;
+    
     double u1 = draw.runif( );
-    newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
+    if (u1 < 0.5){
+        // small world
+        newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
+    } else {
+        // big update
+        newmrateS = draw.rnorm(nowmrateS, 100 * params.momegaProposalS2);
+    }
+    
     proposal.newmrateS = newmrateS;
     bool inrange = true;
     if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
@@ -456,9 +464,13 @@ void EEMS2::propose_omegaq(Proposal &proposal,const MCMC &mcmc) {
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newqrateS = nowqrateS;
-    newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
+    double u1 = draw.runif();
+    if (u1 < 0.5){
+        newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
+    } else {
+        newqrateS = draw.rnorm(nowqrateS, 100 * params.qomegaProposalS2);
+    }
     proposal.newqrateS = newqrateS;
-    
     bool inrange = true;
     if ( newqrateS < params.min_omegaq || newqrateS > params.max_omegaq) { inrange = false;}
     if (inrange){
