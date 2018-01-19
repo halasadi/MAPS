@@ -23,10 +23,12 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("numMCMCIter", po::value<int>(&numMCMCIter)->default_value(1), "numMCMCIter")
         ("numBurnIter", po::value<int>(&numBurnIter)->default_value(0), "numBurnIter")
         ("numThinIter", po::value<int>(&numThinIter)->default_value(0), "numThinIter")
-        ("mSeedsProposalS2", po::value<double>(&mSeedsProposalS2)->default_value(0.0001), "mSeedsProposalS2")
-        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.0001), "qSeedsProposalS2")
+        ("mSeedsProposalS2", po::value<double>(&mSeedsProposalS2)->default_value(0.1), "mSeedsProposalS2")
+        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.001), "qSeedsProposalS2")
         ("mEffctProposalS2", po::value<double>(&mEffctProposalS2)->default_value(0.1), "mEffctProposalS2")
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.1), "qEffctProposalS2")
+        ("mBirthDeathProposalS2", po::value<double>(&mBirthDeathProposalS2)->default_value(0.01), "mBirthDeathProposalS2")
+        ("qBirthDeathProposalS2", po::value<double>(&qBirthDeathProposalS2)->default_value(0.005), "qBirthDeathProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
         ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.001), "momegaProposalS2")
@@ -70,7 +72,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     min_omegaq = -15;
     min_omegam = -15;
     max_omegaq = 0;
-    max_omegam = 1;
+    max_omegam = 0.3;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -100,6 +102,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
+    << "  mBirthDeathProposalS2 = " << params.mBirthDeathProposalS2 << endl
+    << "  qBirthDeathProposalS2 = " << params.qBirthDeathProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
     << "       momegaProposalS2 = " << params.momegaProposalS2 << endl
