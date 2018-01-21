@@ -1,6 +1,6 @@
 # Migration and Population Surface estimation (MAPS)
 
-![Overview of an lPSC segment and the MAPS method](fig1-github.png){height="500px" width="700px"}
+![Overview of an lPSC segment and the MAPS method](fig1-github.jpg)
 
 MAPS estimates time-resolved dispersal rates and population densities based on the number of shared long Pairwise Coalescent Segments (lPSC). 
 
