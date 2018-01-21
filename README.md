@@ -1,32 +1,15 @@
 # Migration and Population Surface estimation (MAPS)
 
-![Overview of the MAPS software](fig1-github.png) 
+![Overview of an lPSC segment and the MAPS method](fig1-github.png){height="500px" width="700px"}
 
-The MAPs software is built from the eems software and the software
-usage is very similar. **Here, we only highlight the differences
-between the usage of MAPs and EEMS**. Please see
-https://github.com/dipetkov/eems for the usage in EEMS.
+MAPS estimates time-resolved dispersal rates and population densities based on the number of shared long Pairwise Coalescent Segments (lPSC). 
 
-*The MAPS program has been tested with ...*
+## Compatability
+
+*MAPS has been tested with Eigen 3.2.2 and Boost 1.57 on OSX and Linux and might not be compatible with newer versions of Boost/Eigen.*
 
 Please post bugs, questions and feature requests or suspected bugs to
 [Github issues](https://github.com/halasadi/MAPS/issues).
-
-## Citing this work
-
-If you find the MAPS program, or any source code contained in this
-repository, useful for your work, please cite:
-
-> Add paper to cite here.
-
-## License
-
-Copyright (c) 2017-2018, Hussein Al-Asadi.
-
-The software and example programs in this repository are made
-available under the terms of the
-[MIT license](https://opensource.org/licenses/mit-license.html).
-See [LICENSE](LICENSE) for the full text of the license.
 
 ## Quick Start
 
@@ -52,6 +35,7 @@ Mac).
    conda create -n MAPS
    source activate MAPS
    ```
+
 4. Install the [Boost](http://www.boost.org) C++ source libraries
    version 1.57.0. If using conda, run `conda install boost=1.57.0`.
 
@@ -100,11 +84,10 @@ Mac).
     ../src/runeems2 --params params-test-6_Inf.ini
     ```
 
-12. *Optionally*, install the
+12. install the
     [plotmaps](https://github.com/halasadi/plotmaps) package in R, and
     run the following code in R. This will generate plots for
-    diagnosing and interprting the MAPS analyses of the shorter and
-    longer PSC segments. The plots are saved as PDFs.
+    the MAPS analyses. The plots are saved as PDFs.
 
     ```R
     library(plotmaps)
@@ -147,12 +130,16 @@ lowerBound = 2
 
 We also allow the capability to visualize IBD segments in a length
 region, for example betweem 2cM and 8cM.  ``` datapath =
-popressard_2_8.sims lowerBound = 2 upperBound = 8 ``` ## parameter
-configuration
+popressard_2_8.sims lowerBound = 2 upperBound = 8 ``` 
 
-As mentioned above, the parameters in MAPs are nearly
-identical. However, there are a few additional arguments in the
-`params` file,
+## parameter configuration
+
+The MAPs software is built from the eems software and the software
+usage is very similar. **Here, we only highlight the differences
+between the usage of MAPs and EEMS**. Please see
+https://github.com/dipetkov/eems for the usage in EEMS.
+
+In comparison to EEMS, there are a few additional arguments in the `params` file,
 
 * `genomeSize` (optional defaults to 3000cM)
 
@@ -162,11 +149,25 @@ identical. However, there are a few additional arguments in the
 
 * `upperBound` (optional defaults to infinity, upper bound in cM)
 
-* `qrateMuProposalS2` (optional, acts in the same was as in mrateMuProposalS2 except for the coalescent rates)
-
 * `olderpath` (optional, path to a run with a older time period, MAPS
                will only estimate the difference between rates from
                the older time period)
+
+## Citing this work
+
+If you find the MAPS program, or any source code contained in this
+repository, useful for your work, please cite:
+
+> TBA
+
+## License
+
+Copyright (c) 2017-2018, Hussein Al-Asadi.
+
+The software and example programs in this repository are made
+available under the terms of the
+[MIT license](https://opensource.org/licenses/mit-license.html).
+See [LICENSE](LICENSE) for the full text of the license.
 
 ## Credits
 
