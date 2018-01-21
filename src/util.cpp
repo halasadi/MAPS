@@ -34,10 +34,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.001), "momegaProposalS2")
         ("qomegaProposalS2", po::value<double>(&qomegaProposalS2)->default_value(0.001), "qomegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
-        ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
-        ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
-        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(1.0), "qrateScale")
-        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(1.0), "mrateScale")
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
@@ -52,11 +48,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         cerr << "[EEMS::Params] Error parsing input parameters in " << params_file << ": " << endl;
         cerr << e.what() << endl; exit(1);
     }
-    mrateShape_2 /= 2.0;
-    qrateShape_2 /= 2.0;
-    mrateScale_2 /= 2.0;
-    qrateScale_2 /= 2.0;
-    
+
     testing = false;
     
     // set upper bound 4 to prevent overflow error
@@ -94,10 +86,6 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "              qnegBiSize = " << params.qnegBiSize << endl
     << "              qnegBiProb = " << params.qnegBiProb << endl
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
-    << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
-    << "             qrateShape = " << 2.0*params.qrateShape_2 << endl
-    << "             qrateScale = " << 2.0*params.qrateScale_2 << endl
-    << "             mrateScale = " << 2.0*params.mrateScale_2 << endl
     << "       mSeedsProposalS2 = " << params.mSeedsProposalS2 << endl
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
@@ -177,13 +165,7 @@ bool Params::check_input_params( ) const {
         << "  numMCMCIter = " << numMCMCIter << ", numBurnIter = " << numBurnIter << ", numThinIter " << numThinIter << endl;
         error = true;
     }
-    if (!(qrateShape_2>0) || !(mrateShape_2>0) ||
-        !(qrateScale_2>0) || !(mrateScale_2>0)) {
-        cerr << "  Error with the Inverse Gamma hyperparameters:" << endl
-        << "  qrateShape = " << 2.0*qrateShape_2 << ", qrateScale = " << 2.0*qrateScale_2 << endl
-        << "  mrateShape = " << 2.0*mrateShape_2 << ", mrateScale = " << 2.0*mrateScale_2 << endl;
-        error = true;
-    }
+  
     if (!(mnegBiSize>0) || !( (mnegBiProb>0) && (mnegBiProb<1) )) {
         cerr << "  Error with the m Negative Binomial hyperparameters:" << endl
         << "  mnegBiSize = " << mnegBiSize << ", mnegBiProb = " << mnegBiProb << endl;
