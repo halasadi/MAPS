@@ -15,6 +15,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
+        ("temperature", po::value<double>(&temp)->default_value(1), "temperature")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
         ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
@@ -23,19 +24,17 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("numMCMCIter", po::value<int>(&numMCMCIter)->default_value(1), "numMCMCIter")
         ("numBurnIter", po::value<int>(&numBurnIter)->default_value(0), "numBurnIter")
         ("numThinIter", po::value<int>(&numThinIter)->default_value(0), "numThinIter")
-        ("mSeedsProposalS2", po::value<double>(&mSeedsProposalS2)->default_value(0.01), "mSeedsProposalS2")
-        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.01), "qSeedsProposalS2")
+        ("mSeedsProposalS2", po::value<double>(&mSeedsProposalS2)->default_value(0.1), "mSeedsProposalS2")
+        ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.001), "qSeedsProposalS2")
         ("mEffctProposalS2", po::value<double>(&mEffctProposalS2)->default_value(0.1), "mEffctProposalS2")
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.1), "qEffctProposalS2")
+        ("mBirthDeathProposalS2", po::value<double>(&mBirthDeathProposalS2)->default_value(1), "mBirthDeathProposalS2")
+        ("qBirthDeathProposalS2", po::value<double>(&qBirthDeathProposalS2)->default_value(1), "qBirthDeathProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
-        ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.01), "qrateMuProposalS2")
-        ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.1), "momegaProposalS2")
-        ("qomegaProposalS2", po::value<double>(&qomegaProposalS2)->default_value(0.1), "qomegaProposalS2")
+        ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.001), "qrateMuProposalS2")
+        ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.01), "momegaProposalS2")
+        ("qomegaProposalS2", po::value<double>(&qomegaProposalS2)->default_value(0.01), "qomegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
-        ("mrateShape", po::value<double>(&mrateShape_2)->default_value(0.001), "mrateShape")
-        ("qrateShape", po::value<double>(&qrateShape_2)->default_value(0.001), "qrateShape")
-        ("qrateScale", po::value<double>(&qrateScale_2)->default_value(1.0), "qrateScale")
-        ("mrateScale", po::value<double>(&mrateScale_2)->default_value(1.0), "mrateScale")
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
         ("qnegBiProb", po::value<double>(&qnegBiProb)->default_value(0.67), "qnegBiProb")
@@ -50,11 +49,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         cerr << "[EEMS::Params] Error parsing input parameters in " << params_file << ": " << endl;
         cerr << e.what() << endl; exit(1);
     }
-    mrateShape_2 /= 2.0;
-    qrateShape_2 /= 2.0;
-    mrateScale_2 /= 2.0;
-    qrateScale_2 /= 2.0;
-    
+
     testing = false;
     
     // set upper bound 4 to prevent overflow error
@@ -70,7 +65,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     min_omegaq = -15;
     min_omegam = -15;
     max_omegaq = 0;
-    max_omegam = 1;
+    max_omegam = 0.3;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
@@ -92,18 +87,17 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "              qnegBiSize = " << params.qnegBiSize << endl
     << "              qnegBiProb = " << params.qnegBiProb << endl
     << "             qVoronoiPr = " << params.qVoronoiPr << endl
-    << "             mrateShape = " << 2.0*params.mrateShape_2 << endl
-    << "             qrateShape = " << 2.0*params.qrateShape_2 << endl
-    << "             qrateScale = " << 2.0*params.qrateScale_2 << endl
-    << "             mrateScale = " << 2.0*params.mrateScale_2 << endl
     << "       mSeedsProposalS2 = " << params.mSeedsProposalS2 << endl
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
+    << "  mBirthDeathProposalS2 = " << params.mBirthDeathProposalS2 << endl
+    << "  qBirthDeathProposalS2 = " << params.qBirthDeathProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
     << "       momegaProposalS2 = " << params.momegaProposalS2 << endl
-    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl;
+    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl
+    << "            temperature = " << params.temp << endl;
     return out;
 }
 bool Params::check_input_params( ) const {
@@ -173,13 +167,7 @@ bool Params::check_input_params( ) const {
         << "  numMCMCIter = " << numMCMCIter << ", numBurnIter = " << numBurnIter << ", numThinIter " << numThinIter << endl;
         error = true;
     }
-    if (!(qrateShape_2>0) || !(mrateShape_2>0) ||
-        !(qrateScale_2>0) || !(mrateScale_2>0)) {
-        cerr << "  Error with the Inverse Gamma hyperparameters:" << endl
-        << "  qrateShape = " << 2.0*qrateShape_2 << ", qrateScale = " << 2.0*qrateScale_2 << endl
-        << "  mrateShape = " << 2.0*mrateShape_2 << ", mrateScale = " << 2.0*mrateScale_2 << endl;
-        error = true;
-    }
+  
     if (!(mnegBiSize>0) || !( (mnegBiProb>0) && (mnegBiProb<1) )) {
         cerr << "  Error with the m Negative Binomial hyperparameters:" << endl
         << "  mnegBiSize = " << mnegBiSize << ", mnegBiProb = " << mnegBiProb << endl;

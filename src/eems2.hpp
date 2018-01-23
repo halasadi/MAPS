@@ -76,12 +76,9 @@ public:
     double eval_proposal_move_one_mtile(Proposal &proposal) const;
     double eval_birthdeath_mVoronoi(Proposal &proposal) const;
     
-    void propose_omegaq(Proposal &proposal, const MCMC &mcmc);
-    void propose_omegam(Proposal &proposal, const MCMC &mcmc);
-
     // Random-walk Metropolis-Hastings proposals:
-    void propose_df(Proposal &proposal,const MCMC &mcmc);
-    //void propose_sigma2(Proposal &proposal);
+    void propose_omegaq(Proposal &proposal);
+    void propose_omegam(Proposal &proposal);
     void propose_rate_one_qtile(Proposal &proposal);
     void propose_rate_one_mtile(Proposal &proposal);
     void propose_overall_mrate(Proposal &proposal);
@@ -90,7 +87,7 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
-    bool accept_proposal(Proposal &proposal);
+    bool accept_proposal(Proposal &proposal, const MCMC &mcmc);
     
     void print_iteration(const MCMC &mcmc) const;
     void save_iteration(const MCMC &mcmc);

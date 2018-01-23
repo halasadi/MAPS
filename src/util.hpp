@@ -57,14 +57,14 @@ public:
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
     double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
+    double mBirthDeathProposalS2, qBirthDeathProposalS2;
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
-    double mrateShape_2, mrateScale_2;
-    double qrateShape_2, qrateScale_2;
     double momegaProposalS2, qomegaProposalS2;
     double mnegBiProb, qnegBiProb;
     double qVoronoiPr;
     double min_omegam, max_omegam;
     double min_omegaq, max_omegaq;
+    double temp;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, mnegBiSize, qnegBiSize;

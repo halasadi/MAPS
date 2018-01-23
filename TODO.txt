@@ -1,11 +1,6 @@
 TO DO
 =====
 
-* Add brief summary of MAPS to beginning of README.
-
-* Describe which versions of Boost, Eigen, etc, have been used to test
-  MAPS software.
-
 * Add paper to cite in README under "Citing this work".
 
 * Figure out (roughly) what version(s) of Boost are compatible with
