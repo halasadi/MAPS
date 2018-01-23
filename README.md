@@ -80,7 +80,7 @@ Mac).
    (Linux) or `DYLD_LIBRARY_PATH` (macOS) environment variable; e.g.,
 
    ```bash
-   export LD_LIBRARY_PATH=$HOME/anaconda3/envs/MAPS/lib
+   export LD_LIBRARY_PATH=$HOME/anaconda/envs/MAPS/lib
    ```
 
 10. Try running MAPS on the 2-6 cM PSC segments provided in the
