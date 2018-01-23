@@ -15,6 +15,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
+        ("temperature", po::value<double>(&temp)->default_value(1), "temperature")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
         ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
@@ -31,8 +32,8 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qBirthDeathProposalS2", po::value<double>(&qBirthDeathProposalS2)->default_value(1), "qBirthDeathProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.001), "qrateMuProposalS2")
-        ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.001), "momegaProposalS2")
-        ("qomegaProposalS2", po::value<double>(&qomegaProposalS2)->default_value(0.001), "qomegaProposalS2")
+        ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.01), "momegaProposalS2")
+        ("qomegaProposalS2", po::value<double>(&qomegaProposalS2)->default_value(0.01), "qomegaProposalS2")
         ("qVoronoiPr", po::value<double>(&qVoronoiPr)->default_value(0.5), "qVoronoiPr")
         ("mnegBiProb", po::value<double>(&mnegBiProb)->default_value(0.67), "mnegBiProb")
         ("mnegBiSize", po::value<int>(&mnegBiSize)->default_value(10), "mnegBiSize")
@@ -95,7 +96,8 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
     << "       momegaProposalS2 = " << params.momegaProposalS2 << endl
-    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl;
+    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl
+    << "            temperature = " << params.temp << endl;
     return out;
 }
 bool Params::check_input_params( ) const {

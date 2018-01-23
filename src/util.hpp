@@ -64,6 +64,7 @@ public:
     double qVoronoiPr;
     double min_omegam, max_omegam;
     double min_omegaq, max_omegaq;
+    double temp;
     double lowerBound, upperBound, genomeSize;
     int numMCMCIter, numBurnIter, numThinIter;
     int nDemes, nIndiv, mnegBiSize, qnegBiSize;

@@ -434,21 +434,12 @@ double EEMS2::eval_birthdeath_mVoronoi(Proposal &proposal) const {
     return(eems2_likelihood(proposal.newmSeeds, proposal.newmEffcts, nowmrateMu, nowqSeeds, nowqEffcts, nowqrateMu, true, nowmrateS, nowqrateS));
 }
 
-void EEMS2::propose_omegam(Proposal &proposal,const MCMC &mcmc) {
+void EEMS2::propose_omegam(Proposal &proposal) {
     proposal.move = OMEGAM_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newmrateS = nowmrateS;
-    
-    double u1 = draw.runif( );
-    if (u1 < 0.5){
-        // small world
-        newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
-    } else {
-        // big update
-        newmrateS = draw.rnorm(nowmrateS, 100 * params.momegaProposalS2);
-    }
-    
+    newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
     proposal.newmrateS = newmrateS;
     bool inrange = true;
     if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
@@ -459,17 +450,13 @@ void EEMS2::propose_omegam(Proposal &proposal,const MCMC &mcmc) {
     }
 }
 
-void EEMS2::propose_omegaq(Proposal &proposal,const MCMC &mcmc) {
+void EEMS2::propose_omegaq(Proposal &proposal) {
     proposal.move = OMEGAQ_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
     double newqrateS = nowqrateS;
     double u1 = draw.runif();
-    if (u1 < 0.5){
-        newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
-    } else {
-        newqrateS = draw.rnorm(nowqrateS, 100 * params.qomegaProposalS2);
-    }
+    newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
     proposal.newqrateS = newqrateS;
     bool inrange = true;
     if ( newqrateS < params.min_omegaq || newqrateS > params.max_omegaq) { inrange = false;}
@@ -687,7 +674,7 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
     proposal.newll = eval_birthdeath_mVoronoi(proposal);
 }
 
-bool EEMS2::accept_proposal(Proposal &proposal) {
+bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
     double u = draw.runif( );
     // The proposal cannot be accepted because the prior is 0
     // This can happen if the proposed value falls outside the parameter's support
@@ -696,7 +683,16 @@ bool EEMS2::accept_proposal(Proposal &proposal) {
         proposal.newll = nowll;
         return false;
     }
-    double ratioln = proposal.newpi - nowpi + proposal.newll - nowll;
+    
+    double temp = params.temp;
+    
+    /*
+    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
+        temp = 1;
+    }
+     */
+    
+    double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
