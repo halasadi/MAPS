@@ -684,13 +684,11 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
         return false;
     }
     
-    double temp = params.temp;
-    
-    /*
-    if (mcmc.currIter > (mcmc.numBurnIter/2)) {
-        temp = 1;
+    double temp = 1;
+    if (mcmc.currIter < (mcmc.numBurnIter/2)) {
+        temp = 10;
+        //temp = params.temp;
     }
-     */
     
     double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
     // If the proposal is either birth or death, add the log(proposal ratio)
