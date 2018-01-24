@@ -250,7 +250,7 @@ bool EEMS2::write_rates() {
 
 void EEMS2::load_rates( ){
     
-    cerr << "[MAPS::load_rates]" << endl;
+    cerr << "[MAPS::load_rates]" << " : " << params.olderpath << endl;
     MatrixXd rates; bool error = false;
     
     rates = readMatrixXd(params.olderpath + "/mRates.txt");
@@ -438,9 +438,17 @@ void EEMS2::propose_omegam(Proposal &proposal) {
     proposal.move = OMEGAM_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
+    
     double newmrateS = nowmrateS;
-    newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
+    if (draw.runif() < 0.5){
+        // small world
+        newmrateS = draw.rnorm(nowmrateS, params.momegaProposalS2);
+    } else {
+        // big update
+        newmrateS = draw.rnorm(nowmrateS, 100 * params.momegaProposalS2);
+    }
     proposal.newmrateS = newmrateS;
+    
     bool inrange = true;
     if ( newmrateS < params.min_omegam || newmrateS > params.max_omegam) { inrange = false;}
     if (inrange){
@@ -454,10 +462,15 @@ void EEMS2::propose_omegaq(Proposal &proposal) {
     proposal.move = OMEGAQ_UPDATE;
     proposal.newpi = -Inf;
     proposal.newll = -Inf;
+    
     double newqrateS = nowqrateS;
-    double u1 = draw.runif();
-    newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
+    if (draw.runif() < 0.5){
+        newqrateS = draw.rnorm(nowqrateS, params.qomegaProposalS2);
+    } else {
+        newqrateS = draw.rnorm(nowqrateS, 100 * params.qomegaProposalS2);
+    }
     proposal.newqrateS = newqrateS;
+    
     bool inrange = true;
     if ( newqrateS < params.min_omegaq || newqrateS > params.max_omegaq) { inrange = false;}
     if (inrange){
@@ -686,8 +699,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
     
     double temp = 1;
     if (mcmc.currIter < (mcmc.numBurnIter/2)) {
-        temp = 10;
-        //temp = params.temp;
+        temp = params.temp;
     }
     
     double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
