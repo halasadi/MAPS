@@ -218,14 +218,17 @@ void EEMS2::store_rates(const MCMC &mcmc) {
     // For every deme in the graph -- which migration tile does the deme fall into?
     graph.index_closest_to_deme(nowmSeeds,mColors);
     
+    VectorXd qEffcts_centered = nowqEffcts - VectorXd::Ones(nowqEffcts.size()) * nowqEffcts.mean();
+    VectorXd mEffcts_centered = nowmEffcts - VectorXd::Ones(nowmEffcts.size()) * nowmEffcts.mean();
+    
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
         
         // coalescent rates
-        double log10q_alpha = (nowqEffcts(qColors(alpha)) * pow(10.0, nowqrateS)) + nowqrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = (qEffcts_centered(qColors(alpha)) * pow(10.0, nowqrateS)) + nowqrateMu + log10_old_qMeanRates(alpha);
         qRates(iter, alpha) = log10q_alpha;
         
         // migration rates
-        double log10m_alpha = (nowmEffcts(mColors(alpha)) * pow(10.0, nowmrateS)) + nowmrateMu + log10_old_mMeanRates(alpha);
+        double log10m_alpha = (mEffcts_centered(mColors(alpha)) * pow(10.0, nowmrateS)) + nowmrateMu + log10_old_mMeanRates(alpha);
         mRates(iter, alpha) = log10m_alpha;
     }
    
@@ -785,8 +788,11 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcqtiles(iter) = nowqtiles;
     mcmcmtiles(iter) = nowmtiles;
     
+    VectorXd qEffcts_centered = nowqEffcts - VectorXd::Ones(nowqEffcts.size()) * nowqEffcts.mean();
+    VectorXd mEffcts_centered = nowmEffcts - VectorXd::Ones(nowmEffcts.size()) * nowmEffcts.mean();
+    
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0, (pow(10.0, nowqrateS) * nowqEffcts(t)) + nowqrateMu));
+        mcmcqRates.push_back(pow(10.0, (pow(10.0, nowqrateS) * qEffcts_centered(t)) + nowqrateMu));
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -795,7 +801,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0, (pow(10.0, nowmrateS) * nowmEffcts(t)) + nowmrateMu));
+        mcmcmRates.push_back(pow(10.0, (pow(10.0, nowmrateS) * mEffcts_centered(t)) + nowmrateMu));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
@@ -1001,9 +1007,14 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     graph.index_closest_to_deme(mSeeds,mColors);
     
     VectorXd q = VectorXd::Zero(d);
+    
+    VectorXd qEffcts_centered = qEffcts - VectorXd::Ones(qEffcts.size()) * qEffcts.mean();
+    VectorXd mEffcts_centered = mEffcts - VectorXd::Ones(mEffcts.size()) * mEffcts.mean();
+    
+    
     // Transform the log10 diversity parameters into diversity rates on the original scale
     for ( int alpha = 0 ; alpha < d ; alpha++ ) {
-        double log10q_alpha = (qEffcts(qColors(alpha)) * pow(10.0, qrateS)) + qrateMu + log10_old_qMeanRates(alpha);
+        double log10q_alpha = (qEffcts_centered(qColors(alpha)) * pow(10.0, qrateS)) + qrateMu + log10_old_qMeanRates(alpha);
         q(alpha) = pow(10.0,log10q_alpha);
     }
     
@@ -1017,8 +1028,8 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
         // Transform the log10 migration parameters into migration rates on the original scale
         for ( int edge = 0 ; edge < graph.get_num_edges() ; edge++ ) {
             graph.get_edge(edge,alpha,beta);
-            double log10m_alpha = (mEffcts(mColors(alpha)) * pow(10.0, mrateS)) + mrateMu + log10_old_mMeanRates(alpha);
-            double log10m_beta =  (mEffcts(mColors(beta))  * pow(10.0, mrateS)) + mrateMu + log10_old_mMeanRates(beta);
+            double log10m_alpha = (mEffcts_centered(mColors(alpha)) * pow(10.0, mrateS)) + mrateMu + log10_old_mMeanRates(alpha);
+            double log10m_beta =  (mEffcts_centered(mColors(beta))  * pow(10.0, mrateS)) + mrateMu + log10_old_mMeanRates(beta);
             M(alpha,beta) = 0.5 * pow(10.0,log10m_alpha) + 0.5 * pow(10.0,log10m_beta);
             M(beta,alpha) = M(alpha,beta);
         }
