@@ -167,8 +167,10 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     }
     
     // Initialize the two Voronoi tessellations
-    nowqtiles = o; // o is the number of observed demes
-    nowmtiles = draw.rnegbin(2*o,0.5);
+    //nowqtiles = o; // o is the number of observed demes
+    //nowmtiles = draw.rnegbin(2*o,0.5);
+    nowqtiles = 1;
+    nowmtiles = 1;
     cerr << "  MAPS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     // Draw the Voronoi centers Coord uniformly within the habitat
     
@@ -176,7 +178,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     // we fix the seeds of the coalescent rates to be at the locations of the observed samples
     // to give the MCMC a head-start
     nowqSeeds = MatrixXd::Zero(nowqtiles,2);
-    nowqSeeds = graph.get_the_obsrv_demes();
+    randpoint_in_habitat(nowqSeeds);
+    //nowqSeeds = graph.get_the_obsrv_demes();
     // random initialization
     nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
     
@@ -704,9 +707,17 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
     }
     
     double temp = 1;
+    /*
     if (mcmc.currIter < (mcmc.numBurnIter/2)) {
         temp = params.temp;
     }
+     */
+    if (mcmc.currIter < (mcmc.numBurnIter/5.0)) {
+        if (proposal.move == Q_VORONOI_BIRTH_DEATH || proposal.move == M_VORONOI_BIRTH_DEATH){
+            return false;
+        }
+    }
+    
     
     double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
     // If the proposal is either birth or death, add the log(proposal ratio)
