@@ -166,22 +166,20 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
         }
     }
     
-    // Initialize the two Voronoi tessellations
-    //nowqtiles = o; // o is the number of observed demes
-    //nowmtiles = draw.rnegbin(2*o,0.5);
-    nowqtiles = 1;
+    // constant m model
     nowmtiles = 1;
-    cerr << "  MAPS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
-    // Draw the Voronoi centers Coord uniformly within the habitat
-    
+    nowmSeeds = MatrixXd::Zero(nowmtiles,2);
+    // random initialization
+    randpoint_in_habitat(nowmSeeds);
     
     // we fix the seeds of the coalescent rates to be at the locations of the observed samples
     // to give the MCMC a head-start
+    nowqtiles = o; // o is the number of observed demes
     nowqSeeds = MatrixXd::Zero(nowqtiles,2);
-    randpoint_in_habitat(nowqSeeds);
-    //nowqSeeds = graph.get_the_obsrv_demes();
-    // random initialization
-    nowmSeeds = MatrixXd::Zero(nowmtiles,2); randpoint_in_habitat(nowmSeeds);
+    nowqSeeds = graph.get_the_obsrv_demes();
+
+    cerr << "  MAPS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
+    // Draw the Voronoi centers Coord uniformly within the habitat
     
     
     nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
@@ -712,8 +710,8 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
         temp = params.temp;
     }
      */
-    if (mcmc.currIter < (mcmc.numBurnIter/5.0)) {
-        if (proposal.move == Q_VORONOI_BIRTH_DEATH || proposal.move == M_VORONOI_BIRTH_DEATH){
+    if (mcmc.currIter < (mcmc.numBurnIter/2.0)) {
+        if (proposal.move == Q_VORONOI_BIRTH_DEATH){
             return false;
         }
     }
