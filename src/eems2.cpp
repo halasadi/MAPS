@@ -171,6 +171,9 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     nowmSeeds = MatrixXd::Zero(nowmtiles,2);
     // random initialization
     randpoint_in_habitat(nowmSeeds);
+    //nowmtiles = o;
+    //nowmSeeds = MatrixXd::Zero(nowmtiles,2);
+    //nowmSeeds = graph.get_the_obsrv_demes();
     
     // we fix the seeds of the coalescent rates to be at the locations of the observed samples
     // to give the MCMC a head-start
@@ -201,7 +204,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(1,1,nowqEffcts);
-    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(1,1,nowmEffcts);
+    nowmEffcts = VectorXd::Zero(nowmtiles); //rnorm_effects(1,1,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -710,12 +713,14 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
         temp = params.temp;
     }
      */
-    if (mcmc.currIter < (mcmc.numBurnIter/2.0)) {
-        if (proposal.move == Q_VORONOI_BIRTH_DEATH){
+    
+
+    if (mcmc.currIter < (mcmc.numBurnIter/4.0)) {
+        if (proposal.move == M_VORONOI_BIRTH_DEATH){
             return false;
         }
     }
-    
+ 
     
     double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
     // If the proposal is either birth or death, add the log(proposal ratio)
