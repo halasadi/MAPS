@@ -352,7 +352,7 @@ bool EEMS2::start_eems(const MCMC &mcmc) {
     return(error);
 }
 
-MoveType EEMS2::choose_move_type( ) {
+MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
     double u1 = draw.runif( );
     double u2 = draw.runif( );
     double u3 = draw.runif( );
@@ -378,10 +378,10 @@ MoveType EEMS2::choose_move_type( ) {
     }
     
     if (u4 < 0.25){
-        if (u2 < 0.5){
-            move = OMEGAM_UPDATE;
-        } else {
+        if (u2 < 0.5 || mcmc.currIter < (mcmc.numBurnIter/2)){
             move = OMEGAQ_UPDATE;
+        } else {
+            move = OMEGAM_UPDATE;
         }
         return(move);
     }
@@ -390,19 +390,19 @@ MoveType EEMS2::choose_move_type( ) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
             move = Q_VORONOI_BIRTH_DEATH;
         } else {
             move = M_VORONOI_BIRTH_DEATH;
         }
     } else if (u1 < 0.66) {
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
         }
     } else {
-        if (u2 < params.qVoronoiPr) {
+        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;

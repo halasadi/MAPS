@@ -58,14 +58,14 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateMuLowerBound = -10;
     qrateMuLowerBound = -10.0;
     
-    // prevent ei to be too large and might cause overflow error
-    mEffctHalfInterval = 4;
-    qEffctHalfInterval = 4;
+    // also prevent ei to be too large and might cause overflow error
+    mEffctHalfInterval = 3;
+    qEffctHalfInterval = 2;
     
     min_omegaq = -15;
     min_omegam = -15;
     max_omegaq = 0;
-    max_omegam = 0.3;
+    max_omegam = 0.176091;
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl

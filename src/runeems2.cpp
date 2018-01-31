@@ -60,7 +60,7 @@ int main(int argc, char** argv)
         
         while (!mcmc.finished) {
             
-            switch ( eems2.choose_move_type( ) ) {
+            switch ( eems2.choose_move_type(mcmc) ) {
                 case Q_VORONOI_BIRTH_DEATH:
                     eems2.propose_birthdeath_qVoronoi(proposal);
                     break;
