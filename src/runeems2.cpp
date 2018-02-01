@@ -91,6 +91,12 @@ int main(int argc, char** argv)
                 case OMEGAQ_UPDATE:
                     eems2.propose_omegaq(proposal);
                     break;
+                case EMBAR_UPDATE:
+                    eems2.propose_embar(proposal);
+                    break;
+                case EQBAR_UPDATE:
+                    eems2.propose_eqbar(proposal);
+                    break;
                 default:
                     cerr << "[RunEEMS2] Unknown move type" << endl;
                     return(EXIT_FAILURE);

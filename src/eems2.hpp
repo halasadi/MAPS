@@ -87,6 +87,8 @@ public:
     void propose_move_one_mtile(Proposal &proposal);
     void propose_birthdeath_qVoronoi(Proposal &proposal);
     void propose_birthdeath_mVoronoi(Proposal &proposal);
+    void propose_embar(Proposal &proposal);
+    void propose_eqbar(Proposal &proposal);
     bool accept_proposal(Proposal &proposal, const MCMC &mcmc);
     
     void print_iteration(const MCMC &mcmc) const;

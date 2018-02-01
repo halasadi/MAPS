@@ -377,11 +377,21 @@ MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
         return(move);
     }
     
+    
     if (u4 < 0.25){
         if (u2 < 0.5 || mcmc.currIter < (mcmc.numBurnIter/2)){
             move = OMEGAQ_UPDATE;
         } else {
             move = OMEGAM_UPDATE;
+        }
+        return(move);
+    }
+    
+    if (draw.runif() < 0.05){
+        if (draw.runif() < 0.5){
+            move = EMBAR_UPDATE;
+        } else {
+            move = EQBAR_UPDATE;
         }
         return(move);
     }
@@ -541,6 +551,27 @@ void EEMS2::propose_overall_mrate(Proposal &proposal) {
         proposal.newpi = -Inf;
         proposal.newll = -Inf;
     }
+}
+
+
+void EEMS2::propose_embar(Proposal &proposal) {
+    double c = draw.rnorm(0,1);
+    proposal.newmrateMu  = nowmrateMu + c;
+    proposal.newmEffcts  = nowmEffcts - (VectorXd::Ones(nowmtiles) * c / pow(10.0, nowmrateS));
+    proposal.move = EMBAR_UPDATE;
+    proposal.newll = nowll;
+    proposal.newpi = eval_prior(nowmSeeds,proposal.newmEffcts,proposal.newmrateMu,nowmrateS,
+                                nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS);
+}
+
+void EEMS2::propose_eqbar(Proposal &proposal) {
+    double c = draw.rnorm(0,1);
+    proposal.newqrateMu  = nowqrateMu + c;
+    proposal.newqEffcts  = nowqEffcts - (VectorXd::Ones(nowqtiles) * c / pow(10.0, nowqrateS));
+    proposal.move = EQBAR_UPDATE;
+    proposal.newll = nowll;
+    proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS,
+                                nowqSeeds,proposal.newqEffcts,proposal.newqrateMu,nowqrateS);
 }
 
 void EEMS2::propose_overall_qrate(Proposal &proposal) {
@@ -713,7 +744,7 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
         temp = params.temp;
     }
      */
-    double ratioln = proposal.newpi - nowpi + ((proposal.newll - nowll)/temp);
+    double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll);
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||
         proposal.move==M_VORONOI_BIRTH_DEATH) {
@@ -762,6 +793,14 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
                 break;
             case OMEGAQ_UPDATE:
                 nowqrateS = proposal.newqrateS;
+                break;
+            case EMBAR_UPDATE:
+                nowmrateMu = proposal.newmrateMu;
+                nowmEffcts = proposal.newmEffcts;
+                break;
+            case EQBAR_UPDATE:
+                nowqrateMu = proposal.newqrateMu;
+                nowqEffcts = proposal.newqEffcts;
                 break;
             default:
                 cerr << "[RJMCMC] Unknown move type" << endl;
@@ -1062,7 +1101,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     if (logll != logll){
         cout << pow(10.0, mrateS) << endl;
         cout << pow(10.0, qrateS) << endl;
-        cout << q << endl;
+        cout << mEffcts << endl;
         cerr << "Error with likelihood computation" << endl;
         throw std::exception();
     }
