@@ -644,14 +644,12 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         pairwise_distance(nowqSeeds,newqSeed).col(0).minCoeff(&r);
         // The new tile is assigned a rate by perturbing the current rate at the new seed
         //double nowqEffct = nowqEffcts(r);
-        //double newqEffct = draw.rtrnorm(nowqEffct,params.qBirthDeathProposalS2,params.qEffctHalfInterval);
-        double newqEffct = draw.rtrnorm(0,params.qBirthDeathProposalS2,params.qEffctHalfInterval);
+        double newqEffct = draw.rtrnorm(0,1,params.qEffctHalfInterval);
         insertRow(proposal.newqSeeds,newqSeed.row(0));
         insertElem(proposal.newqEffcts,newqEffct);
         
         // Compute log(proposal ratio) and log(prior ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        //- dtrnormln(newqEffct,nowqEffct,params.qBirthDeathProposalS2,params.qEffctHalfInterval);
         - dtrnormln(newqEffct,0,1,params.qEffctHalfInterval);
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS);
@@ -669,8 +667,6 @@ void EEMS2::propose_birthdeath_qVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
         + dtrnormln(oldqEffct,0,1,params.qEffctHalfInterval);
-        //+ dtrnormln(oldqEffct,nowqEffct,params.qBirthDeathProposalS2,params.qEffctHalfInterval);
-        
         proposal.newpi = eval_prior(nowmSeeds,nowmEffcts,nowmrateMu,nowmrateS,
                                     proposal.newqSeeds,proposal.newqEffcts,nowqrateMu,nowqrateS);
     }
@@ -691,15 +687,12 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         MatrixXd newmSeed = MatrixXd::Zero(1,2);
         randpoint_in_habitat(newmSeed);
         pairwise_distance(nowmSeeds,newmSeed).col(0).minCoeff(&r);
-        //double nowmEffct = nowmEffcts(r);
-        //double newmEffct = draw.rtrnorm(nowmEffct,params.mBirthDeathProposalS2,params.mEffctHalfInterval);
         double newmEffct = draw.rtrnorm(0,1,params.mEffctHalfInterval);
         insertRow(proposal.newmSeeds,newmSeed.row(0));
         insertElem(proposal.newmEffcts,newmEffct);
         
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pDeath/pBirth)
-        //- dtrnormln(newmEffct,nowmEffct,params.mBirthDeathProposalS2,params.mEffctHalfInterval);
         - dtrnormln(newmEffct,0,1,params.mEffctHalfInterval);
         
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS,
@@ -718,7 +711,6 @@ void EEMS2::propose_birthdeath_mVoronoi(Proposal &proposal) {
         // Compute log(prior ratio) and log(proposal ratio)
         proposal.newratioln = log(pBirth/pDeath)
         + dtrnormln(oldmEffct,0,1,params.mEffctHalfInterval);
-        //+ dtrnormln(oldmEffct,nowmEffct,params.mBirthDeathProposalS2,params.mEffctHalfInterval);
 
         proposal.newpi = eval_prior(proposal.newmSeeds,proposal.newmEffcts,nowmrateMu,nowmrateS,
                                     nowqSeeds,nowqEffcts,nowqrateMu,nowqrateS);
@@ -738,12 +730,6 @@ bool EEMS2::accept_proposal(Proposal &proposal, const MCMC &mcmc) {
         return false;
     }
     
-    double temp = 1;
-    /*
-    if (mcmc.currIter < (mcmc.numBurnIter/2)) {
-        temp = params.temp;
-    }
-     */
     double ratioln = proposal.newpi - nowpi + (proposal.newll - nowll);
     // If the proposal is either birth or death, add the log(proposal ratio)
     if (proposal.move==Q_VORONOI_BIRTH_DEATH ||

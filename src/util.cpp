@@ -15,7 +15,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
         ("gridpath", po::value<string>(&gridpath)->default_value(""), "Path to demes/edges/ipmap files")
         ("nIndiv", po::value<int>(&nIndiv)->required(), "nIndiv")
-        ("temperature", po::value<double>(&temp)->default_value(10), "temperature during one half of burn-in")
         ("genomeSize", po::value<double>(&genomeSize)->default_value(3000), "genomeSize")
         ("lowerBound", po::value<double>(&lowerBound)->required(), "lowerBound")
         ("upperBound", po::value<double>(&upperBound)->default_value(numeric_limits<double>::infinity()), "upperBound")
@@ -28,8 +27,6 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         ("qSeedsProposalS2", po::value<double>(&qSeedsProposalS2)->default_value(0.001), "qSeedsProposalS2")
         ("mEffctProposalS2", po::value<double>(&mEffctProposalS2)->default_value(0.1), "mEffctProposalS2")
         ("qEffctProposalS2", po::value<double>(&qEffctProposalS2)->default_value(0.1), "qEffctProposalS2")
-        ("mBirthDeathProposalS2", po::value<double>(&mBirthDeathProposalS2)->default_value(1), "mBirthDeathProposalS2")
-        ("qBirthDeathProposalS2", po::value<double>(&qBirthDeathProposalS2)->default_value(1), "qBirthDeathProposalS2")
         ("mrateMuProposalS2", po::value<double>(&mrateMuProposalS2)->default_value(0.01), "mrateMuProposalS2")
         ("qrateMuProposalS2", po::value<double>(&qrateMuProposalS2)->default_value(0.001), "qrateMuProposalS2")
         ("momegaProposalS2", po::value<double>(&momegaProposalS2)->default_value(0.001), "momegaProposalS2")
@@ -64,13 +61,14 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     min_omegaq = -15;
     min_omegam = -15;
-    max_omegaq = 0;
-    max_omegam = 0.176091;
+    max_omegaq = log10(1);
+    max_omegam = log10(1.5);
 }
 ostream& operator<<(ostream& out, const Params& params) {
     out << "               datapath = " << params.datapath << endl
     << "               mcmcpath = " << params.mcmcpath << endl
     << "               prevpath = " << params.prevpath << endl
+    << "              olderpath = " << params.olderpath << endl
     << "               gridpath = " << params.gridpath << endl
     << "               distance = " << params.distance << endl
     << "                 nIndiv = " << params.nIndiv << endl
@@ -91,13 +89,10 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "       qSeedsProposalS2 = " << params.qSeedsProposalS2 << endl
     << "       mEffctProposalS2 = " << params.mEffctProposalS2 << endl
     << "       qEffctProposalS2 = " << params.qEffctProposalS2 << endl
-    << "  mBirthDeathProposalS2 = " << params.mBirthDeathProposalS2 << endl
-    << "  qBirthDeathProposalS2 = " << params.qBirthDeathProposalS2 << endl
     << "      mrateMuProposalS2 = " << params.mrateMuProposalS2 << endl
     << "      qrateMuProposalS2 = " << params.qrateMuProposalS2 << endl
     << "       momegaProposalS2 = " << params.momegaProposalS2 << endl
-    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl
-    << "            temperature = " << params.temp << endl;
+    << "       qomegaProposalS2 = " << params.qomegaProposalS2 << endl;
     return out;
 }
 bool Params::check_input_params( ) const {

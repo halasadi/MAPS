@@ -57,7 +57,6 @@ public:
     double mrateMuLowerBound, qrateMuLowerBound, mrateMuUpperBound, qrateMuUpperBound;
     double mSeedsProposalS2, mSeedsProposalS2x, mSeedsProposalS2y;
     double qSeedsProposalS2, qSeedsProposalS2x, qSeedsProposalS2y;
-    double mBirthDeathProposalS2, qBirthDeathProposalS2;
     double qEffctProposalS2, mEffctProposalS2, mrateMuProposalS2, qrateMuProposalS2;
     double momegaProposalS2, qomegaProposalS2;
     double mnegBiProb, qnegBiProb;
