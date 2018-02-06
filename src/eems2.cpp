@@ -100,81 +100,35 @@ void EEMS2::initialize_sims( ) {
 void EEMS2::initialize_state(const MCMC &mcmc) {
     cerr << "[MAPS::initialize_state]" << endl;
     
+    cerr << "[MAPS::bootstrapping the data to compute variance]" << endl;
+
     MatrixXd observed_means = observedIBD.array() / cMatrix.array();
     neffective = MatrixXd::Zero(o,o);
     double var;
+    double ceffective;
     VectorXi indiv2deme = graph.get_indiv2deme();
-    
-    
-    cerr << "[MAPS::bootstrapping the data to compute variance]" << endl;
-    vector<double> x;
-    vector<double> y;
-    
-    double epsilon_mean = 1e-8;
-    double epsilon_var = 1e-10;
-    
-    // if the mean is very small then most entries of the pairwise sharing matrix is zero
-    // and we do not trust variances lower than 1e-10.
-    // if these constraints are broken, we use estimates from other pairs of demes to help us estimate
-    // the effective sample size for this deme (see below)
+
     for (int alpha = 0; alpha < o; alpha++){
         for (int beta = alpha; beta < o; beta++){
             var = get_bootstrap_var(Sims, cvec, indiv2deme, 1000, alpha, beta);
-            if (observed_means(alpha,beta) < epsilon_mean || var < epsilon_var){
-                // -1 is a place-holder
-                neffective(alpha,alpha) = -1;
-            } else{
-                neffective(alpha, beta) = observed_means(alpha,beta) / var;
-                x.push_back(cMatrix(alpha,beta));
-                y.push_back(neffective(alpha,beta));
+            if (var == 0){
+                ceffective = cMatrix(alpha, beta);
+            } else {
+                ceffective = observed_means(alpha,beta) / var;
             }
-         
+            
+            // if pairs are totally uncorrelatd then neffective = npairs
+            neffective(alpha, beta) = min(ceffective, cMatrix(alpha,beta));
             neffective(beta,alpha) = neffective(alpha,beta);
         }
     }
     
-    
-    // fit a linear regression line with intercept fixed to zero
-    double sx = 0.0, sy = 0.0, sxx = 0.0, sxy = 0.0;
-    int n = x.size();
-    for (int i = 0; i < n; ++i)
-    {
-        sx += x[i];
-        sy += y[i];
-        sxx += x[i]*x[i];
-        sxy += x[i]*y[i];
-    }
-    double delta = n*sxx - sx*sx;
-    double slope = (n*sxy - sx*sy)/delta;
-    
-    
-    // if we are unable to estimate the effective sample size for a particular pair of demes,
-    // we use information from other pairs of demes to fit the effective sample size using
-    // a simple linear regression line.
-    for (int alpha = 0; alpha < o; alpha++){
-        for (int beta = alpha; beta < o; beta++){
-            if (neffective(alpha,beta) <= 0){
-                neffective(alpha,beta) = slope * (float) cMatrix(alpha,beta); // zero intercept
-                neffective(beta,alpha) = neffective(alpha,beta);
-            }
-            
-            if (neffective(alpha,beta) < 0){
-                cerr << "unable to estimate the effective number of samples between deme " << alpha << " and deme " << beta << endl;
-                exit(1);
-            }
-            
-        }
-    }
-    
+     
     // constant m model
     nowmtiles = 1;
     nowmSeeds = MatrixXd::Zero(nowmtiles,2);
     // random initialization
     randpoint_in_habitat(nowmSeeds);
-    //nowmtiles = o;
-    //nowmSeeds = MatrixXd::Zero(nowmtiles,2);
-    //nowmSeeds = graph.get_the_obsrv_demes();
-    
     // we fix the seeds of the coalescent rates to be at the locations of the observed samples
     // to give the MCMC a head-start
     nowqtiles = o; // o is the number of observed demes
