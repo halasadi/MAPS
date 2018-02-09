@@ -55,13 +55,12 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     mrateMuLowerBound = -10;
     qrateMuLowerBound = -10.0;
     
-    // also prevent ei to be too large and might cause overflow error
     mEffctHalfInterval = 3;
     qEffctHalfInterval = 2;
     
-    min_omegaq = -15;
-    min_omegam = -15;
-    max_omegaq = log10(1);
+    min_omegaq = -4;
+    min_omegam = -4;
+    max_omegaq = log10(0);
     max_omegam = log10(1.5);
 }
 ostream& operator<<(ostream& out, const Params& params) {

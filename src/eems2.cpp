@@ -121,9 +121,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
             neffective(alpha, beta) = min(ceffective, cMatrix(alpha,beta));
             neffective(beta,alpha) = neffective(alpha,beta);
         }
-    }
-    
-     
+    }     
     // constant m model
     nowmtiles = 1;
     nowmSeeds = MatrixXd::Zero(nowmtiles,2);
@@ -139,8 +137,8 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     // Draw the Voronoi centers Coord uniformly within the habitat
     
     
-    nowmrateS = params.min_omegam + draw.runif() * (params.max_omegam - params.min_omegam);
-    nowqrateS = params.min_omegaq + draw.runif() * (params.max_omegaq - params.min_omegaq);
+    nowmrateS = params.max_omegam;
+    nowqrateS = params.min_omegaq;
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
@@ -158,6 +156,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(1,1,nowqEffcts);
+    // constant m model, so we set the meffects = 0
     nowmEffcts = VectorXd::Zero(nowmtiles); //rnorm_effects(1,1,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
