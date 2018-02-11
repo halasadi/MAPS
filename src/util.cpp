@@ -60,7 +60,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     
     min_omegaq = -4;
     min_omegam = -4;
-    max_omegaq = log10(0);
+    max_omegaq = log10(1);
     max_omegam = log10(1.5);
 }
 ostream& operator<<(ostream& out, const Params& params) {

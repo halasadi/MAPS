@@ -138,7 +138,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     
     nowmrateS = params.max_omegam;
-    nowqrateS = params.min_omegaq;
+    nowqrateS = params.max_omegaq;
     
     int niters = mcmc.num_iters_to_save();
     mRates = MatrixXd::Zero(niters, d);
