@@ -123,12 +123,12 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
         }
     }     
     // constant m model
-    nowmtiles = 1;
+    nowmtiles = o;
     nowmSeeds = MatrixXd::Zero(nowmtiles,2);
+    nowmSeeds = graph.get_the_obsrv_demes();
     // random initialization
-    randpoint_in_habitat(nowmSeeds);
-    // we fix the seeds of the coalescent rates to be at the locations of the observed samples
-    // to give the MCMC a head-start
+    //randpoint_in_habitat(nowmSeeds);
+    
     nowqtiles = o; // o is the number of observed demes
     nowqSeeds = MatrixXd::Zero(nowqtiles,2);
     nowqSeeds = graph.get_the_obsrv_demes();
@@ -156,8 +156,7 @@ void EEMS2::initialize_state(const MCMC &mcmc) {
     
     // Assign rates to the Voronoi tiles
     nowqEffcts = VectorXd::Zero(nowqtiles); rnorm_effects(1,1,nowqEffcts);
-    // constant m model, so we set the meffects = 0
-    nowmEffcts = VectorXd::Zero(nowmtiles); //rnorm_effects(1,1,nowmEffcts);
+    nowmEffcts = VectorXd::Zero(nowmtiles); rnorm_effects(1,1,nowmEffcts);
     // Initialize the mapping of demes to qVoronoi tiles
     graph.index_closest_to_deme(nowqSeeds,nowqColors);
     // Initialize the mapping of demes to mVoronoi tiles
@@ -332,7 +331,7 @@ MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
     
     
     if (u4 < 0.25){
-        if (u2 < 0.5 || mcmc.currIter < (mcmc.numBurnIter/2)){
+        if (u2 < 0.5){
             move = OMEGAQ_UPDATE;
         } else {
             move = OMEGAM_UPDATE;
@@ -353,19 +352,19 @@ MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
         // with probability params.qVoronoiPr (which is 0.05 by default). Otherwise,
         // propose birth/death to update the Voronoi tessellation of the effective migration.
-        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
+        if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_BIRTH_DEATH;
         } else {
             move = M_VORONOI_BIRTH_DEATH;
         }
     } else if (u1 < 0.66) {
-        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
+        if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_POINT_MOVE;
         } else {
             move = M_VORONOI_POINT_MOVE;
         }
     } else {
-        if (u2 < params.qVoronoiPr || mcmc.currIter < (mcmc.numBurnIter/2)) {
+        if (u2 < params.qVoronoiPr) {
             move = Q_VORONOI_RATE_UPDATE;
         } else {
             move = M_VORONOI_RATE_UPDATE;
