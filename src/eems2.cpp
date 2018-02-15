@@ -339,7 +339,7 @@ MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
         return(move);
     }
     
-    if (draw.runif() < 0.05){
+    if (draw.runif() < 0.05 && params.olderpath.empty()){
         if (draw.runif() < 0.5){
             move = EMBAR_UPDATE;
         } else {
