@@ -54,9 +54,10 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
     qrateMuUpperBound = 4;
     mrateMuLowerBound = -10;
     qrateMuLowerBound = -10.0;
-    
-    mEffctHalfInterval = 3;
-    qEffctHalfInterval = 2;
+
+    // 4*sigma 
+    mEffctHalfInterval = 6;
+    qEffctHalfInterval = 4;
     
     min_omegaq = -4;
     min_omegam = -4;
