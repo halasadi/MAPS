@@ -1,3 +1,5 @@
+*Note, this repository is only for internal use.. the software is still under development.* 
+
 # Migration and Population Surface estimation (MAPS)
 
 ![Overview of an lPSC segment and the MAPS method](fig1-github.jpg)
