@@ -43,6 +43,19 @@ void EEMS2::rnorm_effects(const double HalfInterval, const double rateS2, Vector
     }
 }
 
+void EEMS2::populate_count_matrix(MatrixXd &cMatrix, VectorXd cvec) {
+    for (int alpha = 0; alpha < o; alpha++){
+        for( int beta = alpha; beta < o; beta++){
+            if (alpha==beta){
+                cMatrix(alpha, beta) = (cvec(alpha) * (cvec(alpha)-1)) / 2.0;
+            } else{
+                cMatrix(alpha, beta) = cvec(alpha) * cvec(beta);
+            }
+            cMatrix(beta, alpha) = cMatrix(alpha, beta);
+        }
+    }
+}
+
 void EEMS2::initialize_sims( ) {
     cerr << "[Sims::initialize]" << endl;
     MatrixXd sims = readMatrixXd(params.datapath + ".sims");
@@ -61,10 +74,6 @@ void EEMS2::initialize_sims( ) {
     observedIBD = MatrixXd::Zero(o, o);
     maxCnt = Sims.maxCoeff();
     
-    // counts the number of IBD segments that are 0, 1, 2, etc.
-    // pre-computation
-    cClasses = VectorXd::Zero(maxCnt+1);
-    
     //observedIBD(i,j) is the sum of number of blocks shared between individuals in deme i and deme j that are greater than u cM.
     
     int demei;
@@ -77,19 +86,19 @@ void EEMS2::initialize_sims( ) {
         for (int j = (i+1); j < n; j++){
             demei = graph.get_deme_of_indiv(i);
             demej = graph.get_deme_of_indiv(j);
-            cMatrix(demei, demej) += 1;
-            cMatrix(demej, demei) = cMatrix(demei, demej);
-            
             observedIBD(demei, demej) += Sims(i,j);
             observedIBD(demej, demei) = observedIBD(demei, demej);
-            
-            cClasses(Sims(i,j)) += 1;
         }
     }
     
     for ( int i = 0 ; i < n ; i ++ ) {
         cvec(graph.get_deme_of_indiv(i)) += 1;
     }
+    
+    if (params.diploid){
+        cvec = 2 * cvec;
+    }
+    populate_count_matrix(cMatrix, cvec);
     
     JtDhatJ = MatrixXd::Zero(o,o);
     expectedIBD = MatrixXd::Zero(o,o);

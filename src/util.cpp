@@ -10,6 +10,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         po::options_description eems_options("EEMS options from parameter file");
         eems_options.add_options()
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
+        ("diploid", po::value<bool>(&diploid)->default_value(false))
         ("datapath", po::value<string>(&datapath)->required(), "Path to coord/sims/outer files")
         ("mcmcpath", po::value<string>(&mcmcpath)->required(), "Path to output directory")
         ("prevpath", po::value<string>(&prevpath)->default_value(""), "Path to previous output directory")
@@ -77,6 +78,7 @@ ostream& operator<<(ostream& out, const Params& params) {
     << "             upperBound = " << params.upperBound << endl
     << "                 nDemes = " << params.nDemes << endl
     << "                   seed = " << params.seed << endl
+    << "                diploid = " << params.diploid << endl
     << "            numMCMCIter = " << params.numMCMCIter << endl
     << "            numBurnIter = " << params.numBurnIter << endl
     << "            numThinIter = " << params.numThinIter << endl
