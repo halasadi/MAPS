@@ -223,14 +223,18 @@ void EEMS2::load_rates( ){
     for (int i = 0; i < rates.cols(); i++){
         // cast to std::vector
         vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
-        log10_old_mMeanRates(i) = median(vec);
+        //log10_old_mMeanRates(i) = median(vec);
+        double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
+        log10_old_mMeanRates(i) = sum / vec.size();
     }
     
     rates = readMatrixXd(params.olderpath + "/qRates.txt");
     if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
     for (int i = 0; i < rates.cols(); i++){
         vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
-        log10_old_qMeanRates(i) = median(vec);
+        //log10_old_qMeanRates(i) = median(vec);
+        double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
+        log10_old_qMeanRates(i) = sum / vec.size();
     }
     
     
@@ -355,7 +359,7 @@ MoveType EEMS2::choose_move_type(const MCMC &mcmc) {
             move = EQBAR_UPDATE;
         }
         return(move);
-    }
+	}
     
     if (u1 < 0.33) {
         // Propose birth/death to update the Voronoi tessellation of the effective diversity,
@@ -783,7 +787,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
     mcmcmtiles(iter) = nowmtiles;
     
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
-        mcmcqRates.push_back(pow(10.0, (pow(10.0, nowqrateS) * nowqEffcts(t)) + nowqrateMu));
+        mcmcqRates.push_back(pow(10.0, nowqrateS) * nowqEffcts(t) + nowqrateMu);
     }
     for ( int t = 0 ; t < nowqtiles ; t++ ) {
         mcmcwCoord.push_back(nowqSeeds(t,0));
@@ -792,7 +796,7 @@ void EEMS2::save_iteration(const MCMC &mcmc) {
         mcmczCoord.push_back(nowqSeeds(t,1));
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
-        mcmcmRates.push_back(pow(10.0, (pow(10.0, nowmrateS) * nowmEffcts(t)) + nowmrateMu));
+        mcmcmRates.push_back(pow(10.0, nowmrateS) * nowmEffcts(t) + nowmrateMu);
     }
     for ( int t = 0 ; t < nowmtiles ; t++ ) {
         mcmcxCoord.push_back(nowmSeeds(t,0));
