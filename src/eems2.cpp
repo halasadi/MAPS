@@ -222,19 +222,21 @@ void EEMS2::load_rates( ){
     if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
     for (int i = 0; i < rates.cols(); i++){
         // cast to std::vector
-        vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
+        //vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
         //log10_old_mMeanRates(i) = median(vec);
-        double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-        log10_old_mMeanRates(i) = sum / vec.size();
+        //double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
+        //log10_old_mMeanRates(i) = sum / vec.size();
+        log10_old_mMeanRates(i) = rates.col(i).sum() / rates.col(i).size();
     }
     
     rates = readMatrixXd(params.olderpath + "/qRates.txt");
     if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
     for (int i = 0; i < rates.cols(); i++){
-        vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
+        //vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
         //log10_old_qMeanRates(i) = median(vec);
-        double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-        log10_old_qMeanRates(i) = sum / vec.size();
+        //double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
+        //log10_old_qMeanRates(i) = sum / vec.size();
+        log10_old_qMeanRates(i) = rates.col(i).sum() / rates.col(i).size();
     }
     
     
@@ -1011,7 +1013,7 @@ double EEMS2::eems2_likelihood(const MatrixXd &mSeeds, const VectorXd &mEffcts, 
     }
     
     int alpha, beta;
-
+    
     // perform costly eigen-decompositon only if updating migration rates
     if (ismUpdate){
         
