@@ -154,6 +154,15 @@ In comparison to EEMS, there are a few additional arguments in the `params` file
 * `olderpath` (optional, path to a run with a older time period, MAPS
                will only estimate the difference between rates from
                the older time period)
+               
+## calling IBD segments and converting to .sims file
+
+In our paper, we use BEAGLE (https://faculty.washington.edu/browning/beagle/beagle.html) and we make available our pipeline for calling IBD segments:
+https://github.com/halasadi/ibd_data_pipeline
+
+Also, see the folder `convert_beagle` for an example on how to convert BEAGLE output to a .sims file.
+
+Note: We provide example scripts, please feel to use any IBD calling software/pipelines you see fit.
 
 ## Citing this work
 
