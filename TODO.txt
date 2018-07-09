@@ -1,7 +1,0 @@
-TO DO
-=====
-
-* Add paper to cite in README under "Citing this work".
-
-* Figure out (roughly) what version(s) of Boost are compatible with
-  MAPS.
