@@ -13,7 +13,7 @@ int main(int argc, char** argv)
         long seed_from_command_line = 1L;
         string params_file; bool error;
         
-        po::options_description options("EEMS2 options from command line");
+        po::options_description options("MAPS options from command line");
         po::variables_map vm;
         options.add_options()
         ("help", "Produce this help message")
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         Params params(params_file,seed_from_command_line);
         error = params.check_input_params( );
         if (error) {
-            cerr << "[RunEEMS2] Error parametrizing EEMS2." << endl;
+            cerr << "[RunMAPS] Error parametrizing MAPS." << endl;
             return(EXIT_FAILURE);
         }
         
@@ -42,17 +42,18 @@ int main(int argc, char** argv)
         
         
         boost::filesystem::path dir(eems2.prevpath().c_str());
+        
+        cerr << "Initialize MAPS random state" << endl << endl;
+        eems2.initialize_state(mcmc);
+        
         if (exists(dir)) {
-            cerr << "Load final EEMS2 state from " << eems2.prevpath() << endl << endl;
+            cerr << "Rewrote random Initialization, loaded final MAPS state from " << eems2.prevpath() << endl << endl;
             eems2.load_final_state();
-        } else {
-            cerr << "Initialize EEMS2 random state" << endl << endl;
-            eems2.initialize_state(mcmc);
         }
         
         error = eems2.start_eems(mcmc);
         if (error) {
-            cerr << "[RunEEMS2] Error starting EEMS2." << endl;
+            cerr << "[RunMAPS] Error starting MAPS." << endl;
             return(EXIT_FAILURE);
         }
         
@@ -98,7 +99,7 @@ int main(int argc, char** argv)
                     eems2.propose_eqbar(proposal);
                     break;
                 default:
-                    cerr << "[RunEEMS2] Unknown move type" << endl;
+                    cerr << "[RunMAPS] Unknown move type" << endl;
                     return(EXIT_FAILURE);
             }
             
@@ -118,10 +119,10 @@ int main(int argc, char** argv)
             }
         }
         error = eems2.output_results(mcmc);
-        if (error) { cerr << "[RunEEMS2] Error saving eems results to " << eems2.mcmcpath() << endl; }
+        if (error) { cerr << "[RunMAPS] Error saving MAPS results to " << eems2.mcmcpath() << endl; }
         
         error = eems2.write_rates();
-        if (error) { cerr << "[RunEEMS2] Error saving eems means to " << eems2.mcmcpath() << endl; }
+        if (error) { cerr << "[RunMAPS] Error saving MAPS means to " << eems2.mcmcpath() << endl; }
 
         
         

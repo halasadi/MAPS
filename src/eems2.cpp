@@ -221,21 +221,12 @@ void EEMS2::load_rates( ){
     rates = readMatrixXd(params.olderpath + "/mRates.txt");
     if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
     for (int i = 0; i < rates.cols(); i++){
-        // cast to std::vector
-        //vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
-        //log10_old_mMeanRates(i) = median(vec);
-        //double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-        //log10_old_mMeanRates(i) = sum / vec.size();
         log10_old_mMeanRates(i) = rates.col(i).sum() / rates.col(i).size();
     }
     
     rates = readMatrixXd(params.olderpath + "/qRates.txt");
     if ((rates.rows()<1) || (rates.cols()<1)) { error = true; }
     for (int i = 0; i < rates.cols(); i++){
-        //vector<double> vec(rates.col(i).data(), rates.col(i).data() + rates.col(i).size());
-        //log10_old_qMeanRates(i) = median(vec);
-        //double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-        //log10_old_qMeanRates(i) = sum / vec.size();
         log10_old_qMeanRates(i) = rates.col(i).sum() / rates.col(i).size();
     }
     
@@ -256,6 +247,7 @@ void EEMS2::load_final_state( ) {
     tempi = readMatrixXd(params.prevpath + "/lastmtiles.txt");
     if ((tempi.rows()!=1) || (tempi.cols()!=1)) { error = true; }
     nowmtiles = tempi(0,0);
+
     cerr << "  MAPS starts with " << nowqtiles << " qtiles and " << nowmtiles << " mtiles" << endl;
     
     tempi = readMatrixXd(params.prevpath + "/lastmhyper.txt");

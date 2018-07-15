@@ -7,7 +7,7 @@ Params::Params( ) { }
 Params::~Params( ) { }
 Params::Params(const string &params_file, const long seed_from_command_line) {
     try {
-        po::options_description eems_options("EEMS options from parameter file");
+        po::options_description eems_options("MAPS options from parameter file");
         eems_options.add_options()
         ("seed", po::value<long>(&seed)->default_value(seed_from_command_line), "Random seed")
         ("diploid", po::value<bool>(&diploid)->default_value(false))
@@ -44,7 +44,7 @@ Params::Params(const string &params_file, const long seed_from_command_line) {
         po::notify(vm);
         instrm.close();
     } catch(exception& e) {
-        cerr << "[EEMS::Params] Error parsing input parameters in " << params_file << ": " << endl;
+        cerr << "[MAPS::Params] Error parsing input parameters in " << params_file << ": " << endl;
         cerr << e.what() << endl; exit(1);
     }
 
@@ -103,7 +103,7 @@ bool Params::check_input_params( ) const {
     boost::filesystem::path prevdir(prevpath.c_str());
     cerr << "Using Boost " << BOOST_LIB_VERSION
     << " and Eigen " << EIGEN_WORLD_VERSION << "." << EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << endl
-    << "  EEMS was tested with Boost 1_57 and Eigen 3.2.4" << endl << endl;
+    << "  MAPS was tested with Boost 1_57 and Eigen 3.2.4" << endl << endl;
     if (!numeric_limits<double>::has_infinity || !numeric_limits<double>::infinity()) {
         cerr << "  Infinity not supported on this platform" << endl;
         error = true;
@@ -132,7 +132,7 @@ bool Params::check_input_params( ) const {
             error = true;
         }
     if (!prevpath.empty() && !exists(prevdir)) {
-        cerr << "  Failed to find directory " << prevpath << " to previous EEMS output" << endl;
+        cerr << "  Failed to find directory " << prevpath << " to previous MAPS output" << endl;
         error = true;
     }
     if (!(mSeedsProposalS2>0) || !(mEffctProposalS2>0) || !(mrateMuProposalS2>0) ||
