@@ -52,8 +52,8 @@ Mac).
    Makefile for full details):
 
    ```
-   -I$(HOME)/anaconda/envs/MAPS/include
-   -L$(HOME)/anaconda/envs/MAPS/lib
+   -I${HOME}/anaconda/envs/MAPS/include
+   -L${HOME}/anaconda/envs/MAPS/lib
    ```
 
 8. Run `make` in the [src](src) subdirectory to build the `runeems2`
@@ -71,7 +71,7 @@ Mac).
     examples/2_6 subdirectory.
 
     ```bash
-    cd examples
+    cd ../examples
     ../src/runeems2 --params params-test-2_6.ini
     ```
 

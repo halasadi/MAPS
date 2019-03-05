@@ -11,7 +11,8 @@ CXX = g++
 #
 #   CXXFLAGS = -I$(HOME)/anaconda/envs/MAPS/include -O3 -DNDEBUG
 # 
-CXXFLAGS = -O3 -DNDEBUG
+
+CXXFLAGS = -I/miniconda2/envs/MAPS/include -O3 -DNDEBUG
 
 # If the Boost C++ library is installed in a non-standard location,
 # the location should be declared here. For example, if you installed
@@ -22,7 +23,10 @@ CXXFLAGS = -O3 -DNDEBUG
 #             -lboost_system -lboost_program_options \
 #             -lboost_filesystem
 #
-LDFLAGS = -lboost_system -lboost_program_options -lboost_filesystem
+
+LDFLAGS = -L/miniconda2/envs/MAPS/lib \
+             -lboost_system -lboost_program_options \
+             -lboost_filesystem
 
 # AVOID EDITING ANYTHING BELOW THIS LINE
 # --------------------------------------
