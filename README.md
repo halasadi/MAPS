@@ -167,7 +167,7 @@ Note: We provide example scripts, please feel to use any IBD calling software/pi
 If you find the MAPS program, or any source code contained in this
 repository, useful for your work, please cite:
 
-> https://www.biorxiv.org/content/early/2018/07/09/365536
+> https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1007908
 
 ## License
 
